@@ -591,6 +591,7 @@ class StringUtils {
 
     public static function interpolateArray( array &$array, array &$source = null, $defaultValue = null, $delimeter = '.' ) {
 
+        //The source is also a reference to keep the source updated with interpolations at all times
         if( !$source )
             $source = &$array;
 
