@@ -7,7 +7,6 @@ use Tale\App\FeatureBase;
 class Db extends FeatureBase {
 
     protected function init() {
-        parent::init();
 
         $app = $this->getApp();
         $config = $this->getConfig();

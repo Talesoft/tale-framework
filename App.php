@@ -8,18 +8,13 @@ use Exception,
 class App {
 
     private static $_featureTypes = [
-        'config' => 'Tale\\App\\Feature\\Config',
-        'library' => 'Tale\\App\\Feature\\Library',
-        'cache' => 'Tale\\App\\Feature\\Cache',
-        'controllers' => 'Tale\\App\\Feature\\Controllers',
-        'db' => 'Tale\\App\\Feature\\Db',
-        'themes' => 'Tale\\App\\Feature\\Themes',
-        'views' => 'Tale\\App\\Feature\\Views'
+
     ];
 
     private $_path;
     private $_configPath;
     private $_config;
+    private $_featureFactory;
     private $_features;
 
     public function __construct( $path) {
@@ -29,10 +24,19 @@ class App {
         $this->_config = new Config( [
             'path' => $this->_path
         ] );
+        $this->_featureFactory = new Factory( 'Tale\\App\\FeatureBase', [
+            'config' => 'Tale\\App\\Feature\\Config',
+            'library' => 'Tale\\App\\Feature\\Library',
+            'cache' => 'Tale\\App\\Feature\\Cache',
+            'controllers' => 'Tale\\App\\Feature\\Controllers',
+            'db' => 'Tale\\App\\Feature\\Db',
+            'themes' => 'Tale\\App\\Feature\\Themes',
+            'views' => 'Tale\\App\\Feature\\Views'
+        ] );
         $this->_features = [];
 
         if( !file_exists( $this->_configPath ) )
-            throw new RuntimException( "Failed to create app: App config {$this->_configPath} not found" );
+            throw new RuntimeException( "Failed to create app: App config {$this->_configPath} not found" );
 
         $this->loadConfigFile( $this->_configPath );
     }
@@ -58,67 +62,67 @@ class App {
         $this->_config = $this->_config->mergeConfig( $config )->interpolate();
 
         //Init feature types
-        if( isset( $config->featureTypes ) ) {
-
-            foreach( $config->featureTypes as $name => $className )
-                self::registerFeatureType( $name, $this->_config->featureTypes->{$name} );
-        }
+        if( isset( $config->featureAliases ) )
+            foreach( $config->featureAliases as $alias => $className )
+                $this->_featureFactory->registerAlias( $alias, $this->_config->featureAliases->{$alias} );
 
         //Init features
         if( isset( $config->features ) ) {
 
-            foreach( $config->features as $type => $options ) {
+            foreach( $config->features as $className => $options ) {
 
-                $this->addFeature( $type, $options ? $this->_config->features->{$type}->getOptions() : null );
+                $config = $this->_config->features->{$className};
+                $this->addFeature($className, $config ? $config->getOptions() : null );
             }
         }
 
         return $this;
     }
 
+    public function getFeatureFactory() {
+
+        return $this->_featureFactory;
+    }
+
     public function getFeatures() {
 
-        return $this->_feature;
+        return $this->_features;
     }
 
-    public function hasFeature( $type ) {
+    public function hasFeature( $className ) {
 
-        if( isset( self::$_featureTypes[ $type ] ) )
-            $type = self::$_featureTypes[ $type ];
+        $className = $this->_featureFactory->resolveClassName( $className );
 
-        return isset( $this->_features[ $type ] );
+        return isset( $this->_features[ $className ] );
     }
 
-    public function getFeature( $type ) {
+    public function getFeature( $className ) {
 
-        if( isset( self::$_featureTypes[ $type ] ) )
-            $type = self::$_featureTypes[ $type ];
+        $className = $this->_featureFactory->resolveClassName( $className );
 
-        return $this->_features[ $type ];
+        return $this->_features[ $className ];
     }
 
-    public function addFeature( $type, array $options = null ) {
+    public function addFeature( $className, array $options = null ) {
 
-        if( isset( self::$_featureTypes[ $type ] ) )
-            $type = self::$_featureTypes[ $type ];
+        $this->_features[ $className ] = $this->_featureFactory->createInstance( $className, [
+            $this,
+            $options
+        ] );
 
-        if( !class_exists( $type ) || !is_a( $type, 'Tale\\App\\FeatureBase', true ) ) {
-
-            var_dump( spl_autoload_functions() );
-
-            throw new RuntimeException( "Failed to add app feature: $type does not exist or is not a valid class of type Tale\\App\\Feature" );
-        }
-
-        $this->_features[ $type ] = new $type( $this, $options );
+        return $this;
     }
 
-    public function __get( $featureType ) {
+    public function addFeatures( array $features ) {
 
-        return $this->getFeature( $featureType );
+        foreach( $features as $className => $options )
+            $this->addFeature( $className, $options );
+
+        return $this;
     }
 
-    public static function registerFeatureType( $name, $className ) {
+    public function __get( $className ) {
 
-        static::$_featureTypes[ $name ] = $className;
+        return $this->getFeature( $className );
     }
 }

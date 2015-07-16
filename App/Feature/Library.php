@@ -10,7 +10,6 @@ class Library extends FeatureBase {
     private $_classLoader;
 
     protected function init() {
-        parent::init();
 
         $app = $this->getApp();
         $config = $this->getConfig();

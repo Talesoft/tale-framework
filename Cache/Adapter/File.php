@@ -22,6 +22,8 @@ class File extends AdapterBase {
 
     public function getKeyPath( $key ) {
 
+        $key = str_replace( '.', '/', $key );
+
         return $this->_path."/$key.dat";
     }
 
@@ -38,17 +40,21 @@ class File extends AdapterBase {
 
     public function set( $key, $value ) {
 
-        $path = $this->getKeyPath( $key, true );
+        $path = $this->getKeyPath( $key );
         $dir = dirname( $path );
 
         if( !is_dir( $dir ) )
             mkdir( $dir, 0777, true );
 
         file_put_contents( $path, serialize( $value ) );
+
+        return $this;
     }
 
     public function remove( $key ) {
 
-        
+        unlink( $this->getKeyPath( $key ) );
+
+        return $this;
     }
 }

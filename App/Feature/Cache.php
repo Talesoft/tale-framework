@@ -2,16 +2,23 @@
 
 namespace Tale\App\Feature;
 
-use Tale\App\FeatureBase;
+use Tale\App\ProxyFeatureBase,
+    Tale\Cache as TaleCache;
 
-class Cache extends FeatureBase {
+class Cache extends ProxyFeatureBase {
+
+    private $_cacheInstance;
 
     protected function init() {
-        parent::init();
 
         $app = $this->getApp();
         $config = $this->getConfig();
 
-        
+        $this->_cacheInstance = new TaleCache( $config->getOptions() );
+    }
+
+    public function getProxiedObject() {
+
+        return $this->_cacheInstance;
     }
 }
