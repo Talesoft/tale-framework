@@ -66,13 +66,13 @@ class Cache {
 
         $lifeTime = !is_null( $lifeTime ) ? $lifeTime : $this->_config->lifeTime;
 
-        if( $this->_adapter->exists( $key, $lifeTime ) ) {
+        if( $this->_adapter->exists( $key ) ) {
 
             return $this->_adapter->get( $key );
         }
 
         $result = call_user_func( $action, $key );
-        $this->_adapter->set( $key, $result );
+        $this->_adapter->set( $key, $result, $lifeTime );
 
         return $result;
     }

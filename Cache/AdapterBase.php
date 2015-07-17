@@ -20,8 +20,8 @@ abstract class AdapterBase {
     }
 
     abstract protected function init();
-    abstract public function exists( $key, $lifeTime );
+    abstract public function exists( $key );
     abstract public function get( $key );
-    abstract public function set( $key, $value );
+    abstract public function set( $key, $value, $lifeTime );
     abstract public function remove( $key );
 }

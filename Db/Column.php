@@ -7,16 +7,14 @@ use Tale\Db\Column\TypeBase,
 
 class Column extends NamedEntity {
 
-    private $_table;
     private $_type;
     private $_typeFactory;
     private $_defaultValue;
     private $_nullable;
 
-    public function __construct( Table $table, $name ) {
+    public function __construct( $name ) {
         parent::__construct( $name );
 
-        $this->_table = $table;
         $this->_type = null;
         $this->_typeFactory = new Factory( 'Tale\\Db\\Column\\TypeBase', [
             'string' => 'Tale\\Db\\Column\\Type\\StringType',

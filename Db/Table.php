@@ -2,12 +2,20 @@
 
 namespace Tale\Db;
 
-class Table {
+use Tale\Db;
 
-    private $_name;
+class Table extends NamedEntity {
 
-    public function __construct( $name ) {
+    private $_columns;
 
-        $this->_name = $name;
+    public function __construct( $name, array $columns = null ) {
+        parent::__construct( $name );
+
+        $this->_columns = $columns ? $columns : [];
+    }
+
+    public function getColumns() {
+
+        return $this->_columns;
     }
 }

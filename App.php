@@ -3,7 +3,6 @@
 namespace Tale;
 
 use RuntimeException;
-use Tale\App\Feature\Config;
 
 /**
  * Represents an application that can be run from any point in userland code
@@ -54,14 +53,13 @@ class App {
     /**
      * Creates a new App object
      *
-     * @param $path string The path to the application directory
+     * @param string $path The path to the application directory
      */
     public function __construct( $path ) {
 
         $this->_path = $path;
         $this->_configPath = "$path/app.json";
-        $this->_config = new Config(
-            [
+        $this->_config = new Config( [
                 'path' => $this->_path
             ]
         );
@@ -117,7 +115,7 @@ class App {
     /**
      * Loads a new config file by its full path
      *
-     * @param $configFile string The path to the config-file to be loaded
+     * @param string $configFile The path to the config-file to be loaded
      *
      * @return $this
      */
@@ -167,7 +165,7 @@ class App {
     /**
      * Checks if a given feature is loaded or not
      *
-     * @param $className string The class name or the alias of the class (aliases reside in the feature factory)
+     * @param string $className The class name or the alias of the class (aliases reside in the feature factory)
      *
      * @return bool
      */
@@ -181,7 +179,7 @@ class App {
     /**
      * Gets the instance of a given feature
      *
-     * @param $className string The class name or the alias of the class (aliases reside in the feature factory)
+     * @param string $className The class name or the alias of the class (aliases reside in the feature factory)
      *
      * @return App\FeatureBase
      */
@@ -195,8 +193,8 @@ class App {
     /**
      * Adds a new feature by passing an option array
      *
-     * @param string $className string The class name or the alias of the class
-     *                          (aliases reside in the feature factory)
+     * @param string     $className The class name or the alias of the class
+     *                              (aliases reside in the feature factory)
      * @param array|null $options
      *
      * @return $this
@@ -230,7 +228,7 @@ class App {
      * Magic access method for isset/empty
      * Uses $this->hasFeature( $className ) for resolving
      *
-     * @param $className string The class name or the alias of the class
+     * @param string $className The class name or the alias of the class
      *                          (aliases reside in the feature factory)
      *
      * @return bool
@@ -244,7 +242,7 @@ class App {
      * Magic access method for property read access
      * Uses $this->getFeature( $className ) for resolving
      *
-     * @param $className string The class name or the alias of the class
+     * @param string $className The class name or the alias of the class
      *                          (aliases reside in the feature factory)
      *
      * @return App\FeatureBase
