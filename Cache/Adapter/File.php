@@ -24,7 +24,7 @@ class File extends AdapterBase {
 
         $key = str_replace( '.', '/', $key );
 
-        return $this->_path."/$key.dat";
+        return $this->_path."/$key.tmp";
     }
 
     public function exists( $key, $lifeTime ) {

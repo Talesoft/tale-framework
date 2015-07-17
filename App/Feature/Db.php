@@ -11,6 +11,5 @@ class Db extends FeatureBase {
         $app = $this->getApp();
         $config = $this->getConfig();
 
-        var_dump( 'INIT DB FEATURE' );
     }
 }

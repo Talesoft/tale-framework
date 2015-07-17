@@ -121,6 +121,11 @@ class App {
         return $this;
     }
 
+    public function __isset( $className ) {
+
+        return $this->hasFeature( $className );
+    }
+
     public function __get( $className ) {
 
         return $this->getFeature( $className );

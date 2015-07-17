@@ -56,11 +56,6 @@ class Config implements IteratorAggregate, Countable {
         return isset( $this->_options[ $key ] );
     }
 
-    public function __unset( $key ) {
-
-        unset( $this->_options[ $key ] );
-    }
-
     public function __get( $key ) {
 
         $value = $this->_options[ $key ];
@@ -69,11 +64,6 @@ class Config implements IteratorAggregate, Countable {
             return new static( $value );
 
         return $value;
-    }
-
-    public function __set( $key, $value ) {
-
-        $this->_options[ $key ] = $value;
     }
 
     public static function fromFile( $path ) {

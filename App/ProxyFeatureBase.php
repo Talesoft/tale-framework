@@ -2,8 +2,7 @@
 
 namespace Tale\App;
 
-use Tale\App,
-    Tale\Config;
+use Tale\App;
 
 abstract class ProxyFeatureBase extends FeatureBase {
 

@@ -20,7 +20,7 @@ class Factory {
 
     public function getTypes() {
 
-        return $this->_types;
+        return $this->_aliases;
     }
 
     public function resolveClassName( $className ) {

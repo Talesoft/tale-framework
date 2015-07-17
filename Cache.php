@@ -10,7 +10,15 @@ class Cache {
 
     public function __construct( array $options = null ) {
 
-        $this->_config = new Config( $options );
+        $this->_config = new Config( array_replace( [
+            'nameSpace' => '',
+            'lifeTime' => 3600,
+            'adapter' => 'file',
+            'options' => [
+                'path' => './cache'
+            ]
+        ], $options ? $options : [] ) );
+
         $this->_adapterFactory = new Factory( 'Tale\\Cache\\AdapterBase', [
             'file' => 'Tale\\Cache\\Adapter\\File',
             'apc' => 'Tale\\Cache\\Adapter\\Apc',
@@ -24,8 +32,9 @@ class Cache {
                 $this->_adapterFactory->registerAlias( $alias, $className );
         }
 
-        $options = isset( $this->_config->options ) ? $this->_config->options->getOptions() : null;
-        $this->_adapter = $this->_adapterFactory->createInstance( $this->_config->adapter, [ $options ] );
+        $this->_adapter = $this->_adapterFactory->createInstance( $this->_config->adapter, [
+            $this->_config->options->getOptions()
+        ] );
     }
 
     public function getConfig() {
@@ -43,8 +52,28 @@ class Cache {
         return $this->_adapter;
     }
 
-    public function load( $key, $lifeTime ) {
+    public function getSubCache( $nameSpace, array $options = null ) {
 
+        $subNs = isset( $this->_config->nameSpace )
+               ? $this->_config->nameSpace.'.'
+               : '';
 
+        $options[ 'nameSpace' ] = "$subNs$nameSpace";
+        return new self( $this->_config->merge( $options )->getOptions() );
+    }
+
+    public function load( $key, callable $action, $lifeTime = null ) {
+
+        $lifeTime = !is_null( $lifeTime ) ? $lifeTime : $this->_config->lifeTime;
+
+        if( $this->_adapter->exists( $key, $lifeTime ) ) {
+
+            return $this->_adapter->get( $key );
+        }
+
+        $result = call_user_func( $action, $key );
+        $this->_adapter->set( $key, $result );
+
+        return $result;
     }
 }
