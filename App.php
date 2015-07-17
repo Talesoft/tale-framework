@@ -2,38 +2,81 @@
 
 namespace Tale;
 
-use Exception,
-    RuntimeException;
+use RuntimeException;
+use Tale\App\Feature\Config;
 
+/**
+ * Represents an application that can be run from any point in userland code
+ *
+ * An application is always based on a path where a config file and additional directories and dependencies reside
+ *
+ * @package Tale
+ */
 class App {
 
-    private static $_featureTypes = [
-
-    ];
-
+    /**
+     * The path to the application directory
+     *
+     * @var string
+     */
     private $_path;
+
+    /**
+     * The path to the config file
+     *
+     * @var string
+     */
     private $_configPath;
+
+    /**
+     * The configuration object
+     *
+     * @var Config
+     */
     private $_config;
+
+    /**
+     * The factory for app features
+     * Creates new instances of different App\FeatureBase derived classes
+     *
+     * @var Factory
+     */
     private $_featureFactory;
+
+    /**
+     * The features currently loaded into the application
+     * These can be passed to objects that want to work with the app features with their respective aliases
+     *
+     * @var array
+     */
     private $_features;
 
-    public function __construct( $path) {
+    /**
+     * Creates a new App object
+     *
+     * @param $path string The path to the application directory
+     */
+    public function __construct( $path ) {
 
         $this->_path = $path;
         $this->_configPath = "$path/app.json";
-        $this->_config = new Config( [
-            'path' => $this->_path
-        ] );
-        $this->_featureFactory = new Factory( 'Tale\\App\\FeatureBase', [
-            'config' => 'Tale\\App\\Feature\\Config',
-            'library' => 'Tale\\App\\Feature\\Library',
-            'cache' => 'Tale\\App\\Feature\\Cache',
+        $this->_config = new Config(
+            [
+                'path' => $this->_path
+            ]
+        );
+        $this->_featureFactory = new Factory(
+            'Tale\\App\\FeatureBase', [
+            'config'      => 'Tale\\App\\Feature\\Config',
+            'library'     => 'Tale\\App\\Feature\\Library',
+            'cache'       => 'Tale\\App\\Feature\\Cache',
             'controllers' => 'Tale\\App\\Feature\\Controllers',
-            'db' => 'Tale\\App\\Feature\\Db',
-            'themes' => 'Tale\\App\\Feature\\Themes',
-            'views' => 'Tale\\App\\Feature\\Views'
-        ] );
-        $this->_features = [];
+            'db'          => 'Tale\\App\\Feature\\Db',
+            'themes'      => 'Tale\\App\\Feature\\Themes',
+            'views'       => 'Tale\\App\\Feature\\Views'
+        ]
+        );
+        $this->_features = [ ];
 
         if( !file_exists( $this->_configPath ) )
             throw new RuntimeException( "Failed to create app: App config {$this->_configPath} not found" );
@@ -41,21 +84,43 @@ class App {
         $this->loadConfigFile( $this->_configPath );
     }
 
+    /**
+     * Returns the application directory path
+     *
+     * @return string
+     */
     public function getPath() {
 
         return $this->_path;
     }
 
+    /**
+     * Returns the path to the application's main configuration file
+     *
+     * @return string
+     */
     public function getConfigPath() {
 
         return $this->_configPath;
     }
 
+    /**
+     * Returns the current run configuration for the application
+     *
+     * @return Config
+     */
     public function getConfig() {
 
         return $this->_config;
     }
 
+    /**
+     * Loads a new config file by its full path
+     *
+     * @param $configFile string The path to the config-file to be loaded
+     *
+     * @return $this
+     */
     public function loadConfigFile( $configFile ) {
 
         $config = Config::fromFile( $configFile );
@@ -79,16 +144,33 @@ class App {
         return $this;
     }
 
+    /**
+     * Returns the current feature factory of the app
+     *
+     * @return Factory
+     */
     public function getFeatureFactory() {
 
         return $this->_featureFactory;
     }
 
+    /**
+     * Returns the current attached features of the app
+     *
+     * @return array An array of App\Feature-objects
+     */
     public function getFeatures() {
 
         return $this->_features;
     }
 
+    /**
+     * Checks if a given feature is loaded or not
+     *
+     * @param $className string The class name or the alias of the class (aliases reside in the feature factory)
+     *
+     * @return bool
+     */
     public function hasFeature( $className ) {
 
         $className = $this->_featureFactory->resolveClassName( $className );
@@ -96,6 +178,13 @@ class App {
         return isset( $this->_features[ $className ] );
     }
 
+    /**
+     * Gets the instance of a given feature
+     *
+     * @param $className string The class name or the alias of the class (aliases reside in the feature factory)
+     *
+     * @return App\FeatureBase
+     */
     public function getFeature( $className ) {
 
         $className = $this->_featureFactory->resolveClassName( $className );
@@ -103,6 +192,15 @@ class App {
         return $this->_features[ $className ];
     }
 
+    /**
+     * Adds a new feature by passing an option array
+     *
+     * @param string $className string The class name or the alias of the class
+     *                          (aliases reside in the feature factory)
+     * @param array|null $options
+     *
+     * @return $this
+     */
     public function addFeature( $className, array $options = null ) {
 
         $this->_features[ $className ] = $this->_featureFactory->createInstance( $className, [
@@ -113,6 +211,13 @@ class App {
         return $this;
     }
 
+    /**
+     * Adds new features by passing an array of feature definitions
+     *
+     * @param array $features An array consisting of class names/aliases as keys and options as values
+     *
+     * @return $this
+     */
     public function addFeatures( array $features ) {
 
         foreach( $features as $className => $options )
@@ -121,11 +226,29 @@ class App {
         return $this;
     }
 
+    /**
+     * Magic access method for isset/empty
+     * Uses $this->hasFeature( $className ) for resolving
+     *
+     * @param $className string The class name or the alias of the class
+     *                          (aliases reside in the feature factory)
+     *
+     * @return bool
+     */
     public function __isset( $className ) {
 
         return $this->hasFeature( $className );
     }
 
+    /**
+     * Magic access method for property read access
+     * Uses $this->getFeature( $className ) for resolving
+     *
+     * @param $className string The class name or the alias of the class
+     *                          (aliases reside in the feature factory)
+     *
+     * @return App\FeatureBase
+     */
     public function __get( $className ) {
 
         return $this->getFeature( $className );
