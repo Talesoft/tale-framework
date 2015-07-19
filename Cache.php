@@ -2,11 +2,15 @@
 
 namespace Tale;
 
+use InvalidArgumentException,
+    Closure;
+
 class Cache {
 
     private $_config;
     private $_adapterFactory;
     private $_adapter;
+    private $_boundObject;
 
     public function __construct( array $options = null ) {
 
@@ -26,15 +30,14 @@ class Cache {
             'xcache' => 'Tale\\Cache\\Adapter\\Xcache'
         ] );
 
-        if( isset( $this->_config->adapterAliases ) ) {
-
-            foreach( $this->_config->adapterAliases as $alias => $className )
-                $this->_adapterFactory->registerAlias( $alias, $className );
-        }
+        if( isset( $this->_config->adapterAliases ) )
+            $this->_adapterFactory->registerAliases( $this->_config->adapterAliases );
 
         $this->_adapter = $this->_adapterFactory->createInstance( $this->_config->adapter, [
             $this->_config->options->getOptions()
         ] );
+
+        $this->_boundObject = null;
     }
 
     public function getConfig() {
@@ -52,9 +55,33 @@ class Cache {
         return $this->_adapter;
     }
 
+    public function getBoundObject() {
+
+        return $this->_boundObject;
+    }
+
+    public function bind( $boundObject ) {
+
+        if( !is_object( $boundObject ) )
+            throw new InvalidArgumentException( "Invalid argument 1 passed to bind, object expected" );
+
+        $this->_boundObject = $boundObject;
+
+        return $this;
+    }
+
+    public function unbind() {
+
+        $this->_boundObject = null;
+
+        return $this;
+    }
+
+
+
     public function getSubCache( $nameSpace, array $options = null ) {
 
-        $subNs = isset( $this->_config->nameSpace )
+        $subNs = !empty( $this->_config->nameSpace )
                ? $this->_config->nameSpace.'.'
                : '';
 
@@ -65,6 +92,13 @@ class Cache {
     public function load( $key, callable $action, $lifeTime = null ) {
 
         $lifeTime = !is_null( $lifeTime ) ? $lifeTime : $this->_config->lifeTime;
+
+        $key = !empty( $this->_config->nameSpace )
+             ? $this->_config->nameSpace.".$key"
+             : $key;
+
+        if( $this->_boundObject && $action instanceof Closure )
+            $action->bindTo( $this->_boundObject, $this->_boundObject );
 
         if( $this->_adapter->exists( $key ) ) {
 

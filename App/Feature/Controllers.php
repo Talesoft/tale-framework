@@ -11,6 +11,9 @@ class Controllers extends FeatureBase {
         $app = $this->getApp();
         $config = $this->getConfig();
 
-        var_dump( 'INIT CONTROLLERS FEATURE' );
+        if( isset( $app->data ) ) {
+
+
+        }
     }
 }

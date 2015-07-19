@@ -2,7 +2,8 @@
 
 namespace Tale\Cache\Adapter;
 
-use Tale\Cache\AdapterBase;
+use Tale\Cache\AdapterBase,
+    Tale\Factory;
 
 /**
  * Basic file system storage cache adapter
@@ -20,6 +21,10 @@ class File extends AdapterBase {
      * @var string
      */
     private $_path;
+
+    private $_formatFactory;
+
+    private $_format;
 
     /**
      * The path to the file that contains the life-times for each key in this cache
@@ -43,11 +48,23 @@ class File extends AdapterBase {
         $config = $this->getConfig();
 
         $this->_path = $config->path;
-        $this->_lifeTimePath = $this->_path.'/.life-times.json';
+        $this->_formatFactory = new Factory( __NAMESPACE__.'\\File\\FormatBase', [
+            'json' => __NAMESPACE__.'\\File\\Format\\Json',
+            'serialize' => __NAMESPACE__.'\\File\\Format\\Serialize',
+            'export' => __NAMESPACE__.'\\File\\Format\\Export'
+        ] );
+
+        if( isset( $config->formatAliases ) )
+            $this->_formatFactory->registerAliases( $config->formatAliases );
+
+        $this->_format = $this->_formatFactory->createInstance(
+            isset( $config->format ) ? $config->format : 'serialize'
+        );
+        $this->_lifeTimePath = implode( '', [ $this->_path, '/.life-times', $this->_format->getExtension() ] );
         $this->_lifeTimes = [];
 
         if( file_exists( $this->_lifeTimePath ) )
-            $this->_lifeTimes = json_decode( file_get_contents( $this->_lifeTimePath ), true );
+            $this->_lifeTimes = $this->_format->load( $this->_lifeTimePath );
     }
 
 
@@ -73,7 +90,7 @@ class File extends AdapterBase {
 
         $key = str_replace( '.', '/', trim( $key, '.' ) );
 
-        return $this->_path."/$key.cache.json";
+        return implode( '', [ $this->_path, "/$key", $this->_format->getExtension() ] );
     }
 
     /**
@@ -105,7 +122,7 @@ class File extends AdapterBase {
      */
     public function get( $key ) {
 
-        return json_decode( file_get_contents( $this->getKeyPath( $key ) ), true );
+        return $this->_format->load( $this->getKeyPath( $key ) );
     }
 
     /**
@@ -128,13 +145,10 @@ class File extends AdapterBase {
         $this->_lifeTimes[ $key ] = intval( $lifeTime );
 
         //Save the life times
-        file_put_contents( $this->_lifeTimePath, json_encode( $this->_lifeTimes ) );
+        $this->_format->save( $this->_lifeTimePath,  $this->_lifeTimes );
 
         //Save the cache content
-        file_put_contents( $path, json_encode(
-            $value,
-            \JSON_HEX_TAG | \JSON_HEX_AMP | \JSON_HEX_APOS | \JSON_HEX_QUOT
-        ) );
+        $this->_format->save( $path, $value );
 
         return $this;
     }

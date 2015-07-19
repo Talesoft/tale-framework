@@ -2,7 +2,7 @@
 
 namespace Tale\Db;
 
-use Tale\Db;
+use Tale\Data;
 
 class Database extends NamedEntity {
 
@@ -17,5 +17,12 @@ class Database extends NamedEntity {
     public function getTables() {
 
         return $this->_tables;
+    }
+
+    public function setTables( array $tables ) {
+
+        $this->_tables = $tables;
+
+        return $this;
     }
 }

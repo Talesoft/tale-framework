@@ -56,6 +56,11 @@ class Config implements IteratorAggregate, Countable {
         return isset( $this->_options[ $key ] );
     }
 
+    /**
+     * @param $key
+     *
+     * @return static|mixed
+     */
     public function __get( $key ) {
 
         $value = $this->_options[ $key ];

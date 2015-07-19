@@ -14,4 +14,9 @@ abstract class ProxyFeatureBase extends FeatureBase {
 
         return call_user_func_array( [ $this->getProxiedObject(), $method ], $args );
     }
+
+    public function __get( $key ) {
+
+        return $this->getProxiedObject()->{$key};
+    }
 }

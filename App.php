@@ -49,7 +49,7 @@ class App {
      * @var array
      */
     private $_features;
-
+  
     /**
      * Creates a new App object
      *
@@ -69,11 +69,10 @@ class App {
             'library'     => 'Tale\\App\\Feature\\Library',
             'cache'       => 'Tale\\App\\Feature\\Cache',
             'controllers' => 'Tale\\App\\Feature\\Controllers',
-            'db'          => 'Tale\\App\\Feature\\Db',
+            'data'        => 'Tale\\App\\Feature\\Data',
             'themes'      => 'Tale\\App\\Feature\\Themes',
             'views'       => 'Tale\\App\\Feature\\Views'
-        ]
-        );
+        ] );
         $this->_features = [ ];
 
         if( !file_exists( $this->_configPath ) )
@@ -200,6 +199,8 @@ class App {
      * @return $this
      */
     public function addFeature( $className, array $options = null ) {
+
+        $className = $this->_featureFactory->resolveClassName( $className );
 
         $this->_features[ $className ] = $this->_featureFactory->createInstance( $className, [
             $this,

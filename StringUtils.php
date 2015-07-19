@@ -516,7 +516,7 @@ class StringUtils {
         //Between lowercase and UPPERCASE, e.g. some|Camel|Case|String
         //or uppercase notations, abbrevations etc., e.g. Xml|HTTP|Request
         $string = preg_replace( 
-            [ '/([a-z])([A-Z])/', '/([A-Z]+)([A-Z])/' ],
+            [ '/([a-z0-9])([A-Z])/', '/([A-Z]+)([A-Z])/' ],
             '$1'.$delimeter.'$2',
             $string 
         );
@@ -723,12 +723,12 @@ class StringUtils {
      * @todo Maybe try to make an array to $base instead of $base and $unit, e.g.
      *       [ 'ms', 1000 => 's', 60 => 'm', 60 => 'h', 24 => 'Days', 7 => 'Weeks', 52 => 'Years' ] etc.
      *
-     * @param string|int   $number The number to add a unit to
-     * @param int          $base The base number we're working on (1000 mostly, 60 for time, 1024 for bytes etc.)
-     * @param array        $units
-     * @param int   $precision
+     * @param string|int   $number      The number to add a unit to
+     * @param int          $base        The base number we're working on (1000 mostly, 60 for time, 1024 for bytes etc.)
+     * @param array        $units       An array of units mapping on the units from low to high
+     * @param int          $precision   The precision of float values that should be kept
      *
-     * @return string
+     * @return string The converted number with the unit appended
      */
     public static function sizify( $number, $base, array $units, $precision = 3 ) {
 
@@ -746,9 +746,11 @@ class StringUtils {
     }
 
     /**
-     * @param $size
+     * Automatically adds byte units to the number passed (input unit is Byte)
      *
-     * @return string
+     * @param int $size The byte size to bytify
+     *
+     * @return string The converted amount with the unit appended
      */
     public static function bytify( $size ) {
 
@@ -756,9 +758,11 @@ class StringUtils {
     }
 
     /**
-     * @param $size
+     * Automatically adds s and ms to time units (input unit is milliseconds (ms))
      *
-     * @return string
+     * @param int $size The milliseconds to timify
+     *
+     * @return string The converted amount with the unit appended
      */
     public static function timify( $size ) {
 
@@ -766,15 +770,23 @@ class StringUtils {
     }
 
     /**
-     * @param        $key
-     * @param array  $source
-     * @param null   $defaultValue
-     * @param string $delimeter
+     * Resolves a key.subKey.subSubKey-style string to a deep array value
      *
-     * @return array|null
+     * The function accesses multi-dimensional keys with a delimeter given (Default: Dot (.))
+     *
+     * @protip If you want to throw an exception if no key is found, pass the exception as the default value
+     *         and throw it, if the result is an Exception-type
+     *
+     * @param string        $key            The input key to operate on
+     * @param array         $source         The array to search values in
+     * @param mixed         $defaultValue   The default value if no key is found
+     * @param string|null   $delimeter      The delimeter to access dimensions (Default: Dot (.))
+     *
+     * @return array|null The found value or the default value, if none found (Default: null)
      */
-    public static function resolve( $key, array $source, $defaultValue = null, $delimeter = '.' ) {
+    public static function resolve( $key, array $source, $defaultValue = null, $delimeter = null ) {
 
+        $delimeter = $delimeter ? $delimeter : '.';
         $current = &$source;
         $keys = explode( $delimeter, $key );
         foreach( $keys as $key ) {
@@ -792,16 +804,20 @@ class StringUtils {
     }
 
     /**
-     * @param        $string
-     * @param array  $source
-     * @param null   $defaultValue
-     * @param string $delimeter
+     * Interpolates {{var.subVar}}-style based on a source array given
      *
-     * @return mixed
+     * Dimensions in the source array are accessed with a passed delimeter (Default: Dot (.))
+     *
+     * @param string        $string        The input string to operate on
+     * @param array         $source        The associative source array
+     * @param mixed         $defaultValue  The default value for indices that dont exist
+     * @param string|null   $delimeter     The delimeter for multi-dimension access (Default: Dot (.))
+     *
+     * @return string The interpolated string with the variables replaced with their values
      */
-    public static function interpolate( $string, array $source, $defaultValue = null, $delimeter = '.' ) {
+    public static function interpolate( $string, array $source, $defaultValue = null, $delimeter = null ) {
 
-        $del = preg_quote( $delimeter, '/' );
+        $del = !is_string( $delimeter ) ? preg_quote( $delimeter, '/' ) : '';
         return preg_replace_callback( '/\{\{([a-z0-9'.$del.']+)\}\}/i', function( $m ) use( $source, $defaultValue, $delimeter ) {
 
             return StringUtils::resolve( $m[ 1 ], $source, $defaultValue, $delimeter );
@@ -809,12 +825,19 @@ class StringUtils {
     }
 
     /**
-     * @param array      $array
-     * @param array|null $source
-     * @param null       $defaultValue
-     * @param string     $delimeter
+     * Interpolates a multi-dimensional array with another array recursively
+     *
+     * If no source is given, you get a live interpolation where you can directly interpolate
+     * variables that have just been interpolated before
+     *
+     * This is mostly used for option arrays, e.g. config-files
+     *
+     * @param array      $array         The array to interpolate (Passed by reference)
+     * @param array|null $source        The source array for variables. If none given, the input array is taken
+     * @param null       $defaultValue  The default value for indices that couldnt be resolved
+     * @param string     $delimeter     The delimeter used for multi-dimension access (Default: Dot (.))
      */
-    public static function interpolateArray( array &$array, array &$source = null, $defaultValue = null, $delimeter = '.' ) {
+    public static function interpolateArray( array &$array, array &$source = null, $defaultValue = null, $delimeter = null ) {
 
         //The source is also a reference to keep the source updated with interpolations at all times
         if( !$source )
@@ -832,11 +855,38 @@ class StringUtils {
     }
 
     /**
-     * @param       $string
-     * @param       $delimeter
-     * @param array $vars
+     * This function works like a list( $a, $b ) = explode( ':', 'aValue:bValue' ) construct
      *
-     * @return array
+     * It maps the string delimeted by the passed delimeter to a passed array
+     *
+     * The passed array can either be numeric-indexed, using the value as the key (e.g. [ 'controller', 'action' ])
+     * or it can be string-indexed, using the keys as the key and the value as the default value
+     * (e.g. [ 'controller' => 'index', 'action' => 'index' ])
+     * You can even mix both, the default-default value is null
+     * (e.g. [ 'controller' => 'index', 'action' => 'index', 'id' ] )
+     *
+     * The result is a associative array using the keys of $vars and the values of the exploded $string-values
+     *
+     * This is primarily used to map e.g. urls to controllers, it somewhat works like a mini-router
+     *
+     * Imagine an url:
+     * $url = "some-controller/some-action/some-id";
+     *
+     * Using map you can simply do:
+     * $args = StringUtils::map( $url, '/', [ 'controller' => 'index', 'action' => 'index', 'id' ] );
+     *
+     * $args will have the following value:
+     * $args === [
+     *     'controller' => 'some-controller',
+     *     'action' => 'some-action',
+     *     'id' => 'some-id'
+     * ];
+     *
+     * @param string    $string     The delimeted string to operator on
+     * @param string    $delimeter  The delimeter to split the string by
+     * @param array     $vars       The variables to map the string to
+     *
+     * @return array An associative array with the $string-values inserted
      */
     public static function map( $string, $delimeter, array $vars ) {
 
@@ -853,11 +903,15 @@ class StringUtils {
     }
 
     /**
-     * @param       $string
-     * @param       $delimeter
-     * @param array $vars
+     * The same as static::map(), but it works from the the end to the start of the string
      *
-     * @return array
+     * @see StringUtils::map
+     *
+     * @param string    $string     The delimeted string to operator on
+     * @param string    $delimeter  The delimeter to split the string by
+     * @param array     $vars       The variables to map the string to
+     *
+     * @return array An associative array with the $string-values inserted
      */
     public static function mapReverse( $string, $delimeter, array $vars ) {
 
@@ -865,9 +919,12 @@ class StringUtils {
     }
 
     /**
-     * @param $string
+     * A wrapper for parse_url that always contains all keys possible
+     * The values that dont exist will be defaulted to null
      *
-     * @return array
+     * @param $string The URL to parse
+     *
+     * @return array The parse_url result with all keys existent
      * @throws Exception
      */
     public static function parseUrl( $string ) {
@@ -890,25 +947,13 @@ class StringUtils {
     }
 
     /**
-     * @param $string
+     * Normalizes and joins two path strings so that you always get a valid path
+     * without worrying about where the slashes have to be put
      *
-     * @return array
-     */
-    public static function parseQuery( $string ) {
-
-        $result = [];
-        //Why the fuck doesn't parse_str return a "success"-boolean?
-        //Can there be invalid query strings? Probably.
-        parse_str( $string, $result );
-
-        return $result;
-    }
-
-    /**
-     * @param $path
-     * @param $subPath
+     * @param $path     The input path
+     * @param $subPath  The sub path to append safely
      *
-     * @return string
+     * @return string The normalized, joined path
      */
     public static function joinPath( $path, $subPath ) {
 
@@ -922,9 +967,17 @@ class StringUtils {
     }
 
     /**
-     * @param $path
+     * Normalizes a path so it can be safely joined with other paths
      *
-     * @return mixed|string
+     * "Normal" is defined as the following:
+     *
+     * The directory separator is normalized to / (Windows can handle it just fine, natively)
+     * Trailing slashes are removed (/directory/ is normalized to /directory)
+     * If theres "./" or ".\", it is removed
+     *
+     * @param $path The path to normalize
+     *
+     * @return string The normalized path
      */
     public static function normalizePath( $path ) {
 
