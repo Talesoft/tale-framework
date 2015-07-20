@@ -3,7 +3,7 @@
 namespace Tale\Diag;
 
 use Tale\Dom\Html\HtmlManipulator,
-    Tale\System\StringUtils;
+    Tale\StringUtils;
 
 class Profiler {
 

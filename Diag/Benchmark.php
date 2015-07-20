@@ -2,7 +2,7 @@
 
 namespace Tale\Diag;
 
-use Tale\System\Exception;
+use Exception;
 
 class Benchmark {
 

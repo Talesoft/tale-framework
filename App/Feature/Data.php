@@ -23,7 +23,7 @@ class Data extends ProxyFeatureBase {
         }
     }
 
-    public function getProxiedObject() {
+    public function getTarget() {
 
         return $this->_source;
     }

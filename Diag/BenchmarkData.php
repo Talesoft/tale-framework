@@ -9,6 +9,9 @@ class BenchmarkData {
 	private $_realMemoryUsage;
 	private $_memoryUsagePeak;
 	private $_realMemoryUsagePeak;
+
+	//These are somewhat fucked up because of scoping
+	//TODO: Think about removing those
 	private $_definedFunctions;
 	private $_definedVars;
 	private $_definedConstants;

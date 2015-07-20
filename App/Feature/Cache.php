@@ -17,7 +17,7 @@ class Cache extends ProxyFeatureBase {
         $this->_cacheInstance = new TaleCache( $config->getOptions() );
     }
 
-    public function getProxiedObject() {
+    public function getTarget() {
 
         return $this->_cacheInstance;
     }
