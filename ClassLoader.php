@@ -3,7 +3,10 @@
 namespace Tale;
 
 /**
- * Class ClassLoader
+ * A class loader with zero dependencies (and zero configuration, if you like)
+ *
+ * You might just include the file containing this class and get a class-loader up and running easily
+ *
  * @package Tale
  */
 class ClassLoader {
