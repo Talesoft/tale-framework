@@ -99,7 +99,7 @@ class Profiler {
 
 
         $tbl = $m->setCss( [ 'font-family' => 'monospace', 'font-size' => '8px', 'color' => '#333' ] )
-                 ->headLine( 'Profiler Timeline' )
+                 ->headLine( 'Diag Timeline' )
                      ->parent()
                  ->table()
                      ->tableCols( $th );

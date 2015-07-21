@@ -46,12 +46,12 @@ class Benchmark {
         if( !$withOutput )
 		  ob_start();
 
-		$start = BenchmarkData::collect();
+		$start = BenchmarkData::create();
 		while( $it-- ) {
 
 			call_user_func_array( $this->_operation, $this->_args );
 		}
-		$end = BenchmarkData::collect();
+		$end = BenchmarkData::create();
 
         if( !$withOutput )
 		  ob_get_clean();
