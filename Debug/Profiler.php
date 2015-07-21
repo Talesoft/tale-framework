@@ -1,8 +1,9 @@
 <?php
 
-namespace Tale\Diag;
+namespace Tale\Debug;
 
-use Tale\Dom\Html\HtmlManipulator,
+use Tale\Dom\Html\Manipulator;
+use Tale\Dom\Html\Manpulator,
     Tale\StringUtils;
 
 class Profiler {
@@ -26,13 +27,14 @@ class Profiler {
     public function record( $name = null ) {
 
         if( $name )
-            $this->_records[ $name ] = BenchmarkData::collect();
+            $this->_records[ $name ] = Snapshot::create();
         else
-            $this->_records[] = BenchmarkData::collect();
+            $this->_records[] = Snapshot::create();
 
         return $this;
     }
 
+    //TODO: Benchmarking should be moved to a different class
     public function benchmark( $name, callable $operation, array $args = null, $iterationCount = null ) {
 
         $this->_benchmarks[] = new Benchmark( $name, $operation, $args, $iterationCount );
@@ -95,11 +97,11 @@ class Profiler {
             'Avg. Real Memory Peak'
         ];
 
-        $m = new HtmlManipulator( 'div' );
+        $m = new Manipulator( 'div' );
 
 
         $tbl = $m->setCss( [ 'font-family' => 'monospace', 'font-size' => '8px', 'color' => '#333' ] )
-                 ->headLine( 'Diag Timeline' )
+                 ->headLine( 'Debug Timeline' )
                      ->parent()
                  ->table()
                      ->tableCols( $th );
@@ -118,7 +120,7 @@ class Profiler {
                 $time = $time * 1000;
 
                 $tr->append( 'td' )
-                        ->append( 'label', [ 'title' => "$time ms" ] )
+                        ->append( 'label[title="'.$time.' ms"]' )
                             ->setText( StringUtils::timify( $time ) );
             }
 
@@ -133,7 +135,7 @@ class Profiler {
                 $fromStart->getRealMemoryUsagePeak()
             ] as $bytes )
                 $tr->append( 'td' )
-                        ->append( 'label', [ 'title' => "$bytes Bytes" ] )
+                        ->append( 'label[title="'.$bytes.' Byte"]' )
                             ->setText( StringUtils::bytify( $bytes ) );
 
         }

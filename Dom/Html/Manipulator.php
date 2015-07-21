@@ -7,6 +7,15 @@ use Tale\Dom\Manipulator as DomManipulator,
 
 class Manipulator extends DomManipulator {
 
+    public function html( $lang = null, $documentType = null ) {
+
+        $lang = $lang ? $lang : 'en';
+
+        $doc = new Document( $documentType, [ 'lang' => $lang ] );
+
+        return $this->addOrAppend( $doc );
+    }
+
     public function headLine( $text, $size = 1, $selector = null ) {
 
         return $this->addOrAppend( $selector ? "h$size$selector" : "h$size" )

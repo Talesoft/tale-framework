@@ -1,6 +1,6 @@
 <?php
 
-namespace Tale\Diag;
+namespace Tale\Debug;
 
 /**
  * Respresents a snapshot containing information about execution-time, memory usage etc.
@@ -8,7 +8,7 @@ namespace Tale\Diag;
  *
  * Use Snapshot::create() to create a snapshot of current PHP environment values
  *
- * @package Tale\Diag
+ * @package Tale\Debug
  */
 class Snapshot {
 

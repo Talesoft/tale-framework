@@ -2,26 +2,28 @@
 
 namespace Tale\Dom;
 
-use Tale\Io\StreamReader,
-    Tale\Io\StreamInterface,
-    Tale\Io\MemoryStream,
-    Tale\Io\StreamMode,
-    Tale\System\Exception;
+use Exception;
 
-class DomReader extends StreamReader {
+//TODO: This is a parser, not a reader!
+class Parser {
 
     private $_options;
     private $_parser;
     private $_currentElement;
 
-    public function __construct( StreamInterface $stream, array $options = null ) {
-        parent::__construct( $stream );
+    public function __construct( array $options = null ) {
 
         $this->_options = array_replace( [
-            'encoding' => 'utf-8',
-            'bufferSize' => 8192,
-            'elementClassName' => __NAMESPACE__.'\\DomElement'
+            'encoding' => 'utf-8'
         ], $options ? $options : [] );
+    }
+
+    public function getOptions() {
+
+        return $this->_options;
+    }
+
+    private function _createParser() {
 
         $this->_parser = xml_parser_create( $this->_options[ 'encoding' ] );
 
@@ -34,57 +36,42 @@ class DomReader extends StreamReader {
         xml_set_character_data_handler( $this->_parser, 'readText' );
     }
 
-    public function __destruct() {
-
-        $this->close();
-    }
-
-    public function close() {
-        parent::close();
+    private function _freeParser() {
 
         if( is_resource( $this->_parser ) )
             xml_parser_free( $this->_parser );
 
-        return $this;
+        $this->_parser = null;
     }
 
-    public function getOptions() {
+    public function parse( $string ) {
 
-        return $this->_options;
-    }
-
-    public function getParser() {
-
-        return $this->_parser;
-    }
-
-    public function readElement() {
-
+        $this->_createParser();
         $this->_currentElement = null;
-        while( $data = $this->read( $this->_options[ 'bufferSize' ] ) )
-            if( !xml_parse( $this->_parser, $data, $this->isAtEnd() ) )
-                $this->throwException();
+        if( !xml_parse( $this->_parser, $string ) )
+            $this->throwException();
+        $this->_freeParser();
 
         return $this->_currentElement;
     }
 
     protected function readOpenTag( $parser, $tag, array $attrs ) {
 
-        $type = $this->_options[ 'elementClassName' ];
+        $type = static::getElementClassName();
         $this->_currentElement = new $type( $tag, $attrs, $this->_currentElement );
     }
 
     protected function readCloseTag( $parser, $tag ) {
 
         $cur = $this->_currentElement;
-        if( !$cur || !( $cur instanceof DomElement ) || ( $cur instanceof DomElement && $cur->getTag() !== $tag ) )
+        if( !$cur || !( $cur instanceof Element ) || ( $cur instanceof Element && $cur->getTag() !== $tag ) )
             $this->throwException( "Close-tag mismatch for tag $tag" );
 
         if( $cur->hasParent() )
             $this->_currentElement = $cur->getParent();
     }
 
-    protected function readText( $pareser, $text ) {
+    protected function readText( $parser, $text ) {
 
         $text = trim( $text );
 
@@ -96,6 +83,7 @@ class DomReader extends StreamReader {
 
     protected function throwException( $message = null ) {
 
+        $this->_freeParser();
         throw new Exception( 
             sprintf( 
                 'Failed to parse DOM: %s on line %d:%d',
@@ -104,5 +92,10 @@ class DomReader extends StreamReader {
                 xml_get_current_column_number( $this->_parser )
             )
         );
+    }
+
+    public static function getElementClassName() {
+
+        return __NAMESPACE__.'\\Element';
     }
 }

@@ -2,10 +2,7 @@
 
 namespace Tale\Dom;
 
-use Tale\Io\Text\TextWriter,
-    Tale\Io\StreamInterface;
-
-class DomWriter extends TextWriter {
+class Writer {
 
     private $_pretty;
     private $_level;
@@ -17,8 +14,7 @@ class DomWriter extends TextWriter {
     private $_selfClosingTags;
     private $_selfClosingString;
 
-    public function __construct( StreamInterface $stream, array $options = null ) {
-        parent::__construct( $stream );
+    public function __construct( array $options = null ) {
 
         $options = array_replace( [
             'pretty' => false,
@@ -37,9 +33,9 @@ class DomWriter extends TextWriter {
         $this->_newLine = $options[ 'newLine' ];
         $this->_level = $options[ 'level' ];
         $this->_tabWidth = $options[ 'tabWidth' ];
-        $this->_tabString = $options[ 'tabString' ] 
-                          ? str_pad( $options[ 'tabString' ], $this->_tabWidth, $this->_space, \STR_PAD_BOTH )
-                          : str_repeat( $this->_space, $this->_tabWidth );
+        $this->_tabString = $options[ 'tabString' ]
+            ? str_pad( $options[ 'tabString' ], $this->_tabWidth, $this->_space, \STR_PAD_BOTH )
+            : str_repeat( $this->_space, $this->_tabWidth );
         $this->_textWrap = $options[ 'textWrap' ];
         $this->_selfClosingTags = $options[ 'selfClosingTags' ];
         $this->_selfClosingString = $options[ 'selfClosingString' ];
@@ -90,56 +86,58 @@ class DomWriter extends TextWriter {
         return $this->_selfClosingString;
     }
 
-    public function writeElement( DomElement $element, $pretty = null ) {
+    public function writeLeaf( Leaf $child, $level = null ) {
 
-        if( !is_null( $pretty ) )
-            $this->_pretty = $pretty;
+        $level = $level ? $level : $this->_level;
 
-        $this->writeLeaf( $element );
+        if( $child instanceof Text )
+            return $this->writeText( $child, $level );
 
-        return $this;
+        if( $child instanceof Element )
+            return $this->writeElement( $child, $level );
+
+        return '';
     }
 
-    protected function writeDomText( DomText $textChild, $level ) {
+    protected function writeText( Text $textChild, $level ) {
 
         $newLine = $this->_pretty ? $this->_newLine : '';
         $indent = $this->_pretty ? str_repeat( $this->_tabString, $level ) : '';
         $text = $textChild->getText();
-            
-        $this->writeText( 
-            $this->_pretty && strlen( $text ) > $this->_textWrap 
-          ? $indent.wordwrap( str_replace( "\n", '', $text ), $this->_textWrap, "$newLine$indent" ) 
-          : $text 
-        );
+
+        //TODO: Need some kind of mb_wordwrap here, maybe:
+        //http://stackoverflow.com/questions/3825226/multi-byte-safe-wordwrap-function-for-utf-8?
+        return $this->_pretty && mb_strlen( $text, 'utf-8' ) > $this->_textWrap
+             ? $indent.wordwrap( str_replace( "\n", '', $text ), $this->_textWrap, "$newLine$indent" )
+             : $text;
     }
 
-    protected function writeAttributes( DomAttributeSet $attributes ) {
+    protected function writeAttributes( array $attributes ) {
 
-        $attrString = (string)$attributes;
+        $str = '';
+        foreach( $attributes as $key => $val )
+            $str .= " $key=\"$val\"";
 
-        if( !empty( $attrString ) )
-            $this->writeText( " $attrString" );
+        return $str;
     }
 
-    protected function writeOpenTag( $tag, DomAttributeSet $attributes, $hasChildren, $level ) {
+    protected function writeOpenTag( $tag, array $attributes, $hasChildren ) {
 
-        $indent = $this->_pretty ? str_repeat( $this->_tabString, $level ) : '';
-
-        $this->writeText( "<$tag" );
-        $this->writeAttributes( $attributes );
+        $str = "<$tag";
+        $str .= $this->writeAttributes( $attributes );
 
         if( !$hasChildren && ( empty( $this->_selfClosingTags ) || in_array( $tag, $this->_selfClosingTags ) ) )
-            $this->writeText( $this->_selfClosingString );
+            $str .= $this->_selfClosingString;
 
-        $this->writeText( '>' );
+        return $str.'>';
     }
 
     protected function writeCloseTag( $tag ) {
 
-        $this->writeText( "</$tag>" );
+        return "</$tag>";
     }
 
-    protected function writeDomElement( DomElement $element, $level ) {
+    protected function writeElement( Element $element, $level ) {
 
         $children = $element->getChildren();
         $childCount = count( $children );
@@ -148,26 +146,25 @@ class DomWriter extends TextWriter {
         $newLine = $this->_pretty ? $this->_newLine : '';
         $indent = $this->_pretty ? str_repeat( $this->_tabString, $level ) : '';
 
-        $this->writeText( $indent );
-        $this->writeOpenTag( $element->getTag(), $element->getAttributes(), $hasChildren, $level );
+        $str = $indent;
+        $str .= $this->writeOpenTag( $element->getTag(), $element->getAttributes(), $hasChildren );
 
         $writeCloseIndent = false;
-
         if( $hasChildren ) {
 
-            if( $childCount === 1 && $children[ 0 ] instanceof DomText && strlen( $children[ 0 ]->getText() ) < $this->_textWrap ) {
+            if( $childCount === 1 && $children[ 0 ] instanceof Text && mb_strlen( $children[ 0 ]->getText(), 'utf-8' ) < $this->_textWrap ) {
 
-                $this->writeText( $children[ 0 ]->getText(), $level + 1 );
+                $str .= $children[ 0 ]->getText();
             } else {
 
-                $this->writeText( $newLine );
+                $str .= $newLine;
 
                 for( $i = 0; $i < $childCount; $i++ ) {
 
                     $child = $children[ $i ];
 
-                    $this->writeLeaf( $child, $level + 1 );
-                    $this->writeText( $newLine );
+                    $str .= $this->writeLeaf( $child, $level + 1 );
+                    $str .= $newLine;
                 }
 
                 $writeCloseIndent = true;
@@ -177,23 +174,11 @@ class DomWriter extends TextWriter {
         if( $hasChildren || ( !empty( $this->_selfClosingTags ) && !in_array( $element->getTag(), $this->_selfClosingTags ) ) ) {
 
             if( $hasChildren && $writeCloseIndent )
-                $this->writeText( $indent );
+                $str .= $indent;
 
-            $this->writeCloseTag( $element->getTag() );
+            $str .= $this->writeCloseTag( $element->getTag() );
         }
-    }
 
-    protected function writeLeaf( DomLeaf $child, $level = null ) {
-
-        $level = $level ? $level : $this->_level;
-
-        $newLine = $this->_pretty ? $this->_newLine : '';
-        $indent = $this->_pretty ? str_repeat( $this->_tabString, $level ) : '';
-
-        if( $child instanceof DomText )
-            return $this->writeDomText( $child, $level );
-
-        if( $child instanceof DomElement )
-            return $this->writeDomElement( $child, $level );
+        return $str;
     }
 }

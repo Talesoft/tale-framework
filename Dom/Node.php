@@ -218,6 +218,6 @@ class Node extends Leaf {
         parent::__clone();
 
         foreach( $this->_children as $i => $child )
-            $this->_children[ $i ] = clone $child;
+            $this->appendChild( clone $child );
     }
 }

@@ -6,7 +6,7 @@ class Leaf {
 
     private $_parent;
 
-    public function __construct( DomNode $parent = null ) {
+    public function __construct( Node $parent = null ) {
 
         $this->_parent = null;
 
@@ -24,7 +24,7 @@ class Leaf {
         return $this->_parent;
     }
 
-    public function setParent( DomNode $parent = null ) {
+    public function setParent( Node $parent = null ) {
 
         if( $this->_parent === $parent )
             return $this;

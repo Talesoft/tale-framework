@@ -238,25 +238,13 @@ class Element extends Node {
         return iterator_to_array( $this->find( $selectors ) );
     }
 
-    public function getString( $pretty = null, $bufferSize = 8192 ) {
+    //TODO: I don't know if getString, toString or something is cooler. Let's think about it
+    //TODO: Also, maybe this would be better placed in Leaf?
+    public function getString( array $options = null ) {
 
-        //TODO: Writers will be replaced. This needs fixing then.
         $writerClassName = static::getWriterClassName();
-        $writer = call_user_func( [ $writerClassName, 'createOnMemory' ] );
-        $writer->writeElement( $this, $pretty );
-
-        $writer->seekStart();
-
-        $str = '';
-        while( $buf = $writer->read( $bufferSize ) )
-            $str .= $buf;
-
-        return $str;
-    }
-
-    public function __toString() {
-
-        return $this->getString();
+        $writer = new $writerClassName( $options );
+        return $writer->writeLeaf( $this );
     }
 
     public static function fromSelector( $selector, Node $parent = null, array $children = null ) {
@@ -276,14 +264,20 @@ class Element extends Node {
         return $el;
     }
 
-    public static function fromString( $string, DomNode $parent = null, array $children = null ) {
+    public static function fromString( $string, array $options = null ) {
 
-        //TODO: Readers will be replaced. This needs fixing then.
-        $readerClassName = static::getReaderClassName();
-        $reader = call_user_func( [ $readerClassName, 'createOnMemory' ] );
-        $reader->write( $string, strlen( $string ) );
-        $reader->seekStart();
+        $parserClassName = static::getParserClassName();
+        $parser = new $parserClassName( $options );
+        return $parser->parse( $string );
+    }
 
-        return $reader->readElement();
+    public static function getWriterClassName() {
+
+        return __NAMESPACE__.'\\Writer';
+    }
+
+    public static function getParserClassName() {
+
+        return __NAMESPACE__.'\\Parser';
     }
 }

@@ -8,6 +8,7 @@ use Exception,
     Countable,
     Traversable;
 
+//Just try this: var_dump( $m->html( '[lang="de"]' )->html()->parent()->body()->parent() )      :)
 class Manipulator implements IteratorAggregate, Countable {
 
     private $_elements;
@@ -259,22 +260,30 @@ class Manipulator implements IteratorAggregate, Countable {
         }, $this->_elements ) );
     }
 
+    public function getString( array $options = null ) {
+
+        $str = '';
+        foreach( $this->_elements as $el )
+            $str .= $el->getString( $options );
+
+        return $str;
+    }
+
+    public function __toString() {
+
+        return $this->getString();
+    }
+
     public function __clone() {
 
         foreach( $this->_elements as $i => $el )
             $this->_elements[ $i ] = $el;
     }
 
-    public function __toString() {
-
-        //TODO: Is this really neccessary? How about only __toString?
-        //Would __call trigger or would we need $this->__call( '__toString' )?
-        return $this->getString();
-    }
-
     public function __call( $method, array $args ) {
 
         if( !method_exists( static::getElementClassName(), $method ) )
+            //This is some kind of auto-creation ($m->html( '[lang="de"]' )->head()->parent()->body())
             return $this->addOrAppend( $method.( count( $args ) ? $args[ 0 ] : '' ) );
 
         $result = [];
@@ -287,6 +296,11 @@ class Manipulator implements IteratorAggregate, Countable {
             return implode( '', $result );
 
         return $this;
+    }
+
+    public function __invoke( $elements ) {
+
+        return new static( $elements );
     }
 
     public static function getElementClassName() {

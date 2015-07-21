@@ -73,7 +73,7 @@ class Selector {
         return $this->_pseudos;
     }
 
-    public function matches( DomElement $element ) {
+    public function matches( Element $element ) {
 
         if( $this->_tag && $this->_tag !== '*' && $element->getTag() !== $this->_tag )
             return false;

@@ -44,4 +44,9 @@ class Element extends DomElement {
 
         return $this;
     }
+
+    public static function getWriterClassName() {
+
+        return __NAMESPACE__.'\\Writer';
+    }
 }
