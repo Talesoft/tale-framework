@@ -891,13 +891,19 @@ class StringUtils {
     public static function map( $string, $delimeter, array $vars ) {
 
         $parts = explode( $delimeter, $string, count( $vars ) );
-
+        
         $result = [];
         $x = 0;
-        foreach( $vars as $name => $var ) 
-            $result[ is_int( $name ) ? $var : $name ] = empty( $parts[ $x ] ) 
-                                                      ? ( is_int( $name ) ? null : $var ) 
-                                                      : $parts[ $x++ ];
+        foreach( $vars as $name => $var ) {
+
+            $index = is_int( $name ) ? $var : $name;
+
+            $result[ $index ] = empty( $parts[ $x ] )
+                              ? ( is_int( $name ) ? null : $var )
+                              : $parts[ $x ];
+
+            $x++;
+        }
 
         return $result;
     }
