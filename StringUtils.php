@@ -817,7 +817,7 @@ class StringUtils {
      */
     public static function interpolate( $string, array $source, $defaultValue = null, $delimeter = null ) {
 
-        $del = !is_string( $delimeter ) ? preg_quote( $delimeter, '/' ) : '';
+        $del = !is_string( $delimeter ) ? preg_quote( $delimeter, '/' ) : '.';
         return preg_replace_callback( '/\{\{([a-z0-9'.$del.']+)\}\}/i', function( $m ) use( $source, $defaultValue, $delimeter ) {
 
             return StringUtils::resolve( $m[ 1 ], $source, $defaultValue, $delimeter );
@@ -891,7 +891,7 @@ class StringUtils {
     public static function map( $string, $delimeter, array $vars ) {
 
         $parts = explode( $delimeter, $string, count( $vars ) );
-        
+
         $result = [];
         $x = 0;
         foreach( $vars as $name => $var ) {
