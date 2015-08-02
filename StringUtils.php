@@ -818,7 +818,7 @@ class StringUtils {
     public static function interpolate( $string, array $source, $defaultValue = null, $delimeter = null ) {
 
         return preg_replace_callback( '/\{\{([^\}]+)\}\}/i', function( $m ) use( $source, $defaultValue, $delimeter ) {
-            
+
             return StringUtils::resolve( $m[ 1 ], $source, $defaultValue, $delimeter );
         }, $string );
     }
@@ -847,8 +847,7 @@ class StringUtils {
             if( is_array( $val ) )
                 self::interpolateArray( $val, $source, $defaultValue, $delimeter );
             else if( is_string( $val ) ) {
-
-                var_dump( "IPOL: $key => $val" );
+                
                 $array[ $key ] = self::interpolate( $val, $source, $defaultValue, $delimeter );
             }
         }
