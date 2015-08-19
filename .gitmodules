@@ -1,6 +1,8 @@
 [submodule "Data"]
 	path = Data
 	url = https://bitbucket.org/talesoft/tale-data
+	branch = master
 [submodule "Jade"]
 	path = Jade
 	url = https://bitbucket.org/talesoft/tale-jade
+	branch = master
