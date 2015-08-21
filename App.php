@@ -9,6 +9,9 @@ use RuntimeException;
  *
  * An application is always based on a path where a config file and additional directories and dependencies reside
  *
+ * @version 1.0
+ * @featureState Development
+ *
  * @package Tale
  */
 class App {
@@ -59,8 +62,21 @@ class App {
 
         $this->_path = $path;
         $this->_configPath = "$path/app.json";
+
+
         $this->_config = new Config( [
-                'path' => $this->_path
+                //The key "path" leading to the app path is fed first to the config. This way config strings can
+                //interpolate the config path via {{path}} and use it for own paths
+                'path' => $this->_path,
+
+                //We also need some pre-defined values for PHP Options to avoid unnecessary CONST parsing
+                'errorLevels' => [
+                    'all' => E_ALL | E_STRICT,
+                    'errors' => E_NOTICE | E_WARNING | E_ERROR,
+                    'warnings' => E_NOTICE | E_WARNING,
+                    'notices' => E_NOTICE,
+                    'none' => 0
+                ]
             ]
         );
         $this->_featureFactory = new Factory(
@@ -69,9 +85,11 @@ class App {
             'library'     => 'Tale\\App\\Feature\\Library',
             'cache'       => 'Tale\\App\\Feature\\Cache',
             'controllers' => 'Tale\\App\\Feature\\Controllers',
-            'data'        => 'Tale\\App\\Feature\\Data',
             'themes'      => 'Tale\\App\\Feature\\Themes',
-            'views'       => 'Tale\\App\\Feature\\Views'
+            'views'       => 'Tale\\App\\Feature\\Views',
+
+            //Known external libraries
+            'data'        => 'Tale\\Data\\App\\Feature'
         ] );
         $this->_features = [ ];
 
@@ -122,6 +140,12 @@ class App {
 
         $config = Config::fromFile( $configFile );
         $this->_config = $this->_config->mergeConfig( $config )->interpolate();
+
+        //Init php.ini settings
+        if( isset( $config->phpOptions ) ) {
+            foreach( $config->phpOptions as $name => $value )
+                ini_set( StringUtils::tableize( $name ), $value );
+        }
 
         //Init feature types
         if( isset( $config->featureAliases ) )

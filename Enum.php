@@ -9,6 +9,9 @@ use ReflectionClass,
  * Static class for enum-style classes to extend
  * Provides a few utilities to work with such enum-style classes easier
  *
+ * @version 1.0
+ * @featureState Stable
+ *
  * @package Tale
  */
 class Enum {

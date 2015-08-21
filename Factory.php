@@ -9,6 +9,9 @@ namespace Tale;
  *
  * Does automatic subclass-checks and alias-conversion
  *
+ * @version 1.0
+ * @featureState Stable
+ *
  * @package Tale
  */
 class Factory {

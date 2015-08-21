@@ -1,23 +1,14 @@
 <?php
 
-namespace Tale\Runtime;
-
-use Traversable,
-	Tale\System\Exception;
+namespace Tale\App;
 
 class Router {
 
 	private $_routes;
 
-	public function __construct( $routes = null ) {
+	public function __construct( array $routes = null ) {
 
-		if( $routes instanceof Traversable )
-			$routes = iterator_to_array( $routes );
-
-		if( !is_null( $routes ) && !is_array( $routes ) )
-			throw new Exception( "Argument 1 passed to Router::__construct needs to be an array or iterable value" );
-
-		$this->_routes = $routes;
+		$this->_routes = $routes ? $routes : [];
 	}
 
 	public function setRoute( $route, callable $handler ) {

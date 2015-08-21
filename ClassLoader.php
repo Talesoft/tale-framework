@@ -7,6 +7,9 @@ namespace Tale;
  *
  * You might just include the file containing this class and get a class-loader up and running easily
  *
+ * @version 1.0
+ * @featureState Stable
+ *
  * @package Tale
  */
 class ClassLoader {

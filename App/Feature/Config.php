@@ -12,12 +12,15 @@ class Config extends FeatureBase {
 
         $app = $this->getApp();
         $config = $this->getConfig();
+
+        if( !isset( $config->path ) )
+            throw new \Exception( "The Config app-feature needs a valid {{path}} to work on" );
+
         $configFiles = glob( $config->path.'/*.json' );
 
         if( isset( $config->order ) ) {
 
-            $order = $config->order->getOptions();
-            usort($configFiles, [ $this, '_sort' ] );
+            usort( $configFiles, [ $this, '_sort' ] );
         }
 
         $this->_configFiles = $configFiles;

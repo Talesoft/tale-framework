@@ -77,8 +77,6 @@ class Cache {
         return $this;
     }
 
-
-
     public function getSubCache( $nameSpace, array $options = null ) {
 
         $subNs = !empty( $this->_config->nameSpace )

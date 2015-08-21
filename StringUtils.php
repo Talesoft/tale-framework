@@ -9,6 +9,9 @@ use Exception;
  *
  * First argument should consistently be a string
  *
+ * @version 1.0
+ * @featureState Stable
+ *
  * @package Tale
  */
 class StringUtils {
