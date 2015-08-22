@@ -49,4 +49,9 @@ class Element extends DomElement {
 
         return __NAMESPACE__.'\\Writer';
     }
+
+    public static function getParserClassName() {
+
+        return __NAMESPACE__.'\\Parser';
+    }
 }

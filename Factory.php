@@ -36,9 +36,9 @@ class Factory {
      * @param string     $baseClassName The base class child-classes should extend from
      * @param array|null $aliases The aliases that can be used in favor of the FQCN (associative)
      */
-    public function __construct( $baseClassName, array $aliases = null ) {
+    public function __construct( $baseClassName = null, array $aliases = null ) {
 
-        $this->_baseClassName = $baseClassName;
+        $this->_baseClassName = $baseClassName ? $baseClassName : null;
         $this->_aliases = $aliases ? $aliases : [];
     }
 
@@ -130,7 +130,7 @@ class Factory {
         $args = $args ? $args : [];
         $className = $this->resolveClassName( $className );
 
-        if( !class_exists( $className ) || !is_subclass_of( $className, $this->_baseClassName ) )
+        if( !class_exists( $className ) || ( $this->_baseClassName && !is_subclass_of( $className, $this->_baseClassName ) ) )
             throw new \RuntimeException(
                 "Failed to create factory instance: "
                 . "$className does not exist or is not a valid {$this->_baseClassName}"

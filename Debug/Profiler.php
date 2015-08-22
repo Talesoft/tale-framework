@@ -2,85 +2,109 @@
 
 namespace Tale\Debug;
 
+use Tale\Debug\Profiler\Record;
 use Tale\Dom\Html\Manipulator;
-use Tale\Dom\Html\Manpulator,
-    Tale\StringUtils;
+use Tale\StringUtils;
 
+/**
+ * Class Profiler
+ * @package Tale\Debug
+ */
 class Profiler {
 
-    private $_benchmarks;
+    /**
+     * @var Record[]
+     */
     private $_records;
 
+    /**
+     * @var Record
+     */
+    private $_startRecord;
+
+    /**
+     * @var Record
+     */
+    private $_lastRecord;
+
+    /**
+     *
+     */
     public function __construct() {
 
         $this->reset();
     }
 
+    /**
+     *
+     */
     public function reset() {
 
-        $this->_benchmarks = [];
         $this->_records = [];
-
-        return $this->record( '.start' );
+        $this->_startRecord = null;
+        $this->_lastRecord = null;
     }
 
+    /**
+     * @return mixed
+     */
+    public function getRecords() {
+
+        return $this->_records;
+    }
+
+    /**
+     * @param $name
+     *
+     * @return bool
+     */
+    public function hasRecord( $name ) {
+
+        return isset( $this->_records[ $name ] );
+    }
+
+    /**
+     * @param $name
+     *
+     * @return Record
+     */
+    public function getRecord( $name ) {
+
+        return $this->_records[ $name ];
+    }
+
+    /**
+     * @param null $name
+     *
+     * @return $this
+     */
     public function record( $name = null ) {
 
-        if( $name )
-            $this->_records[ $name ] = Snapshot::create();
-        else
-            $this->_records[] = Snapshot::create();
+        $snapshot = Snapshot::create();
+        $record = new Profiler\Record( $this, $name, $snapshot, $this->_lastRecord );
+
+        $this->_records[] = $record;
+        $this->_lastRecord = $record;
+
+        if( !$this->_startRecord )
+            $this->_startRecord = $record;
 
         return $this;
     }
 
-    //TODO: Benchmarking should be moved to a different class
-    public function benchmark( $name, callable $operation, array $args = null, $iterationCount = null ) {
+    /**
+     * @return Record
+     */
+    public function getStartRecord() {
 
-        $this->_benchmarks[] = new Benchmark( $name, $operation, $args, $iterationCount );
-
-        return $this;
+        return $this->_startRecord;
     }
 
-    public function getBenchmarkResults( $withOutput = false ) {
-
-        foreach( $this->_benchmarks as $name => $benchmark ) {
-
-            $result = $benchmark->process( $withOutput );
-
-            yield $benchmark->getName() => [ 'benchmark' => $benchmark, 'result' => $result ];
-        }
-    }
-
-    public function getBenchmarkResultArray( $withOutput = false ) {
-
-        return iterator_to_array( $this->getBenchmarkResults( $withOutput ) );
-    }
-
-    public function getResults() {
-
-        $this->record( '.end' );
-
-        reset( $this->_records );
-
-        $start = current( $this->_records );
-        $current = $start;
-        foreach( $this->_records as $name => $data ) {
-
-            $fromStart = $data->diff( $start );
-            $fromLast = $data->diff( $current );
-
-            $current = $data;
-
-            yield $name => [ 'fromStart' => $fromStart, 'fromLast' => $fromLast ];
-        }
-    }
-
-    public function getResultArray() {
-
-        return iterator_to_array( $this->getResults() );
-    }
-
+    /**
+     * @param bool|false $withOutput
+     *
+     * @return Manipulator
+     */
     public function generateHtml( $withOutput = false ) {
 
         $th = [
@@ -99,21 +123,21 @@ class Profiler {
 
         $m = new Manipulator( 'div' );
 
-
         $tbl = $m->setCss( [ 'font-family' => 'monospace', 'font-size' => '8px', 'color' => '#333' ] )
-                 ->headLine( 'Debug Timeline' )
-                     ->parent()
-                 ->table()
+                 ->table
                      ->tableCols( $th );
 
-        foreach( $this->getResults( $withOutput ) as $name => $data ) {
+        foreach( $this->_records as $record ) {
 
-            $fromStart = $data[ 'fromStart' ];
-            $fromLast = $data[ 'fromLast' ];
+            $fromStart = $record->getAbsoluteResult();
+            $fromLast = $record->getResult();
+
+            if( !$fromLast )
+                $fromLast = $fromStart;
 
             $tr = $tbl->append( 'tr' );
             $tr->append( 'th' )
-                   ->setText( $name );
+                   ->setText( $record->getName() );
 
             foreach( [ $fromLast->getTime(), $fromStart->getTime() ] as $time ) {
 
@@ -138,52 +162,6 @@ class Profiler {
                         ->append( 'label[title="'.$bytes.' Byte"]' )
                             ->setText( StringUtils::bytify( $bytes ) );
 
-        }
-
-        $th = [
-            'Name',
-            'Iterations',
-            'Execution Time',
-            'Memory',
-            'Memory Peak',
-            'Real Memory',
-            'Real Memory Peak',
-        ];
-
-        $tbl = $m->setCss( [ 'font-family' => 'monospace', 'font-size' => '8px', 'color' => '#333' ] )
-                 ->headLine( 'Benchmark Results' )
-                     ->parent()
-                 ->table()
-                     ->tableCols( $th );
-
-
-        foreach( $this->getBenchmarkResults( $withOutput ) as $name => $data ) {
-
-            $benchmark = $data[ 'benchmark' ];
-            $result = $data[ 'result' ];
-
-            $tr = $tbl->append( 'tr' );
-
-            $tr->append( 'th' )
-                    ->setText( $name )
-                    ->parent()
-                ->append( 'td' )
-                    ->setText( $benchmark->getIterationCount() );
-
-            $time = $result->getTime() * 1000;
-            $tr->append( 'td' )
-                    ->append( 'label', [ 'title' => "$time ms" ] )
-                        ->setText( StringUtils::timify( $time ) );
-
-            foreach( [ 
-                $result->getMemoryUsage(),
-                $result->getMemoryUsagePeak(),
-                $result->getRealMemoryUsage(),
-                $result->getRealMemoryUsagePeak()
-            ] as $bytes )
-                $tr->append( 'td' )
-                        ->append( 'label', [ 'title' => "$bytes Bytes" ] )
-                            ->setText( StringUtils::bytify( $bytes ) );
         }
 
         $m->find( 'table' )->setCss( [ 'width' => '100%' ] );

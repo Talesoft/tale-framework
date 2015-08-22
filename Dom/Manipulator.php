@@ -8,7 +8,7 @@ use Exception,
     Countable,
     Traversable;
 
-//Just try this: var_dump( $m->html( '[lang="de"]' )->html()->parent()->body()->parent() )      :)
+//Just try this: var_dump( $m->html( '[lang="de"]' )->html->parent->body->parent )      :)
 class Manipulator implements IteratorAggregate, Countable {
 
     private $_elements;
@@ -39,6 +39,22 @@ class Manipulator implements IteratorAggregate, Countable {
             return $this->parseElements( Selector::fromString( $elements ) );
         }
 
+        if( is_array( $elements ) )
+            return array_filter( $elements, function( $val ) {
+
+                return $val instanceof Element;
+            } );
+
+        if( $elements instanceof self ) {
+
+            return $elements->getElements();
+        }
+
+        if( $elements instanceof Traversable ) {
+
+            return iterator_to_array( $elements );
+        }
+
         if( $elements instanceof Selector ) {
 
             $className = static::getElementClassName();
@@ -50,28 +66,12 @@ class Manipulator implements IteratorAggregate, Countable {
             return [ $elements ];
         }
 
-        if( $elements instanceof Traversable ) {
-
-            $elements = iterator_to_array( $elements );
-        }
-
-        if( is_array( $elements ) )
-            return array_filter( $elements, function( $val ) {
-
-                return $val instanceof Element;
-            } );
-
         throw new Exception( "Invalid argument $elements passed to Manipulator->parseElements" );
     }
 
     public function add( $elements ) {
 
         return new static( array_merge( $this->_elements, $this->parseElements( $elements ) ) );
-    }
-
-    public function addOrAppend( $elements ) {
-
-        return !count( $this ) ? $this->add( $elements ) : $this->append( $elements );
     }
 
     public function find( $selector ) {
@@ -157,6 +157,11 @@ class Manipulator implements IteratorAggregate, Countable {
         return new static( $result );
     }
 
+    public function appendOrAdd( $elements ) {
+
+        return count( $this ) ? $this->append( $elements ) : $this->add( $elements );
+    }
+
     public function prepend( $elements ) {
 
         $elements = $this->parseElements( $elements );
@@ -170,6 +175,11 @@ class Manipulator implements IteratorAggregate, Countable {
         }
 
         return new static( $result );
+    }
+
+    public function prependOrAdd( $elements ) {
+
+        return count( $this ) ? $this->prepend( $elements ) : $this->add( $elements );
     }
 
     public function before( $elements ) {
@@ -202,8 +212,6 @@ class Manipulator implements IteratorAggregate, Countable {
         return new static( $result );
     }
 
-
-
     public function appendTo( $elements ) {
 
         $mp = new static( $elements );
@@ -222,14 +230,13 @@ class Manipulator implements IteratorAggregate, Countable {
 
     public function filter( $selector ) {
 
-        $handler = is_callable( $selector ) ? (
-        $selector instanceof DomSelector ? $selector : DomSelector::fromString( $selector )
-        ) : function( $el ) use( $selector ) {
+        $selector = $selector instanceof Selector || is_callable( $selector ) ? $selector : Selector::fromString( $selector );
+        $filter = is_callable( $selector ) ? $selector : function( $el ) use( $selector ) {
 
             return $el->matches( $selector );
         };
 
-        return new static( array_filter( $this->_elements, $handler ) );
+        return new static( array_filter( $this->_elements, $filter ) );
     }
 
     public function map( callable $handler ) {
@@ -277,15 +284,34 @@ class Manipulator implements IteratorAggregate, Countable {
     public function __clone() {
 
         foreach( $this->_elements as $i => $el )
-            $this->_elements[ $i ] = $el;
+            $this->_elements[ $i ] = clone $el;
     }
 
     public function __call( $method, array $args ) {
 
-        if( !method_exists( static::getElementClassName(), $method ) )
-            //This is some kind of auto-creation ($m->html( '[lang="de"]' )->head()->parent()->body())
-            return $this->addOrAppend( $method.( count( $args ) ? $args[ 0 ] : '' ) );
+        //In case you call $m->parent->parent (without ())
+        if( method_exists( $this, $method ) ) {
 
+            //Just proxy dat shit
+            return call_user_func_array( [ $this, $method ], $args );
+        }
+
+        //In case you enter an element ($m->div->table->thead or $m->div()->table()->thead())
+        if( !method_exists( static::getElementClassName(), $method ) ) {
+
+            //First we check if there's a direct descendant of this selector already
+            $els = $this->find( ">$method" );
+            if( count( $els ) ) {
+
+                //Found some sub-elements for this selector, access these
+                return $els;
+            }
+
+            //This is some kind of auto-creation ($m->html( '[lang="de"]' )->head->parent->body)
+            return $this->appendOrAdd( $method.( count( $args ) ? $args[ 0 ] : '' ) );
+        }
+
+        //In case you want to act on the elements ($m->getText(), $m->setCss() etc.)
         $result = [];
         foreach( $this->_elements as $el ) {
 
@@ -298,9 +324,14 @@ class Manipulator implements IteratorAggregate, Countable {
         return $this;
     }
 
-    public function __invoke( $elements ) {
+    public function __get( $method ) {
 
-        return new static( $elements );
+        return $this->__call( $method, [] );
+    }
+
+    public function __invoke( $selector ) {
+
+        return $this->find( $selector );
     }
 
     public static function getElementClassName() {

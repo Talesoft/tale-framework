@@ -13,18 +13,18 @@ class Manipulator extends DomManipulator {
 
         $doc = new Document( $documentType, [ 'lang' => $lang ] );
 
-        return $this->addOrAppend( $doc );
+        return $this->appendOrAdd( $doc );
     }
 
     public function headLine( $text, $size = 1, $selector = null ) {
 
-        return $this->addOrAppend( $selector ? "h$size$selector" : "h$size" )
+        return $this->appendOrAdd( $selector ? "h$size$selector" : "h$size" )
                     ->setText( $text );
     }
 
     public function content( $text, $align = null, $selector = null ) {
 
-        $p = $this->addOrAppend( $selector ? "p$selector" : 'p' )
+        $p = $this->appendOrAdd( $selector ? "p$selector" : 'p' )
                   ->setText( $text );
 
         if( $align )
@@ -39,25 +39,14 @@ class Manipulator extends DomManipulator {
             throw new Exception( "Table cols has to be used on a table-element" );
 
         $els = new self();
-        if( $head ) {
+        if( $head )
+            $els = $els->add( $this->thead );
 
-            $thead = $this->find( '>thead' );
-            if( !count( $thead ) )
-                $thead = $this->append( 'thead' );
-
-            $els = $els->add( $thead );
-        }
-
-        if( $foot ) {
-
-            $tfoot = $this->find( '>tfoot' );
-            if( !count( $tfoot ) )
-                $tfoot = $this->append( 'tfoot' );
-
-            $els = $els->add( $tfoot );
-        }
+        if( $foot )
+            $els = $els->add( $this->tfoot );
 
         $tr = $els->append( 'tr' );
+
         foreach( $columns as $name => $selector ) {
 
             if( is_int( $name ) ) {

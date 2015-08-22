@@ -7,8 +7,6 @@ use Exception;
 class Node extends Leaf {
 
     private $_children;
-    private $_textClassName;
-    private $_elementClassName;
 
     public function __construct( Node $parent = null, array $children = null ) {
         parent::__construct( $parent );
@@ -172,20 +170,6 @@ class Node extends Leaf {
             $child->setParent( null );
 
         $this->_children = [];
-
-        return $this;
-    }
-
-    public function setTextClassName( $className ) {
-
-        $this->_textClassName = $className;
-
-        return $this;
-    }
-
-    public function setElementClassName( $className ) {
-
-        $this->_elementClassName = $className;
 
         return $this;
     }

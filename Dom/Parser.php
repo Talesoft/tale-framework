@@ -4,7 +4,6 @@ namespace Tale\Dom;
 
 use Exception;
 
-//TODO: This is a parser, not a reader!
 class Parser {
 
     private $_options;
