@@ -261,10 +261,8 @@ class Manipulator implements IteratorAggregate, Countable {
 
     public function getIterator() {
 
-        return new ArrayIterator( array_map( function( $el ) {
-
-            return new static( $el );
-        }, $this->_elements ) );
+        foreach( $this->_elements as $el )
+            yield new static( $el );
     }
 
     public function getString( array $options = null ) {

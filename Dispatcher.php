@@ -71,11 +71,9 @@ class Dispatcher {
 
     public function createInstance( $className, array $args = null ) {
 
-        return $this->_factory->createInstance( $this->resolveClassName( $className ), $args );
-    }
-
-    public function createTarget( $className, array $args = null ) {
-
-        return new Dispatcher\Target( $this, $className, $args );
+        return new Dispatcher\Instance(
+            $this,
+            $this->_factory->createInstance( $this->resolveClassName( $className ), $args )
+        );
     }
 }
