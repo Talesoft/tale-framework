@@ -13,6 +13,9 @@ class Router {
 
 	public function setRoute( $route, callable $handler ) {
 
+		if( $handler instanceof \Closure )
+			$handler = $handler->bindTo( $this, $this );
+
 		$this->_routes[ $route ] = $handler;
 
 		return $this;
@@ -25,7 +28,7 @@ class Router {
 				if( ( $result = call_user_func( $handler, $result ) ) !== false )
 					return $result;
 
-		return false;
+		return null;
 	}
 
 	protected function getRegExFromRoute( $route ) {
@@ -65,7 +68,7 @@ class Router {
 		$vars = [];
 		if( !empty( $matches ) )
 			foreach( $matches as $name => $value )
-				if( is_string( $name ) )
+				if( is_string( $name ) && !empty( $value ) )
 					$vars[ $name ] = $value;
 
 		return $vars;

@@ -2,10 +2,9 @@
 
 namespace Tale\Net;
 
-use Tale\System\StringUtils,
-    Tale\System\Exception;
+use Tale\StringUtils;
 
-class Credential implements CredentialInterface {
+class Credential {
 
     private $_userName;
     private $_password;

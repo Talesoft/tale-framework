@@ -2,18 +2,18 @@
 
 namespace Tale\Net;
 
-use Tale\System\StringUtils,
-    Tale\System\Exception;
+use Tale\StringUtils,
+    Exception;
 
-class Url extends Uri implements UrlInterface {
+class Url extends Uri {
 
     private static $_schemePorts = [
-        'ssh' => Ip\IpPort::SSH,
-        'ftp' => Ip\IpPort::FTP,
-        'ftps' => Ip\IpPort::FTPS,
-        'http' => Ip\IpPort::HTTP,
-        'https' => Ip\IpPort::HTTPS,
-        'ldap' => Ip\IpPort::LDAP
+        'ssh' => Ip\Port::SSH,
+        'ftp' => Ip\Port::FTP,
+        'ftps' => Ip\Port::FTPS,
+        'http' => Ip\Port::HTTP,
+        'https' => Ip\Port::HTTPS,
+        'ldap' => Ip\Port::LDAP
     ];
 
 	private static $_parts = [
@@ -109,7 +109,7 @@ class Url extends Uri implements UrlInterface {
 
     public function getDomainCredential() {
 
-        return new Credentials\DomainCredential( $this->_userName, $this->_password, $this->_domain );
+        return new Credential\Domain( $this->_userName, $this->_password, $this->_domain );
     }
 
 	public function hasPort() {
@@ -153,7 +153,7 @@ class Url extends Uri implements UrlInterface {
         if( !$this->_domain )
             throw new Exception( "Failed to get endpoint on $this: No domain specified. Use the host-name, ipv4 or [ipv6]" );
 
-        return new Ip\IpEndPoint( Ip\IpAddress::fromDomain( $this->_domain ), $this->getRequiredPort() );
+        return new Ip\EndPoint( Ip\Address::fromDomain( $this->_domain ), $this->getRequiredPort() );
     }
 
 	public function hasQueryString() {
@@ -178,7 +178,9 @@ class Url extends Uri implements UrlInterface {
         if( is_null( $this->_queryString ) )
             return [];
 
-        return StringUtils::parseQuery( $this->_queryString );
+        parse_str( $this->_queryString, $result );
+
+        return $result;
     }
 
 	public function setQueryArray( array $items ) {

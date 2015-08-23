@@ -2,9 +2,9 @@
 
 namespace Tale\Net;
 
-use Tale\System\StringUtils;
+use Tale\StringUtils;
 
-class Uri implements UriInterface {
+class Uri {
 
 	private $_scheme;
 	private $_path;
@@ -56,7 +56,17 @@ class Uri implements UriInterface {
 
 	public function getString() {
 
-		return $this->_scheme;
+		$str = '';
+
+		if( $this->_scheme )
+			$str .= "{$this->_scheme}:";
+
+		if( $this->_path )
+			$str .= $this->_path;
+		else
+			$str .= '/';
+
+		return $str;
 	}
 
 	public function __toString() {

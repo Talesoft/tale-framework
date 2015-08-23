@@ -23,6 +23,14 @@ abstract class FeatureBase {
         return $this->_app;
     }
 
+    public function setDefaultOptions( array $options, $recursive = false ) {
+
+        $this->_config = ( new Config( $options ) )->mergeConfig( $this->_config, $recursive );
+        $this->_config->interpolate();
+
+        return $this;
+    }
+
     public function getConfig() {
 
         return $this->_config;

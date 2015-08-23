@@ -2,23 +2,26 @@
 
 namespace Tale\App\Feature;
 
-use Tale\App\FeatureBase;
+use Tale\App\Controller\Dispatcher;
+use Tale\StringUtils;
+use Tale\App\ProxyFeatureBase;
 
-class Controllers extends Library {
+class Controllers extends ProxyFeatureBase {
 
     private $_dispatcher;
 
     protected function init() {
-        parent::init();
 
-        $app = $this->getApp();
         $config = $this->getConfig();
+        $this->_dispatcher = new Dispatcher( array_replace( [
+            'path' => $this->getApp()->getConfig()->path.'/controllers',
+        ], $config->getOptions() ) );
 
-        var_dump( 'INIT CONTROLLERS!' );
+        $this->setArg( 'app', $this->getApp() );
     }
 
-    public function dispatch( $controller = null, $action = null, array $args = null ) {
+    public function getTarget() {
 
-
+        return $this->_dispatcher;
     }
 }

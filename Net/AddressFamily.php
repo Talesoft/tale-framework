@@ -2,9 +2,9 @@
 
 namespace Tale\Net;
 
-use Tale\System\Enum;
+use Tale\Enum;
 
-abstract class AddressFamily extends Enum {
+class AddressFamily extends Enum {
 
 	const INET = \AF_INET;
 	const INET6 = \AF_INET6;

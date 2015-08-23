@@ -2,9 +2,9 @@
 
 namespace Tale\Net;
 
-use Tale\System\Enum;
+use Tale\Enum;
 
-abstract class SocketType extends Enum {
+class SocketType extends Enum {
 
 	const STREAM = \SOCK_STREAM;
 	const DGRAM = \SOCK_DGRAM;

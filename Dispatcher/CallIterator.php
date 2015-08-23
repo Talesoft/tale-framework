@@ -48,7 +48,8 @@ class CallIterator implements \IteratorAggregate {
     public function getFirstResult() {
 
         foreach( $this as $result )
-            return $result;
+            if( $result )
+                return $result;
 
         return null;
     }

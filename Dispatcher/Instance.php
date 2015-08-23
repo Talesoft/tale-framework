@@ -7,15 +7,15 @@ use Tale\Dispatcher;
 class Instance {
 
     private $_dispatcher;
-    private $_instance;
+    private $_internalInstance;
     private $_reflection;
     private $_methods;
 
     public function __construct( Dispatcher $dispatcher, $instance ) {
 
         $this->_dispatcher = $dispatcher;
-        $this->_instance = $instance;
-        $this->_reflection = new \ReflectionClass( $this->_instance );
+        $this->_internalInstance = $instance;
+        $this->_reflection = new \ReflectionClass( $this->_internalInstance );
         $this->_methods = array_map( function( $method ) {
 
             return $method->getName();
@@ -39,9 +39,9 @@ class Instance {
     }
 
 
-    public function getInstance() {
+    public function getInternalInstance() {
 
-        return $this->_instance;
+        return $this->_internalInstance;
     }
 
     public function hasMethod( $method ) {
@@ -70,7 +70,7 @@ class Instance {
         if( !$this->hasMethod( $method ) )
             throw new \RuntimeException( "Failed to dispatch method $method: Method not found in ".get_class( $this->_instance ) );
 
-        return call_user_func_array( [ $this->_instance, $method ], $args );
+        return call_user_func_array( [ $this->_internalInstance, $method ], $args );
     }
 
     public function getCallIterator( $methods, array $args = null, $resolve = true ) {
@@ -81,7 +81,7 @@ class Instance {
             foreach( $methods as $i => $method )
                 $methods[ $i ] = $this->_dispatcher->resolveMethodName( $method );
 
-        return new CallIterator( $this->_instance, $methods, $args );
+        return new CallIterator( $this->_internalInstance, $methods, $args );
     }
 
     public function getExpressionIterator( $expression, array $args = null ) {

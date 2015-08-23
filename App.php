@@ -84,12 +84,11 @@ class App {
             'config'      => 'Tale\\App\\Feature\\Config',
             'library'     => 'Tale\\App\\Feature\\Library',
             'cache'       => 'Tale\\App\\Feature\\Cache',
+            'data'        => 'Tale\\App\\Feature\\Data',
             'controllers' => 'Tale\\App\\Feature\\Controllers',
             'themes'      => 'Tale\\App\\Feature\\Themes',
             'views'       => 'Tale\\App\\Feature\\Views',
-
-            //Known external libraries
-            'data'        => 'Tale\\Data\\App\\Feature'
+            'router'      => 'Tale\\App\\Feature\\Router'
         ] );
         $this->_features = [ ];
 
@@ -143,8 +142,9 @@ class App {
 
         //Init php.ini settings
         if( isset( $config->phpOptions ) ) {
+
             foreach( $config->phpOptions as $name => $value )
-                ini_set( StringUtils::tableize( $name ), $value );
+                ini_set( StringUtils::tableize( $name, '.' ), $this->_config->phpOptions->{$name} );
         }
 
         //Init feature types
@@ -158,7 +158,7 @@ class App {
             foreach( $config->features as $className => $options ) {
 
                 $config = $this->_config->features->{$className};
-                $this->addFeature($className, $config ? $config->getOptions() : null );
+                $this->addFeature( $className, $config ? $config->getOptions() : null );
             }
         }
 

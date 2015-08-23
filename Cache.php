@@ -96,7 +96,7 @@ class Cache {
              : $key;
 
         if( $this->_boundObject && $action instanceof Closure )
-            $action->bindTo( $this->_boundObject, $this->_boundObject );
+            $action = $action->bindTo( $this->_boundObject, $this->_boundObject );
 
         if( $this->_adapter->exists( $key ) ) {
 

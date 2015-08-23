@@ -2,7 +2,7 @@
 
 namespace Tale\Net;
 
-class EndPoint implements EndPointInterface {
+class EndPoint {
 
 	private $_addressFamily;
 

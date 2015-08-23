@@ -2,10 +2,10 @@
 
 namespace Tale\Net;
 
-use Tale\System\Enum;
+use Tale\Enum;
 
 //http://php.net/manual/de/function.getprotobyname.php
-abstract class ProtocolType extends Enum {
+class ProtocolType extends Enum {
 
 	const IP = 'ip';
 	const ICMP = 'icmp';
