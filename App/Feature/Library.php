@@ -9,7 +9,8 @@ class Library extends FeatureBase {
 
     private $_classLoader;
 
-    protected function init() {
+    public
+    function run() {
 
         $app = $this->getApp();
         $config = $this->getConfig();

@@ -9,7 +9,7 @@ class Data extends ProxyFeatureBase {
 
     private $_source;
 
-    protected function init() {
+    public function run() {
 
         if( !class_exists( 'Tale\\Data\\Source' ) )
             throw new \RuntimeException(
@@ -20,11 +20,11 @@ class Data extends ProxyFeatureBase {
         $app = $this->getApp();
         $config = $this->getConfig();
 
-        $this->_source = new Source( $config->getOptions() );
+        $this->_source = new Source( $config->getItems() );
 
         if( isset( $app->cache ) ) {
 
-            $cache = $app->cache->getSubCache( 'tale.data' );
+            $cache = $app->cache->getSubCache( 'data' );
             $this->_source->setCache( $cache );
         }
     }

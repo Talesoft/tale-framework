@@ -36,5 +36,6 @@ abstract class FeatureBase {
         return $this->_config;
     }
 
-    abstract protected function init();
+    protected function init() {}
+    public function run() {}
 }

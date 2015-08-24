@@ -138,7 +138,7 @@ class App {
     public function loadConfigFile( $configFile ) {
 
         $config = Config::fromFile( $configFile );
-        $this->_config = $this->_config->mergeConfig( $config )->interpolate();
+        $this->_config = $this->_config->merge( $config )->interpolate();
 
         //Init php.ini settings
         if( isset( $config->phpOptions ) ) {
@@ -158,7 +158,7 @@ class App {
             foreach( $config->features as $className => $options ) {
 
                 $config = $this->_config->features->{$className};
-                $this->addFeature( $className, $config ? $config->getOptions() : null );
+                $this->addFeature( $className, $config ? $config->getItems() : null );
             }
         }
 

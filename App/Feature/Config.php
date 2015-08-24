@@ -29,6 +29,10 @@ class Config extends FeatureBase {
             $app->loadConfigFile( $configFile );
     }
 
+    public function run() {
+        //NoOp
+    }
+
     private function _sort( $a, $b ) {
 
         $order = $this->getConfig()->order->getOptions();

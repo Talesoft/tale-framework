@@ -9,12 +9,11 @@ class Cache extends ProxyFeatureBase {
 
     private $_cacheInstance;
 
-    protected function init() {
+    public function run() {
 
-        $app = $this->getApp();
         $config = $this->getConfig();
 
-        $this->_cacheInstance = new TaleCache( $config->getOptions() );
+        $this->_cacheInstance = new TaleCache( $config->getItems() );
     }
 
     public function getTarget() {

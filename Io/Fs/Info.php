@@ -1,6 +1,6 @@
 <?php
 
-namespace Tale\Fs;
+namespace Tale\Io\Fs;
 
 class Info {
 
