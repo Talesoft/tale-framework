@@ -12,7 +12,7 @@ class ArrayObject implements IteratorAggregate, Countable, ArrayAccess, Serializ
 
     //Mutability acts on the internal array as a whole, operations directly on array indices are always mutable
     const FLAG_MUTABLE = 1;
-    const FLAG_READONLY = 2;
+    const FLAG_READ_ONLY = 2;
     const FLAG_PROPERTY_ACCESS = 4;
 
     private $_items;
@@ -26,17 +26,17 @@ class ArrayObject implements IteratorAggregate, Countable, ArrayAccess, Serializ
 
     public function isMutable() {
 
-        return $this->_flags & self::FLAG_MUTABLE;
+        return ( $this->_flags & self::FLAG_MUTABLE ) !== 0;
     }
 
     public function isReadOnly() {
 
-        return $this->_flags & self::FLAG_READONLY;
+        return ( $this->_flags & self::FLAG_READ_ONLY ) !== 0;
     }
 
     public function hasPropertyAccess() {
 
-        return $this->_flags & self::FLAG_PROPERTY_ACCESS;
+        return ( $this->_flags & self::FLAG_PROPERTY_ACCESS ) !== 0;
     }
 
     public function getItems() {
@@ -112,8 +112,15 @@ class ArrayObject implements IteratorAggregate, Countable, ArrayAccess, Serializ
 
     public function getIterator() {
 
-        foreach( $this->_items as $key => $value )
-            yield $key => $value;
+        $keys = array_keys( $this->_items );
+        foreach( $keys as $key )
+            yield $key => $this->getItem( $key );
+    }
+
+    public function getCallbackIterator( callable $callback ) {
+
+        foreach( $this as $key => $value )
+            yield $key => call_user_func( $callback, $value, $key );
     }
 
     public function offsetExists( $offset ) {

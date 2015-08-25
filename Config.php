@@ -3,7 +3,7 @@
 namespace Tale;
 
 /**
- * A simple configuration wrapper respresentiv a PHP config array
+ * A simple configuration wrapper respresenting a PHP config array
  *
  * @version 1.0
  * @featureState Pending
@@ -13,29 +13,13 @@ namespace Tale;
 class Config extends ArrayObject {
 
     /**
-     * The internal config array (multi-dimensional, associative)
-     * @var array
-     */
-    private $_options;
-
-    /**
      * Create a new Config instance
      *
      * @param array|null $options The initial configuration (e.g. default values)
      */
     public function __construct( array $options = null, $flags = null ) {
-        parent::__construct( $options, $flags );
+        parent::__construct( $options, $flags ? $flags : self::FLAG_PROPERTY_ACCESS | self::FLAG_MUTABLE );
 
-    }
-
-    public function getItem( $key ) {
-
-        $item = parent::getItem( $key );
-
-        if( is_array( $item ) )
-            return new static( $item, $this->getFlags() );
-
-        return $item;
     }
 
     /**
@@ -52,9 +36,11 @@ class Config extends ArrayObject {
 
         $items = $this->getItems();
         StringUtils::interpolateArray( $items );
-        $this->setItems( $items );
 
-        return $this;
+        if( $this->isMutable() )
+            return $this->setItems( $items );
+
+        return new static( $items );
     }
 
     /**

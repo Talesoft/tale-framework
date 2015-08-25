@@ -14,7 +14,7 @@ use RuntimeException;
  *
  * @package Tale
  */
-class App {
+class App extends Config\Container {
 
     /**
      * The path to the application directory
@@ -29,13 +29,6 @@ class App {
      * @var string
      */
     private $_configPath;
-
-    /**
-     * The configuration object
-     *
-     * @var Config
-     */
-    private $_config;
 
     /**
      * The factory for app features
@@ -59,26 +52,11 @@ class App {
      * @param string $path The path to the application directory
      */
     public function __construct( $path ) {
+        parent::__construct();
 
         $this->_path = $path;
         $this->_configPath = "$path/app.json";
 
-
-        $this->_config = new Config( [
-                //The key "path" leading to the app path is fed first to the config. This way config strings can
-                //interpolate the config path via {{path}} and use it for own paths
-                'path' => $this->_path,
-
-                //We also need some pre-defined values for PHP Options to avoid unnecessary CONST parsing
-                'errorLevels' => [
-                    'all' => E_ALL | E_STRICT,
-                    'errors' => E_NOTICE | E_WARNING | E_ERROR,
-                    'warnings' => E_NOTICE | E_WARNING,
-                    'notices' => E_NOTICE,
-                    'none' => 0
-                ]
-            ]
-        );
         $this->_featureFactory = new Factory(
             'Tale\\App\\FeatureBase', [
             'config'      => 'Tale\\App\\Feature\\Config',
@@ -90,12 +68,29 @@ class App {
             'views'       => 'Tale\\App\\Feature\\Views',
             'router'      => 'Tale\\App\\Feature\\Router'
         ] );
-        $this->_features = [ ];
+
+        $this->_features = [];
 
         if( !file_exists( $this->_configPath ) )
             throw new RuntimeException( "Failed to create app: App config {$this->_configPath} not found" );
 
+        $this->setDefaultConfig( [
+             //The key "path" leading to the app path is fed first to the config. This way config strings can
+             //interpolate the config path via {{path}} and use it for own paths
+             'path' => $this->_path,
+
+             //We also need some pre-defined values for PHP Options to avoid unnecessary CONST parsing
+             'errorLevels' => [
+                 'all' => E_ALL | E_STRICT,
+                 'errors' => E_NOTICE | E_WARNING | E_ERROR,
+                 'warnings' => E_NOTICE | E_WARNING,
+                 'notices' => E_NOTICE,
+                 'none' => 0
+             ]
+        ] );
+
         $this->loadConfigFile( $this->_configPath );
+        $this->_runFeatures();
     }
 
     /**
@@ -106,6 +101,16 @@ class App {
     public function getPath() {
 
         return $this->_path;
+    }
+
+    public function loadConfigFile( $path ) {
+        parent::loadConfigFile( $path );
+
+        $this->_setPhpOptions();
+        $this->_registerNewFeatureAliases();
+        $this->_registerNewFeatures();
+
+        return $this;
     }
 
     /**
@@ -119,23 +124,13 @@ class App {
     }
 
     /**
-     * Returns the current run configuration for the application
-     *
-     * @return Config
-     */
-    public function getConfig() {
-
-        return $this->_config;
-    }
-
-    /**
      * Loads a new config file by its full path
      *
      * @param string $configFile The path to the config-file to be loaded
      *
      * @return $this
      */
-    public function loadConfigFile( $configFile ) {
+    /*public function loadConfigFile( $configFile ) {
 
         $config = Config::fromFile( $configFile );
         $this->_config = $this->_config->merge( $config )->interpolate();
@@ -163,7 +158,7 @@ class App {
         }
 
         return $this;
-    }
+    }*/
 
     /**
      * Returns the current feature factory of the app
