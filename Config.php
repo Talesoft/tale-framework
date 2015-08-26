@@ -10,7 +10,7 @@ namespace Tale;
  *
  * @package Tale
  */
-class Config extends ArrayObject {
+class Config extends Collection {
 
     /**
      * Create a new Config instance
@@ -18,7 +18,7 @@ class Config extends ArrayObject {
      * @param array|null $options The initial configuration (e.g. default values)
      */
     public function __construct( array $options = null, $flags = null ) {
-        parent::__construct( $options, $flags ? $flags : self::FLAG_PROPERTY_ACCESS | self::FLAG_MUTABLE );
+        parent::__construct( $options, ( $flags ? $flags : self::FLAG_MUTABLE ) | self::FLAG_PROPERTY_ACCESS );
 
     }
 

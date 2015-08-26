@@ -2,10 +2,12 @@
 
 namespace Tale\App\Feature;
 
-use Tale\App\ProxyFeatureBase,
+use Tale\App\FeatureBase;
+use Tale\Proxy,
     Tale\Data\Source;
 
-class Data extends ProxyFeatureBase {
+class Data extends FeatureBase {
+    use Proxy\CallTrait;
 
     private $_source;
 
@@ -24,12 +26,12 @@ class Data extends ProxyFeatureBase {
 
         if( isset( $app->cache ) ) {
 
-            $cache = $app->cache->getSubCache( 'data' );
-            $this->_source->setCache( $cache );
+            $cache = $app->cache->createSubCache( 'data' );
+            $this->_source->setSubCache( $cache );
         }
     }
 
-    public function getTarget() {
+    public function getCallProxyTarget() {
 
         return $this->_source;
     }

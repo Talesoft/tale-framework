@@ -34,7 +34,7 @@ class Cache {
             $this->_adapterFactory->registerAliases( $this->_config->adapterAliases );
 
         $this->_adapter = $this->_adapterFactory->createInstance( $this->_config->adapter, [
-            $this->_config->options->getOptions()
+            $this->_config->options
         ] );
 
         $this->_boundObject = null;
@@ -77,14 +77,15 @@ class Cache {
         return $this;
     }
 
-    public function getSubCache( $nameSpace, array $options = null ) {
+    public function createSubCache( $nameSpace, array $options = null ) {
 
         $subNs = !empty( $this->_config->nameSpace )
                ? $this->_config->nameSpace.'.'
                : '';
 
-        $options[ 'nameSpace' ] = "$subNs$nameSpace";
-        return new self( $this->_config->merge( $options )->getOptions() );
+        $config = clone $this->_config;
+        $config->nameSpace = "$subNs$nameSpace";
+        return new self( $config->getItems() );
     }
 
     public function load( $key, callable $action, $lifeTime = null ) {
@@ -103,7 +104,8 @@ class Cache {
             return $this->_adapter->get( $key );
         }
 
-        $result = call_user_func( $action, $key );
+        //TODO: Maybe we need $args here?
+        $result = call_user_func( $action );
         $this->_adapter->set( $key, $result, $lifeTime );
 
         return $result;

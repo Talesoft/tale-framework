@@ -11,31 +11,33 @@ class Config extends FeatureBase {
     protected function init() {
 
         $app = $this->getApp();
+        $appConfig = $app->getConfig();
         $config = $this->getConfig();
 
-        if( !isset( $config->path ) )
-            throw new \Exception( "The Config app-feature needs a valid {{path}} to work on" );
+        $this->setDefaultOptions( [
+            'path' => "{$appConfig->path}/cache"
+        ] );
 
+        //The additional configuration files need to be merged into the app before the features are ran
         $configFiles = glob( $config->path.'/*.json' );
 
         if( isset( $config->order ) ) {
 
+            //Sort the found config files by the order-array that is defined
             usort( $configFiles, [ $this, '_sort' ] );
         }
 
         $this->_configFiles = $configFiles;
 
+        var_dump( "FCFG", $configFiles );
+
         foreach( $configFiles as $configFile )
             $app->loadConfigFile( $configFile );
     }
 
-    public function run() {
-        //NoOp
-    }
-
     private function _sort( $a, $b ) {
 
-        $order = $this->getConfig()->order->getOptions();
+        $order = $this->getConfig()->order;
 
         $abn = basename( $a, '.json' );
         $bbn = basename( $b, '.json' );
@@ -53,10 +55,5 @@ class Config extends FeatureBase {
             return 1;
 
         return $ao < $bo ? -1 : 1;
-    }
-
-    public function getConfigFiles() {
-
-        return $this->_configFiles;
     }
 }

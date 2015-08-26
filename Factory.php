@@ -63,23 +63,6 @@ class Factory {
     }
 
     /**
-     * Resolves a a class-name or an alias to a FQCN
-     *
-     * If no alias is found, it returns the class name given
-     *
-     * @param string $className The class-name to be converted
-     *
-     * @return string The usable FQCN of the class
-     */
-    public function resolveClassName( $className ) {
-
-        if( isset( $this->_aliases[ $className ] ) )
-            $className = $this->_aliases[ $className ];
-
-        return $className;
-    }
-
-    /**
      * Registers a new alias with a specific FQCN
      *
      * @param string $alias     The alias the FQDN can be found under
@@ -108,6 +91,24 @@ class Factory {
             $this->registerAlias( $alias, $className );
 
         return $this;
+    }
+
+
+    /**
+     * Resolves a a class-name or an alias to a FQCN
+     *
+     * If no alias is found, it returns the class name given
+     *
+     * @param string $className The class-name to be converted
+     *
+     * @return string The usable FQCN of the class
+     */
+    public function resolveClassName( $className ) {
+
+        if( isset( $this->_aliases[ $className ] ) )
+            $className = $this->_aliases[ $className ];
+
+        return $className;
     }
 
     /**

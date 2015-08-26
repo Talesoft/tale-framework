@@ -3,19 +3,21 @@
 namespace Tale\App\Feature;
 
 use Tale\App\Controller\Response;
-use Tale\App\ProxyFeatureBase;
+use Tale\App\FeatureBase;
 use Tale\Theme\Manager;
+use Tale\Proxy;
 
-class Themes extends ProxyFeatureBase {
+class Themes extends FeatureBase {
+    use Proxy\CallTrait;
 
     private $_manager;
 
-    protected function init() {
+    public function run() {
 
         $app = $this->getApp();
         $manager = new Manager( array_replace_recursive( [
             'path' => $app->getConfig()->path.'/themes'
-        ], $this->getConfig()->getOptions() ) );
+        ], $this->getConfig()->getItems() ) );
         $this->_manager = $manager;
 
         if( isset( $app->controllers ) ) {
@@ -59,7 +61,7 @@ class Themes extends ProxyFeatureBase {
         }
     }
 
-    public function getTarget() {
+    public function getCallProxyTarget() {
 
         return $this->_manager;
     }

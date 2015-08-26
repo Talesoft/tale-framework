@@ -9,10 +9,11 @@ class Library extends FeatureBase {
 
     private $_classLoader;
 
-    public
-    function run() {
+    protected function init() {
 
-        $app = $this->getApp();
+        //Libraries are initialized before the features are running since we might need them in other initialization logic
+        //or for custom features
+
         $config = $this->getConfig();
 
         $path = isset( $config->path ) ? $config->path : null;
@@ -21,10 +22,5 @@ class Library extends FeatureBase {
 
         $this->_classLoader = new ClassLoader( $path, $nameSpace, $pattern );
         $this->_classLoader->register();
-    }
-
-    public function getClassLoader() {
-
-        return $this->_classLoader;
     }
 }

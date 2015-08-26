@@ -3,6 +3,7 @@
 namespace Tale;
 
 use RuntimeException;
+use Tale\Proxy;
 
 /**
  * Represents an application that can be run from any point in userland code
@@ -15,6 +16,7 @@ use RuntimeException;
  * @package Tale
  */
 class App extends Config\Container {
+    use Proxy\OffsetGetTrait;
 
     /**
      * The path to the application directory
@@ -42,7 +44,7 @@ class App extends Config\Container {
      * The features currently loaded into the application
      * These can be passed to objects that want to work with the app features with their respective aliases
      *
-     * @var array
+     * @var App\FeatureBase[]
      */
     private $_features;
   
@@ -74,7 +76,7 @@ class App extends Config\Container {
         if( !file_exists( $this->_configPath ) )
             throw new RuntimeException( "Failed to create app: App config {$this->_configPath} not found" );
 
-        $this->setDefaultConfig( [
+        $this->setDefaultOptions( [
              //The key "path" leading to the app path is fed first to the config. This way config strings can
              //interpolate the config path via {{path}} and use it for own paths
              'path' => $this->_path,
@@ -89,8 +91,45 @@ class App extends Config\Container {
              ]
         ] );
 
+        var_dump( 'Loading App' );
         $this->loadConfigFile( $this->_configPath );
-        $this->_runFeatures();
+    }
+
+    private function _setPhpOptions() {
+
+        //Iterate the whole config and set all options, regardless if we set some already
+        $config = $this->getConfig();
+
+        if( isset( $config->phpOptions ) ) {
+
+            foreach( $config->phpOptions as $option => $value ) {
+
+                $option = StringUtils::tableize( $option, '.' );
+                ini_set( $option, $value );
+            }
+        }
+    }
+
+    private function _registerFeatureAliases() {
+
+        $config = $this->getConfig();
+
+        if( isset( $config->featureAliases ) ) {
+
+            foreach( $config->featureAliases as $alias => $className )
+                $this->_featureFactory->registerAlias( $alias, $className );
+        }
+    }
+
+    private function _registerFeatures() {
+
+        $config = $this->getConfig();
+
+        if( isset( $config->features ) ) {
+
+            foreach( $config->features as $name => $options )
+                $this->addFeature( $name, $options );
+        }
     }
 
     /**
@@ -106,9 +145,11 @@ class App extends Config\Container {
     public function loadConfigFile( $path ) {
         parent::loadConfigFile( $path );
 
+        var_dump( "LCFG $path" );
+
         $this->_setPhpOptions();
-        $this->_registerNewFeatureAliases();
-        $this->_registerNewFeatures();
+        $this->_registerFeatureAliases();
+        $this->_registerFeatures();
 
         return $this;
     }
@@ -130,35 +171,7 @@ class App extends Config\Container {
      *
      * @return $this
      */
-    /*public function loadConfigFile( $configFile ) {
 
-        $config = Config::fromFile( $configFile );
-        $this->_config = $this->_config->merge( $config )->interpolate();
-
-        //Init php.ini settings
-        if( isset( $config->phpOptions ) ) {
-
-            foreach( $config->phpOptions as $name => $value )
-                ini_set( StringUtils::tableize( $name, '.' ), $this->_config->phpOptions->{$name} );
-        }
-
-        //Init feature types
-        if( isset( $config->featureAliases ) )
-            foreach( $config->featureAliases as $alias => $className )
-                $this->_featureFactory->registerAlias( $alias, $this->_config->featureAliases->{$alias} );
-
-        //Init features
-        if( isset( $config->features ) ) {
-
-            foreach( $config->features as $className => $options ) {
-
-                $config = $this->_config->features->{$className};
-                $this->addFeature( $className, $config ? $config->getItems() : null );
-            }
-        }
-
-        return $this;
-    }*/
 
     /**
      * Returns the current feature factory of the app
@@ -173,7 +186,7 @@ class App extends Config\Container {
     /**
      * Returns the current attached features of the app
      *
-     * @return array An array of App\Feature-objects
+     * @return App\FeatureBase[] An array of App\FeatureBase-objects
      */
     public function getFeatures() {
 
@@ -181,47 +194,42 @@ class App extends Config\Container {
     }
 
     /**
-     * Checks if a given feature is loaded or not
-     *
-     * @param string $className The class name or the alias of the class (aliases reside in the feature factory)
-     *
-     * @return bool
-     */
-    public function hasFeature( $className ) {
-
-        $className = $this->_featureFactory->resolveClassName( $className );
-
-        return isset( $this->_features[ $className ] );
-    }
-
-    /**
-     * Gets the instance of a given feature
-     *
-     * @param string $className The class name or the alias of the class (aliases reside in the feature factory)
-     *
-     * @return App\FeatureBase
-     */
-    public function getFeature( $className ) {
-
-        $className = $this->_featureFactory->resolveClassName( $className );
-
-        return $this->_features[ $className ];
-    }
-
-    /**
      * Adds a new feature by passing an option array
      *
-     * @param string     $className The class name or the alias of the class
-     *                              (aliases reside in the feature factory)
+     * If a feature with the same class was already created, the options of that feature will
+     * be merged with the passed options and the old instance will be kept
+     *
+     * @param string     $name
      * @param array|null $options
      *
      * @return $this
      */
-    public function addFeature( $className, array $options = null ) {
+    public function addFeature( $name, array $options = null ) {
 
-        $className = $this->_featureFactory->resolveClassName( $className );
+        if( isset( $this->_features[ $name ] ) ) {
 
-        $this->_features[ $className ] = $this->_featureFactory->createInstance( $className, [
+            //Checks if the feature is still initializing (e.g. if the feature-init() function calls "loadConfig" or addFeature on itself
+            if( !( $this->_features[ $name ] instanceof App\FeatureBase ) )
+                return;
+
+            //Feature was already added, we just add the new config (if needed)
+            if( $options ) {
+
+                $cfg = $this->_features[ $name ]->getConfig();
+
+                if( !$cfg->isMutable() )
+                    throw new \RuntimeException( "Failed to merge config for $name feature: Config object is not mutable" );
+
+                $cfg->mergeArray( $options, true, true );
+            }
+
+            return $this;
+        }
+
+        $this->_features[ $name ] = true;
+
+        //Create the actual instance
+        $this->_features[ $name ] = $this->_featureFactory->createInstance( $name, [
             $this,
             $options
         ] );
@@ -238,37 +246,22 @@ class App extends Config\Container {
      */
     public function addFeatures( array $features ) {
 
-        foreach( $features as $className => $options )
-            $this->addFeature( $className, $options );
+        foreach( $features as $name => $options )
+            $this->addFeature( $name, $options );
 
         return $this;
     }
 
-    /**
-     * Magic access method for isset/empty
-     * Uses $this->hasFeature( $className ) for resolving
-     *
-     * @param string $className The class name or the alias of the class
-     *                          (aliases reside in the feature factory)
-     *
-     * @return bool
-     */
-    public function __isset( $className ) {
+    public function run() {
 
-        return $this->hasFeature( $className );
+        foreach( $this->_features as $feature )
+            $feature->run();
+
+        return $this;
     }
 
-    /**
-     * Magic access method for property read access
-     * Uses $this->getFeature( $className ) for resolving
-     *
-     * @param string $className The class name or the alias of the class
-     *                          (aliases reside in the feature factory)
-     *
-     * @return App\FeatureBase
-     */
-    public function __get( $className ) {
+    public function getOffsetProxyTarget() {
 
-        return $this->getFeature( $className );
+        return $this->_features;
     }
 }

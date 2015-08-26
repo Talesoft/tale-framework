@@ -2,8 +2,8 @@
 
 namespace Tale\Config;
 
-use Tale\Traversable;
 use Tale\Config;
+use Traversable;
 
 class Container {
 
@@ -30,9 +30,10 @@ class Container {
         return $this->_config;
     }
 
-    public function setDefaultConfig( array $defaults, $recursive = false ) {
+    public function setDefaultOptions( array $defaults, $recursive = false ) {
 
         $this->_config->mergeArray( $defaults, $recursive, true );
+        $this->_config->interpolate();
 
         return $this;
     }
@@ -40,6 +41,7 @@ class Container {
     public function loadConfigFile( $path ) {
 
         $this->_config->merge( Config::fromFile( $path ), true );
+        $this->_config->interpolate();
 
         return $this;
     }
@@ -47,12 +49,5 @@ class Container {
     public function getOption( $key ) {
 
         return $this->_config[ $key ];
-    }
-
-    public function setOption( $key, $value ) {
-
-        $this->_config[ $key ] = $value;
-
-        return $this;
     }
 }

@@ -5,15 +5,14 @@ namespace Tale\App;
 use Tale\App,
     Tale\Config;
 
-abstract class FeatureBase {
+abstract class FeatureBase extends Config\Container {
 
     private $_app;
-    private $_config;
 
-    public function __construct( App $app, array $options = null ) {
+    public function __construct( App $app, $options = null ) {
+        parent::__construct( $options );
 
         $this->_app = $app;
-        $this->_config = new Config( $options );
 
         $this->init();
     }
@@ -21,19 +20,6 @@ abstract class FeatureBase {
     public function getApp() {
 
         return $this->_app;
-    }
-
-    public function setDefaultOptions( array $options, $recursive = false ) {
-
-        $this->_config = ( new Config( $options ) )->mergeConfig( $this->_config, $recursive );
-        $this->_config->interpolate();
-
-        return $this;
-    }
-
-    public function getConfig() {
-
-        return $this->_config;
     }
 
     protected function init() {}

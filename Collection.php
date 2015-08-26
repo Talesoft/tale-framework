@@ -8,7 +8,7 @@ use IteratorAggregate,
     Serializable,
     Traversable;
 
-class ArrayObject implements IteratorAggregate, Countable, ArrayAccess, Serializable {
+class Collection implements IteratorAggregate, Countable, ArrayAccess, Serializable {
 
     //Mutability acts on the internal array as a whole, operations directly on array indices are always mutable
     const FLAG_MUTABLE = 1;

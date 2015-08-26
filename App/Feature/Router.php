@@ -2,27 +2,28 @@
 
 namespace Tale\App\Feature;
 
-use Tale\App\Controller\Dispatcher;
 use Tale\App\Controller\Response;
+use Tale\App\FeatureBase;
 use Tale\Net\Http\StatusCode;
 use Tale\Net\Mime\Type;
-use Tale\StringUtils;
 use Tale\App\Router as AppRouter;
-use Tale\App\ProxyFeatureBase;
 use Tale\Net\Http\Request\Server as ServerRequest;
 use Tale\App\Controller\Request;
+use Tale\Proxy;
 
-class Router extends ProxyFeatureBase {
+class Router extends FeatureBase {
+    use Proxy\CallTrait;
 
     private $_router;
 
-    protected function init() {
+    public function run() {
 
         $this->setDefaultOptions( [
               'defaultController' => 'index',
               'defaultAction' => 'index',
               'defaultId' => null,
               'defaultFormat' => 'html',
+              'routeHttpAndApply' => true,
               'routes' => [
                   '/:controller?/:action?/:id?.:format?' => [ $this, 'dispatchController' ]
               ]
@@ -30,9 +31,12 @@ class Router extends ProxyFeatureBase {
         $config = $this->getConfig();
 
         $this->_router = new AppRouter( $config->routes->getOptions() );
+
+        if( $config->routeHttpAndApply )
+            $this->routeHttp()->apply();
     }
 
-    public function getTarget() {
+    public function getCallProxyTarget() {
 
         return $this->_router;
     }
@@ -51,8 +55,9 @@ class Router extends ProxyFeatureBase {
 
             $basePath = $appConfig->urlBasePath;
             $len = strlen( $basePath );
+            //Request was not in the base path directory
             if( strncmp( $path, $basePath, $len ) !== 0 )
-                return;
+                return null;
 
             $path = substr( $path, $len );
         }
