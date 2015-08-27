@@ -5,10 +5,32 @@ namespace Tale;
 use RuntimeException;
 use Tale\Proxy;
 
+/*
+ * CONS: Apps should be queuable and there should be inter-app-communication
+ *       Imagine this:
+ *
+ * $site = new App( './apps/site' );
+ * $blog = new App( './apps/blog' );
+ * $shop = new App( './apps/shop' );
+ *
+ * And then either:
+ * $shop->run( $blog->run( $site->run() ) );
+ *
+ * or rather directly some kind of AppQueue
+ *
+ * $queue = new App\Queue( [ './apps/site', './apps/blog', './apps/shop' ] );
+ * $queue->run();
+ *
+ * Apps should also follow a Request->Response model (Think about this)
+ */
+
 /**
  * Represents an application that can be run from any point in userland code
  *
  * An application is always based on a path where a config file and additional directories and dependencies reside
+ *
+ * The features are initialized in the constructor
+ * As soon as you call ->run() on the app, ->run() is called on all features
  *
  * @version 1.0
  * @featureState Development
@@ -91,7 +113,6 @@ class App extends Config\Container {
              ]
         ] );
 
-        var_dump( 'Loading App' );
         $this->loadConfigFile( $this->_configPath );
     }
 
@@ -144,8 +165,6 @@ class App extends Config\Container {
 
     public function loadConfigFile( $path ) {
         parent::loadConfigFile( $path );
-
-        var_dump( "LCFG $path" );
 
         $this->_setPhpOptions();
         $this->_registerFeatureAliases();

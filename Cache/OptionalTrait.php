@@ -22,6 +22,7 @@ trait OptionalTrait {
     public function setCache( Cache $cache ) {
 
         $this->_cache = $cache;
+        $cache->bind( $this );
 
         return $this;
     }

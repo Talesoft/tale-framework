@@ -35,8 +35,8 @@ class Dispatcher {
         $this->_factory = new Factory( $this->_config->baseControllerClassName );
         $this->_dispatcher = new TaleDispatcher( $this->_factory, $this->_config->nameSpace, $this->_config->classNamePattern, $this->_config->methodNamePattern );
         $this->_controllers = [];
-        $this->_args = $this->_config->args->getOptions();
-        $this->_helpers = $this->_config->helpers->getOptions();
+        $this->_args = $this->_config->args;
+        $this->_helpers = $this->_config->helpers;
 
         $this->_loader->register();
     }

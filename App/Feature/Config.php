@@ -29,8 +29,6 @@ class Config extends FeatureBase {
 
         $this->_configFiles = $configFiles;
 
-        var_dump( "FCFG", $configFiles );
-
         foreach( $configFiles as $configFile )
             $app->loadConfigFile( $configFile );
     }

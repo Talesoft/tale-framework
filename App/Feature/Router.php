@@ -23,6 +23,7 @@ class Router extends FeatureBase {
               'defaultAction' => 'index',
               'defaultId' => null,
               'defaultFormat' => 'html',
+              //TODO: Remove this shit!
               'routeHttpAndApply' => true,
               'routes' => [
                   '/:controller?/:action?/:id?.:format?' => [ $this, 'dispatchController' ]
@@ -30,8 +31,9 @@ class Router extends FeatureBase {
         ], false );
         $config = $this->getConfig();
 
-        $this->_router = new AppRouter( $config->routes->getOptions() );
+        $this->_router = new AppRouter( $config->routes );
 
+        //TODO: Remove this shit!
         if( $config->routeHttpAndApply )
             $this->routeHttp()->apply();
     }
@@ -51,9 +53,10 @@ class Router extends FeatureBase {
         $app = $this->getApp();
         $appConfig = $app->getConfig();
 
-        if( isset( $appConfig->urlBasePath ) ) {
+        if( isset( $appConfig->url ) ) {
 
-            $basePath = $appConfig->urlBasePath;
+            $basePath = parse_url( $appConfig->url, \PHP_URL_PATH );
+
             $len = strlen( $basePath );
             //Request was not in the base path directory
             if( strncmp( $path, $basePath, $len ) !== 0 )

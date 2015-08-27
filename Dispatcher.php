@@ -1,6 +1,6 @@
 <?php
 
-namespace Tale\Factory;
+namespace Tale;
 
 class Dispatcher {
 

@@ -27,7 +27,7 @@ class Data extends FeatureBase {
         if( isset( $app->cache ) ) {
 
             $cache = $app->cache->createSubCache( 'data' );
-            $this->_source->setSubCache( $cache );
+            $this->_source->setCache( $cache );
         }
     }
 

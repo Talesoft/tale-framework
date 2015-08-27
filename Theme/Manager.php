@@ -54,7 +54,7 @@ class Manager {
              ]
          ], $options ? $options : [] ) );
 
-        $this->_activeThemes = $this->_config->activeThemes->getOptions();
+        $this->_activeThemes = $this->_config->activeThemes;
     }
 
     public function getConfig() {
@@ -71,16 +71,16 @@ class Manager {
 
     private function _process( $type, $path ) {
 
-        if( !isset( $this->_config->preprocessors->{$type} ) )
+        if( !isset( $this->_config->preprocessors[ $type ] ) )
             return $path;
 
         $ext = pathinfo( $path, \PATHINFO_EXTENSION );
-        $exts = $this->_config->preprocessors->{$type};
+        $exts = $this->_config->preprocessors[ $type ];
 
-        if( !isset( $exts->{$ext} ) )
+        if( !isset( $exts[ $ext ] ) )
             return $path;
 
-        $processors = $exts->{$ext};
+        $processors = $exts[ $ext ];
 
         //TODO: Caching now works on a extension level, a file with the same name but different extension will be created
         //TODO: Rework this into Tale\Cache (Will probably only work with File adapter, which sucks...)
@@ -104,7 +104,7 @@ class Manager {
     public function resolve( $type, $path, $process = true ) {
 
         $config = $this->getConfig();
-        $subPath = $config->resourceTypes->{$type};
+        $subPath = $config->resourceTypes[ $type ];
 
         foreach( $this->_activeThemes as $theme ) {
 
