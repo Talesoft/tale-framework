@@ -3,7 +3,7 @@
 namespace Tale\Net\Ip;
 
 use Tale\Net\EndPoint as NetEndPoint,
-    Tale\StringUtils;
+    Tale\StringUtil;
 
 class EndPoint extends NetEndPoint {
 
@@ -43,7 +43,7 @@ class EndPoint extends NetEndPoint {
 
     public static function fromString( $string ) {
 
-        $parts = StringUtils::mapReverse( $string, ':', [ 'port', 'ip' ] );
+        $parts = StringUtil::mapReverse( $string, ':', [ 'port', 'ip' ] );
 
         return new static( Address::fromString( trim( $parts[ 'ip' ], '[]' ) ), $parts[ 'port' ] );
     }

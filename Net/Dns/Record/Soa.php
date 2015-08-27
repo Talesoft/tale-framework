@@ -5,7 +5,7 @@ namespace Tale\Net\Dns\Record;
 use Tale\Net\Dns\Record;
 use Tale\Net\Dns\RecordType;
 
-class DnsSoaRecord extends Record {
+class Soa extends Record {
 
     private $_sourceHostName;
     private $_mailAddress;

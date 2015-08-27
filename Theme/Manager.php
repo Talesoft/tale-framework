@@ -103,6 +103,8 @@ class Manager {
 
     public function resolve( $type, $path, $process = true ) {
 
+        //TODO: Resolve files with Tale\Io\Fs\Resolver
+
         $config = $this->getConfig();
         $subPath = $config->resourceTypes[ $type ];
 

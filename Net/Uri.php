@@ -2,7 +2,7 @@
 
 namespace Tale\Net;
 
-use Tale\StringUtils;
+use Tale\StringUtil;
 
 class Uri {
 
@@ -76,6 +76,6 @@ class Uri {
 
 	public static function fromString( $uriString ) {
 
-		return new static( StringUtils::map( $uriString, ':', [ 'scheme', 'path' ] ) );
+		return new static( StringUtil::map( $uriString, ':', [ 'scheme', 'path' ] ) );
 	}
 }

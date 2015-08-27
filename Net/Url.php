@@ -2,7 +2,7 @@
 
 namespace Tale\Net;
 
-use Tale\StringUtils,
+use Tale\StringUtil,
     Exception;
 
 class Url extends Uri {

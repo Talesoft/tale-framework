@@ -2,7 +2,7 @@
 
 namespace Tale\Net\Http;
 
-use Tale\StringUtils;
+use Tale\StringUtil;
 
 //Headers work a little bit like this:
 //You can get a header in ANY casing, hasHeader and getHeader would find User-Agent under user-agent as well as USER-AGENT
@@ -92,7 +92,7 @@ class Message {
 
     public function setHeaderLine( $line ) {
 
-        $parts = StringUtils::map( $line, ':', [ 'name', 'value' ] );
+        $parts = StringUtil::map( $line, ':', [ 'name', 'value' ] );
 
         return $this->setHeader( trim( $parts[ 'name' ] ), trim( $parts[ 'value' ] ) );
     }

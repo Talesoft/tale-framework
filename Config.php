@@ -23,27 +23,6 @@ class Config extends Collection {
     }
 
     /**
-     * Interpolates the internal config with itself.
-     * For a deeper explanation, have a look at Tale\StringUtils::interpolateArray
-     *
-     * This method mutates the config array. If you want to keep both versions, use the "clone" keyword
-     *
-     * @see Tale\StringUtils::interpolateArray
-     *
-     * @return $this The current config object with the strings interpolated
-     */
-    public function interpolate() {
-
-        $items = $this->getItems();
-        StringUtils::interpolateArray( $items );
-
-        if( $this->isMutable() )
-            return $this->setItems( $items );
-
-        return new static( $items );
-    }
-
-    /**
      * Loads a config from a given file name
      *
      * This method only handles JSON-files right now!

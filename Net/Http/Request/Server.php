@@ -4,7 +4,7 @@ namespace Tale\Net\Http\Request;
 
 use Tale\Net\Http\Request,
 	Tale\Net\Http\Body,
-	Tale\StringUtils,
+	Tale\StringUtil,
 	Tale\Net\Url,
 	Tale\Net\Ip\EndPoint,
 	Tale\Net\Ip\Address,
@@ -31,19 +31,19 @@ class Server extends Request {
 
 			if( strncmp( $name, 'HTTP_', 5 ) === 0 ) {
 
-				$name = StringUtils::dasherize( StringUtils::humanize( strtolower( substr( $name, 5 ) ) ) );
+				$name = StringUtil::dasherize( StringUtil::humanize( strtolower( substr( $name, 5 ) ) ) );
 				$this->setHeader( $name, $value );
 				continue;
 			}
 
-			$this->_args[ StringUtils::variablize( strtolower( $name ) ) ] = $value;
+			$this->_args[ StringUtil::variablize( strtolower( $name ) ) ] = $value;
 		}
 		ksort( $this->_args );
 
 		//Message/Request stuff
 		if( $this->hasArg( 'serverProtocol' ) ) {
 
-			$parts = StringUtils::map( $this->getArg( 'serverProtocol' ), '/', [ 'proto', 'version' ] );
+			$parts = StringUtil::map( $this->getArg( 'serverProtocol' ), '/', [ 'proto', 'version' ] );
 
 			$this->setProtocol( $parts[ 'proto' ] );
 			$this->setProtocolVersion( $parts[ 'version' ] );

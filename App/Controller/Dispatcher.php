@@ -6,7 +6,7 @@ use Tale\ClassLoader;
 use Tale\Config;
 use Tale\Factory;
 use Tale\Dispatcher as TaleDispatcher;
-use Tale\StringUtils;
+use Tale\StringUtil;
 
 class Dispatcher {
 

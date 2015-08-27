@@ -1,4 +1,19 @@
 <?php
+/**
+ * Tale\StringUtil - The Tale Framework
+ *
+ * @version 1.0
+ * @state Beta
+ * @author Torben Köhn <t.koehn@outlook.com>
+ *
+ * This software is distributed under the MIT license.
+ * A copy of the license has been distributed with this software.
+ * If this is not the case, you can read the license text here:
+ * http://licenses.talesoft.io/2015/MIT.txt
+ *
+ * Please do not remove this comment block. Thank you.
+ */
+
 
 namespace Tale;
 
@@ -7,14 +22,14 @@ use Exception;
 /**
  * Static string utility class
  *
- * First argument should consistently be a string
+ * Provides many useful utilities to work with strings and ruby-style string inflections
+ * (plural, singular, casing, splitting and similar inflections)
  *
- * @version 1.0
- * @featureState Stable
+ * First argument should consistently be a string
  *
  * @package Tale
  */
-class StringUtils {
+class StringUtil {
 
     /**
      * Array of uncountable english words
@@ -434,6 +449,11 @@ class StringUtils {
     ];
 
     /**
+     * The constructor is blocked for a Util, we don't want instances of this class
+     */
+    private function __construct() {}
+
+    /**
      * Returns the plural representation of a singular string
      * e.g. car => cars, house => houses, user-group => user-groups
      *
@@ -822,38 +842,8 @@ class StringUtils {
 
         return preg_replace_callback( '/\{\{([^\}]+)\}\}/i', function( $m ) use( $source, $defaultValue, $delimeter ) {
 
-            return StringUtils::resolve( $m[ 1 ], $source, $defaultValue, $delimeter );
+            return StringUtil::resolve( $m[ 1 ], $source, $defaultValue, $delimeter );
         }, $string );
-    }
-
-    /**
-     * Interpolates a multi-dimensional array with another array recursively
-     *
-     * If no source is given, you get a live interpolation where you can directly interpolate
-     * variables that have just been interpolated before
-     *
-     * This is mostly used for option arrays, e.g. config-files
-     *
-     * @param array      $array         The array to interpolate (Passed by reference)
-     * @param array|null $source        The source array for variables. If none given, the input array is taken
-     * @param null       $defaultValue  The default value for indices that couldnt be resolved
-     * @param string     $delimeter     The delimeter used for multi-dimension access (Default: Dot (.))
-     */
-    public static function interpolateArray( array &$array, array &$source = null, $defaultValue = null, $delimeter = null ) {
-
-        //The source is also a reference to keep the source updated with interpolations at all times
-        if( !$source )
-            $source = &$array;
-
-        foreach( $array as $key => &$val ) {
-
-            if( is_array( $val ) )
-                self::interpolateArray( $val, $source, $defaultValue, $delimeter );
-            else if( is_string( $val ) ) {
-                
-                $array[ $key ] = self::interpolate( $val, $source, $defaultValue, $delimeter );
-            }
-        }
     }
 
     /**
@@ -875,7 +865,7 @@ class StringUtils {
      * $url = "some-controller/some-action/some-id";
      *
      * Using map you can simply do:
-     * $args = StringUtils::map( $url, '/', [ 'controller' => 'index', 'action' => 'index', 'id' ] );
+     * $args = StringUtil::map( $url, '/', [ 'controller' => 'index', 'action' => 'index', 'id' ] );
      *
      * $args will have the following value:
      * $args === [
@@ -913,7 +903,7 @@ class StringUtils {
     /**
      * The same as static::map(), but it works from the the end to the start of the string
      *
-     * @see StringUtils::map
+     * @see StringUtil::map
      *
      * @param string    $string     The delimeted string to operator on
      * @param string    $delimeter  The delimeter to split the string by

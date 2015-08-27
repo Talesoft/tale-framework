@@ -2,7 +2,7 @@
 
 namespace Tale\Net;
 
-use Tale\StringUtils;
+use Tale\StringUtil;
 
 class Credential {
 
@@ -52,7 +52,7 @@ class Credential {
 
     public static function fromString( $string ) {
 
-        $parts = StringUtils::mapReverse( $string, ':', [ 'password', 'userName' ] );
+        $parts = StringUtil::mapReverse( $string, ':', [ 'password', 'userName' ] );
 
         return new static( $parts[ 'userName' ], $parts[ 'password' ] );
     }

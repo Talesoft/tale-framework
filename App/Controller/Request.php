@@ -2,7 +2,7 @@
 
 namespace Tale\App\Controller;
 
-use Tale\StringUtils;
+use Tale\StringUtil;
 
 class Request extends Message {
 
@@ -14,8 +14,8 @@ class Request extends Message {
         parent::__construct( $format );
 
         //Sanitize names for consistent use
-        $this->_controller = implode( '.', array_map( 'Tale\\StringUtils::canonicalize', explode( '.', $controller ) ) );
-        $this->_action = StringUtils::canonicalize( $action );
+        $this->_controller = implode( '.', array_map( 'Tale\\StringUtil::canonicalize', explode( '.', $controller ) ) );
+        $this->_action = StringUtil::canonicalize( $action );
         $this->_args = $args ? $args : [];
     }
 

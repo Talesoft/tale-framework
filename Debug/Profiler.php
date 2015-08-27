@@ -4,7 +4,7 @@ namespace Tale\Debug;
 
 use Tale\Debug\Profiler\Record;
 use Tale\Dom\Html\Manipulator;
-use Tale\StringUtils;
+use Tale\StringUtil;
 
 /**
  * Class Profiler
@@ -145,7 +145,7 @@ class Profiler {
 
                 $tr->append( 'td' )
                         ->append( 'label[title="'.$time.' ms"]' )
-                            ->setText( StringUtils::timify( $time ) );
+                            ->setText( StringUtil::timify( $time ) );
             }
 
             foreach( [ 
@@ -160,7 +160,7 @@ class Profiler {
             ] as $bytes )
                 $tr->append( 'td' )
                         ->append( 'label[title="'.$bytes.' Byte"]' )
-                            ->setText( StringUtils::bytify( $bytes ) );
+                            ->setText( StringUtil::bytify( $bytes ) );
 
         }
 

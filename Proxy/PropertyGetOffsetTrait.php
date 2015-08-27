@@ -2,7 +2,7 @@
 
 namespace Tale\Proxy;
 
-trait OffsetGetTrait {
+trait PropertyGetOffsetTrait {
 
     abstract public function &getOffsetProxyTarget();
 

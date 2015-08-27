@@ -38,7 +38,7 @@ use Tale\Proxy;
  * @package Tale
  */
 class App extends Config\Container {
-    use Proxy\OffsetGetTrait;
+    use Proxy\PropertyGetOffsetTrait;
 
     /**
      * The path to the application directory
@@ -83,7 +83,6 @@ class App extends Config\Container {
 
         $this->_featureFactory = new Factory(
             'Tale\\App\\FeatureBase', [
-            'config'      => 'Tale\\App\\Feature\\Config',
             'library'     => 'Tale\\App\\Feature\\Library',
             'cache'       => 'Tale\\App\\Feature\\Cache',
             'data'        => 'Tale\\App\\Feature\\Data',
@@ -125,7 +124,7 @@ class App extends Config\Container {
 
             foreach( $config->phpOptions as $option => $value ) {
 
-                $option = StringUtils::tableize( $option, '.' );
+                $option = StringUtil::tableize( $option, '.' );
                 ini_set( $option, $value );
             }
         }
@@ -229,7 +228,7 @@ class App extends Config\Container {
 
             //Checks if the feature is still initializing (e.g. if the feature-init() function calls "loadConfig" or addFeature on itself
             if( !( $this->_features[ $name ] instanceof App\FeatureBase ) )
-                return;
+                return $this;
 
             //Feature was already added, we just add the new config (if needed)
             if( $options ) {
@@ -245,6 +244,8 @@ class App extends Config\Container {
             return $this;
         }
 
+        //We set the feature to true for the detection above to return true if you call addFeature/loadConfig or something
+        //similar INSIDE the feature (constructor or init()-method)
         $this->_features[ $name ] = true;
 
         //Create the actual instance
@@ -273,8 +274,12 @@ class App extends Config\Container {
 
     public function run() {
 
-        foreach( $this->_features as $feature )
+        var_dump( array_keys( $this->_features ) );
+
+        foreach( $this->_features as $name => $feature ) {
+            var_dump( "RUN $name" );
             $feature->run();
+        }
 
         return $this;
     }

@@ -2,8 +2,8 @@
 
 namespace Tale\Proxy;
 
-trait OffsetSetTrait {
-    use OffsetGetTrait;
+trait PropertySetOffsetTrait {
+    use PropertyGetOffsetTrait;
 
     public function __unset( $name ) {
 

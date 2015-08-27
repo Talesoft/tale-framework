@@ -62,7 +62,7 @@ class Collection implements IteratorAggregate, Countable, ArrayAccess, Serializa
         return isset( $this->_items[ $key ] );
     }
 
-    public function getItem( $key ) {
+    public function &getItem( $key ) {
 
         return $this->_items[ $key ];
     }
@@ -110,6 +110,30 @@ class Collection implements IteratorAggregate, Countable, ArrayAccess, Serializa
         return new static( $result, $this->_flags );
     }
 
+    /**
+     * Interpolates a multi-dimensional array with another array recursively
+     *
+     * If no source is given, you get a live interpolation where you can directly interpolate
+     * variables that have just been interpolated before
+     *
+     * This is mostly used for option arrays, e.g. config-files
+     *
+     * @param array|null $source        The source array for variables. If none given, the input array is taken
+     * @param null       $defaultValue  The default value for indices that couldnt be resolved
+     * @param string     $delimeter     The delimeter used for multi-dimension access (Default: Dot (.))
+     *
+     * @return Collection
+     */
+    public function interpolate( array &$source = null, $defaultValue = null, $delimeter = null ) {
+
+        if( !$this->isMutable() )
+            return new static( ArrayUtil::interpolate( $this->_items, $source, $defaultValue, $delimeter ) );
+
+        ArrayUtil::interpolateMutable( $this->_items, $source, $defaultValue, $delimeter );
+
+        return $this;
+    }
+
     public function getIterator() {
 
         $keys = array_keys( $this->_items );
@@ -128,7 +152,7 @@ class Collection implements IteratorAggregate, Countable, ArrayAccess, Serializa
         return $this->hasItem( $offset );
     }
 
-    public function offsetGet( $offset ) {
+    public function &offsetGet( $offset ) {
 
         return $this->getItem( $offset );
     }
@@ -159,7 +183,7 @@ class Collection implements IteratorAggregate, Countable, ArrayAccess, Serializa
         return count( $this->_items );
     }
 
-    function __get( $name ) {
+    function &__get( $name ) {
 
         if( !$this->hasPropertyAccess() )
             throw new \Exception( "Failed to get property $name: Property not found" );

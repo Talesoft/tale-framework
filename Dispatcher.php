@@ -55,7 +55,7 @@ class Dispatcher {
 
         return $ns.sprintf( $this->_classNamePattern, implode( '\\', array_map( function( $name ) {
 
-            return StringUtils::camelize( $name );
+            return StringUtil::camelize( $name );
         }, explode( '.', $this->_factory->resolveClassName( $className ) ) ) ) );
     }
 
@@ -64,8 +64,8 @@ class Dispatcher {
         return sprintf(
             $this->_methodNamePattern,
             strpos( $this->_methodNamePattern, '%s' ) === 0
-                ? StringUtils::variablize( $methodName )
-                : StringUtils::camelize( $methodName )
+                ? StringUtil::variablize( $methodName )
+                : StringUtil::camelize( $methodName )
         );
     }
 
