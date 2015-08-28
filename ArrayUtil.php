@@ -38,8 +38,6 @@ class ArrayUtil {
         if( !$source )
             $source = &$array;
 
-        var_dump( 'IPOL', $array );
-
         foreach( $array as $key => &$val ) {
 
             if( is_array( $val ) )

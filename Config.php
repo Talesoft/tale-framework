@@ -18,8 +18,15 @@ class Config extends Collection {
      * @param array|null $options The initial configuration (e.g. default values)
      */
     public function __construct( array $options = null, $flags = null ) {
-        parent::__construct( $options, ( $flags ? $flags : self::FLAG_MUTABLE ) | self::FLAG_PROPERTY_ACCESS );
+        parent::__construct( $options, ( $flags ? $flags : 0 ) | self::FLAG_MUTABLE | self::FLAG_PROPERTY_ACCESS );
+    }
 
+    public function setDefaults( array $defaults, $recursive = false ) {
+
+        $this->mergeArray( $defaults, $recursive, true );
+        $this->interpolate();
+
+        return $this;
     }
 
     /**

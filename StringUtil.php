@@ -14,7 +14,6 @@
  * Please do not remove this comment block. Thank you.
  */
 
-
 namespace Tale;
 
 use Exception;
@@ -969,7 +968,7 @@ class StringUtil {
      *
      * "Normal" is defined as the following:
      *
-     * The directory separator is normalized to / (Windows can handle it just fine, natively)
+     * If the OS directory separator is /, all \ are converted to / and vice versa
      * Trailing slashes are removed (/directory/ is normalized to /directory)
      * If theres "./" or ".\", it is removed
      *
