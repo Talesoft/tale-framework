@@ -37,22 +37,9 @@ use Tale\Proxy;
  *
  * @package Tale
  */
-class App extends Config\Container {
+class App {
     use Proxy\PropertyGetOffsetTrait;
-
-    /**
-     * The path to the application directory
-     *
-     * @var string
-     */
-    private $_path;
-
-    /**
-     * The path to the config file
-     *
-     * @var string
-     */
-    private $_configPath;
+    use Config\OptionalTrait;
 
     /**
      * The factory for app features
@@ -73,13 +60,9 @@ class App extends Config\Container {
     /**
      * Creates a new App object
      *
-     * @param string $path The path to the application directory
+     * @param array $options
      */
-    public function __construct( $path ) {
-        parent::__construct();
-
-        $this->_path = $path;
-        $this->_configPath = "$path/app.json";
+    public function __construct( array $options = null ) {
 
         $this->_featureFactory = new Factory(
             'Tale\\App\\FeatureBase', [
@@ -91,10 +74,19 @@ class App extends Config\Container {
             'views'       => 'Tale\\App\\Feature\\Views',
             'router'      => 'Tale\\App\\Feature\\Router'
         ] );
-
         $this->_features = [];
 
-        if( !file_exists( $this->_configPath ) )
+        $this->addDefaultOptions( [
+            'path' => './',
+            'manifestName' => 'app.json'
+        ] );
+
+        $this->addOptions( $options );
+
+        $manifestPath = $this->getOption( 'path' ).'/'.$this->getOption( 'manifestName' );
+
+
+        if( !file_exists( $manifestPath ) )
             throw new RuntimeException( "Failed to create app: App config {$this->_configPath} not found" );
 
         $this->setDefaultOptions( [
@@ -113,6 +105,11 @@ class App extends Config\Container {
         ] );
 
         $this->loadConfigFile( $this->_configPath );
+    }
+
+    public function getConfigClassName() {
+
+        return 'Tale\\App\\Manifest';
     }
 
     private function _setPhpOptions() {

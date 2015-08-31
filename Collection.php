@@ -2,11 +2,13 @@
 
 namespace Tale;
 
+use Exception;
 use IteratorAggregate,
     Countable,
     ArrayAccess,
     Serializable,
     Traversable;
+use Tale\Dom\Xml\Element as XmlElement;
 
 class Collection implements IteratorAggregate, Countable, ArrayAccess, Serializable {
 
@@ -63,6 +65,8 @@ class Collection implements IteratorAggregate, Countable, ArrayAccess, Serializa
     }
 
     public function &getItem( $key ) {
+        //Return as a reference allows for $this->getItem( 'array' )[] = 'Some new Item'
+        //as well as $this->array[] = 'Some new Item'
 
         return $this->_items[ $key ];
     }
@@ -70,7 +74,7 @@ class Collection implements IteratorAggregate, Countable, ArrayAccess, Serializa
     public function setItem( $key, $value ) {
 
         if( $this->isReadOnly() )
-            throw new \Exception( "Failed to access key $key: ArrayObject is read-only" );
+            throw new Exception( "Failed to access key $key: ArrayObject is read-only" );
 
         if( $key === null )
             $this->_items[] = $value;
@@ -83,7 +87,7 @@ class Collection implements IteratorAggregate, Countable, ArrayAccess, Serializa
     public function removeItem( $key ) {
 
         if( $this->isReadOnly() )
-            throw new \Exception( "Failed to access key $key: ArrayObject is read-only" );
+            throw new Exception( "Failed to access key $key: ArrayObject is read-only" );
 
         unset( $this->_items[ $key ] );
 
@@ -141,10 +145,17 @@ class Collection implements IteratorAggregate, Countable, ArrayAccess, Serializa
             yield $key => $this->getItem( $key );
     }
 
-    public function getCallbackIterator( callable $callback ) {
+    public function getMapIterator( callable $callback ) {
 
         foreach( $this as $key => $value )
             yield $key => call_user_func( $callback, $value, $key );
+    }
+
+    public function getFilterIterator( callable $filter ) {
+
+        foreach( $this as $key => $value )
+            if( call_user_func( $filter, $value, $key ) )
+                yield $key => $value;
     }
 
     public function offsetExists( $offset ) {
@@ -183,35 +194,70 @@ class Collection implements IteratorAggregate, Countable, ArrayAccess, Serializa
         return count( $this->_items );
     }
 
-    function &__get( $name ) {
+    public function &__get( $name ) {
 
         if( !$this->hasPropertyAccess() )
-            throw new \Exception( "Failed to get property $name: Property not found" );
+            throw new Exception( "Failed to get property $name: Property not found" );
 
         return $this->getItem( $name );
     }
 
-    function __set( $name, $value ) {
+    public function __set( $name, $value ) {
 
         if( !$this->hasPropertyAccess() )
-            throw new \Exception( "Failed to set property $name: Property not found" );
+            throw new Exception( "Failed to set property $name: Property not found" );
 
         $this->setItem( $name, $value );
     }
 
-    function __isset( $name ) {
+    public function __isset( $name ) {
 
         if( !$this->hasPropertyAccess() )
-            throw new \Exception( "Failed to check property $name: Property not found" );
+            throw new Exception( "Failed to check property $name: Property not found" );
 
         return $this->hasItem( $name );
     }
 
-    function __unset( $name ) {
+    public function __unset( $name ) {
 
         if( !$this->hasPropertyAccess() )
-            throw new \Exception( "Failed to unset property $name: Property not found" );
+            throw new Exception( "Failed to unset property $name: Property not found" );
 
         $this->removeItem( $name );
+    }
+
+    /**
+     * Loads a collection from a given file name
+     *
+     * json => json_decode
+     * php => include
+     * yml? => Tale\Yaml\Parser
+     * xml => Tale\Dom\Xml\Parser
+     *
+     * @param string $path The path of the collection file to load
+     * @return static The config object generated from the passed file
+     */
+    public static function fromFile( $path ) {
+
+        $ext = pathinfo( $path, \PATHINFO_EXTENSION );
+
+        $items = null;
+        switch( $ext ) {
+            default:
+            case 'php':
+
+                $items = include( $path );
+                break;
+            case 'json':
+
+                $items = json_decode( file_get_contents( $path ), true );
+                break;
+            case 'xml':
+
+                $items = XmlElement::fromFile( $path )->getArray();
+                break;
+        }
+
+        return new static( $items );
     }
 }

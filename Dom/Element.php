@@ -238,14 +238,14 @@ class Element extends Node {
         return iterator_to_array( $this->find( $selectors ) );
     }
 
-    //TODO: I don't know if getString, toString or something is cooler. Let's think about it
-    //TODO: Also, maybe this would be better placed in Leaf?
     public function getString( array $options = null ) {
 
         $writerClassName = static::getWriterClassName();
         $writer = new $writerClassName( $options );
         return $writer->writeLeaf( $this );
     }
+
+    //TODO: getArray()
 
     public static function fromSelector( $selector, Node $parent = null, array $children = null ) {
 
@@ -269,6 +269,11 @@ class Element extends Node {
         $parserClassName = static::getParserClassName();
         $parser = new $parserClassName( $options );
         return $parser->parse( $string );
+    }
+
+    public static function fromFile( $path, array $options = null ) {
+
+        return static::fromString( file_get_contents( $path ), $options );
     }
 
     public static function getWriterClassName() {

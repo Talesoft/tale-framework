@@ -18,35 +18,16 @@ class Config extends Collection {
      * @param array|null $options The initial configuration (e.g. default values)
      */
     public function __construct( array $options = null, $flags = null ) {
+        //Config is always mutable and always has property access for consistency reasons
+        //Configs can be read-only though, which still makes them mutable, but you can't simply set single keys
         parent::__construct( $options, ( $flags ? $flags : 0 ) | self::FLAG_MUTABLE | self::FLAG_PROPERTY_ACCESS );
     }
 
     public function setDefaults( array $defaults, $recursive = false ) {
 
-        $this->mergeArray( $defaults, $recursive, true );
-        $this->interpolate();
+        $this->mergeArray( $defaults, $recursive, true )
+             ->interpolate();
 
         return $this;
-    }
-
-    /**
-     * Loads a config from a given file name
-     *
-     * This method only handles JSON-files right now!
-     *
-     * @todo Parse the file extension and use proper imports
-     *
-     * json => json_decode
-     * php => include
-     * yml? => Tale\Yaml\Parser
-     * xml => Tale\Dom\Xml\Parser
-     *
-     * @param string $path The path of the config file to load
-     * @return static The config object generated from the passed file
-     */
-    public static function fromFile( $path ) {
-
-        $json = file_get_contents( $path );
-        return new static( json_decode( $json, true ) );
     }
 }
