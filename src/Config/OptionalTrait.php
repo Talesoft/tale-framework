@@ -5,11 +5,13 @@ namespace Tale\Config;
 use Tale\Collection;
 use Tale\Config;
 
-trait OptionalTrait {
+trait OptionalTrait
+{
 
     private $_config;
 
-    public function getConfigClassName() {
+    public function getConfigClassName()
+    {
 
         return 'Tale\\Config';
     }
@@ -17,9 +19,10 @@ trait OptionalTrait {
     /**
      * @return Config
      */
-    public function getConfig() {
+    public function getConfig()
+    {
 
-        if( !isset( $this->_config ) ) {
+        if (!isset($this->_config)) {
 
             $className = $this->getConfigClassName();
             $this->_config = new $className();
@@ -28,34 +31,43 @@ trait OptionalTrait {
         return $this->_config;
     }
 
-    public function addOptions( array $options, $recursive = false ) {
+    public function mergeOptions(array $options, $recursive = false, $reverse = false)
+    {
 
-        $this->getConfig()->mergeArray( $options, $recursive )->interpolate();
-
-        return $this;
-    }
-
-    public function addOptionFile( $path, $recursive = false ) {
-
-        $this->getConfig()->merge( Collection::fromFile( $path ), $recursive );
+        $this->getConfig()->mergeArray($options, $recursive, $reverse)->interpolate();
 
         return $this;
     }
 
-    public function addDefaultOptions( array $options, $recursive = false ) {
+    public function appendOptions(array $options, $recursive = false)
+    {
 
-        $this->getConfig()->mergeArray( $options, $recursive, true );
+        return $this->mergeOptions($options, $recursive);
+    }
+
+    public function prependOptions(array $options, $recursive = false)
+    {
+
+        return $this->mergeOptions($options, $recursive);
+    }
+
+    public function mergeOptionFile($path, $recursive = false)
+    {
+
+        $this->getConfig()->merge(Collection::fromFile($path), $recursive);
 
         return $this;
     }
 
-    public function hasOption( $key ) {
+    public function hasOption($key)
+    {
 
-        return $this->getConfig()->hasItem( $key );
+        return $this->getConfig()->hasItem($key);
     }
 
-    public function getOption( $key ) {
+    public function getOption($key)
+    {
 
-        return $this->getConfig()->getItem( $key );
+        return $this->getConfig()->getItem($key);
     }
 }

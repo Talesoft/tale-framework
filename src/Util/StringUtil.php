@@ -1,10 +1,10 @@
 <?php
 /**
- * Tale\StringUtil - The Tale Framework
+ * StringUtil - The Tale Framework
  *
  * @version 1.0
- * @state Beta
- * @author Torben Köhn <t.koehn@outlook.com>
+ * @stability Stable
+ * @author Torben Köhn <tk@talesoft.io>
  *
  * This software is distributed under the MIT license.
  * A copy of the license has been distributed with this software.
@@ -14,9 +14,10 @@
  * Please do not remove this comment block. Thank you.
  */
 
-namespace Tale;
+namespace Tale\Util;
 
 use Exception;
+use Tale\Util;
 
 /**
  * Static string utility class
@@ -26,9 +27,9 @@ use Exception;
  *
  * First argument should consistently be a string
  *
- * @package Tale
+ * @package Tale\Util
  */
-class StringUtil
+class StringUtil extends Util
 {
 
     /**

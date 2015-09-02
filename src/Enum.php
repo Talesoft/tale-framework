@@ -10,16 +10,16 @@ use ReflectionClass,
  * Provides a few utilities to work with such enum-style classes easier
  *
  * @version 1.0
- * @featureState Stable
+ * @stability Stable
  *
  * @package Tale
  */
 class Enum {
 
     /**
-     * The constructor is blocked, use this on static-only classes only
+     * The constructor is blocked, we don't want enum instances
      */
-    private function __construct() {}
+    private final function __construct() {}
 
     /**
      * Returns the value of an enum constant
@@ -41,7 +41,7 @@ class Enum {
      */
     public static function getValues() {
 
-        //TODO: Caching (Not with a static property, but with a static property array indexed by get_called_class())
+        //It doesn't matter. ReflectionClass is cached internally.
         $ref = new ReflectionClass( get_called_class() );
         return $ref->getConstants();
     }

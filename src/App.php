@@ -5,25 +5,6 @@ namespace Tale;
 use RuntimeException;
 use Tale\Proxy;
 
-/*
- * CONS: Apps should be queuable and there should be inter-app-communication
- *       Imagine this:
- *
- * $site = new App( './apps/site' );
- * $blog = new App( './apps/blog' );
- * $shop = new App( './apps/shop' );
- *
- * And then either:
- * $shop->run( $blog->run( $site->run() ) );
- *
- * or rather directly some kind of AppQueue
- *
- * $queue = new App\Queue( [ './apps/site', './apps/blog', './apps/shop' ] );
- * $queue->run();
- *
- * Apps should also follow a Request->Response model (Think about this)
- */
-
 /**
  * Represents an application that can be run from any point in userland code
  *
@@ -33,12 +14,12 @@ use Tale\Proxy;
  * As soon as you call ->run() on the app, ->run() is called on all features
  *
  * @version 1.0
- * @featureState Development
+ * @stability Development
  *
  * @package Tale
  */
-class App {
-    use Proxy\PropertyGetOffsetTrait;
+class App
+{
     use Config\OptionalTrait;
 
     /**
@@ -56,13 +37,14 @@ class App {
      * @var App\FeatureBase[]
      */
     private $_features;
-  
+
     /**
      * Creates a new App object
      *
      * @param array $options
      */
-    public function __construct( array $options = null ) {
+    public function __construct(array $options = null)
+    {
 
         $this->_featureFactory = new Factory(
             'Tale\\App\\FeatureBase', [
@@ -73,79 +55,83 @@ class App {
             'themes'      => 'Tale\\App\\Feature\\Themes',
             'views'       => 'Tale\\App\\Feature\\Views',
             'router'      => 'Tale\\App\\Feature\\Router'
-        ] );
+        ]);
         $this->_features = [];
 
-        $this->addDefaultOptions( [
-            'path' => './',
+        $this->addDefaultOptions([
+            'path'         => './',
             'manifestName' => 'app.json'
-        ] );
+        ]);
 
-        $this->addOptions( $options );
+        $this->addOptions($options);
 
-        $manifestPath = $this->getOption( 'path' ).'/'.$this->getOption( 'manifestName' );
+        $manifestPath = $this->getOption('path').'/'.$this->getOption('manifestName');
 
 
-        if( !file_exists( $manifestPath ) )
-            throw new RuntimeException( "Failed to create app: App config {$this->_configPath} not found" );
+        if (!file_exists($manifestPath))
+            throw new RuntimeException("Failed to create app: App config {$this->_configPath} not found");
 
-        $this->setDefaultOptions( [
-             //The key "path" leading to the app path is fed first to the config. This way config strings can
-             //interpolate the config path via {{path}} and use it for own paths
-             'path' => $this->_path,
+        $this->setDefaultOptions([
+            //The key "path" leading to the app path is fed first to the config. This way config strings can
+            //interpolate the config path via {{path}} and use it for own paths
+            'path'        => $this->_path,
 
-             //We also need some pre-defined values for PHP Options to avoid unnecessary CONST parsing
-             'errorLevels' => [
-                 'all' => E_ALL | E_STRICT,
-                 'errors' => E_NOTICE | E_WARNING | E_ERROR,
-                 'warnings' => E_NOTICE | E_WARNING,
-                 'notices' => E_NOTICE,
-                 'none' => 0
-             ]
-        ] );
+            //We also need some pre-defined values for PHP Options to avoid unnecessary CONST parsing
+            'errorLevels' => [
+                'all'      => E_ALL | E_STRICT,
+                'errors'   => E_NOTICE | E_WARNING | E_ERROR,
+                'warnings' => E_NOTICE | E_WARNING,
+                'notices'  => E_NOTICE,
+                'none'     => 0
+            ]
+        ]);
 
-        $this->loadConfigFile( $this->_configPath );
+        $this->loadConfigFile($this->_configPath);
     }
 
-    public function getConfigClassName() {
+    public function getConfigClassName()
+    {
 
         return 'Tale\\App\\Manifest';
     }
 
-    private function _setPhpOptions() {
+    private function _setPhpOptions()
+    {
 
         //Iterate the whole config and set all options, regardless if we set some already
         $config = $this->getConfig();
 
-        if( isset( $config->phpOptions ) ) {
+        if (isset($config->phpOptions)) {
 
-            foreach( $config->phpOptions as $option => $value ) {
+            foreach ($config->phpOptions as $option => $value) {
 
-                $option = StringUtil::tableize( $option, '.' );
-                ini_set( $option, $value );
+                $option = StringUtil::tableize($option, '.');
+                ini_set($option, $value);
             }
         }
     }
 
-    private function _registerFeatureAliases() {
+    private function _registerFeatureAliases()
+    {
 
         $config = $this->getConfig();
 
-        if( isset( $config->featureAliases ) ) {
+        if (isset($config->featureAliases)) {
 
-            foreach( $config->featureAliases as $alias => $className )
-                $this->_featureFactory->registerAlias( $alias, $className );
+            foreach ($config->featureAliases as $alias => $className)
+                $this->_featureFactory->registerAlias($alias, $className);
         }
     }
 
-    private function _registerFeatures() {
+    private function _registerFeatures()
+    {
 
         $config = $this->getConfig();
 
-        if( isset( $config->features ) ) {
+        if (isset($config->features)) {
 
-            foreach( $config->features as $name => $options )
-                $this->addFeature( $name, $options );
+            foreach ($config->features as $name => $options)
+                $this->addFeature($name, $options);
         }
     }
 
@@ -154,13 +140,15 @@ class App {
      *
      * @return string
      */
-    public function getPath() {
+    public function getPath()
+    {
 
         return $this->_path;
     }
 
-    public function loadConfigFile( $path ) {
-        parent::loadConfigFile( $path );
+    public function loadConfigFile($path)
+    {
+        parent::loadConfigFile($path);
 
         $this->_setPhpOptions();
         $this->_registerFeatureAliases();
@@ -174,7 +162,8 @@ class App {
      *
      * @return string
      */
-    public function getConfigPath() {
+    public function getConfigPath()
+    {
 
         return $this->_configPath;
     }
@@ -193,7 +182,8 @@ class App {
      *
      * @return Factory
      */
-    public function getFeatureFactory() {
+    public function getFeatureFactory()
+    {
 
         return $this->_featureFactory;
     }
@@ -203,7 +193,8 @@ class App {
      *
      * @return App\FeatureBase[] An array of App\FeatureBase-objects
      */
-    public function getFeatures() {
+    public function getFeatures()
+    {
 
         return $this->_features;
     }
@@ -219,23 +210,24 @@ class App {
      *
      * @return $this
      */
-    public function addFeature( $name, array $options = null ) {
+    public function addFeature($name, array $options = null)
+    {
 
-        if( isset( $this->_features[ $name ] ) ) {
+        if (isset($this->_features[$name])) {
 
             //Checks if the feature is still initializing (e.g. if the feature-init() function calls "loadConfig" or addFeature on itself
-            if( !( $this->_features[ $name ] instanceof App\FeatureBase ) )
+            if (!($this->_features[$name] instanceof App\FeatureBase))
                 return $this;
 
             //Feature was already added, we just add the new config (if needed)
-            if( $options ) {
+            if ($options) {
 
-                $cfg = $this->_features[ $name ]->getConfig();
+                $cfg = $this->_features[$name]->getConfig();
 
-                if( !$cfg->isMutable() )
-                    throw new \RuntimeException( "Failed to merge config for $name feature: Config object is not mutable" );
+                if (!$cfg->isMutable())
+                    throw new \RuntimeException("Failed to merge config for $name feature: Config object is not mutable");
 
-                $cfg->mergeArray( $options, true, true );
+                $cfg->mergeArray($options, true, true);
             }
 
             return $this;
@@ -243,13 +235,13 @@ class App {
 
         //We set the feature to true for the detection above to return true if you call addFeature/loadConfig or something
         //similar INSIDE the feature (constructor or init()-method)
-        $this->_features[ $name ] = true;
+        $this->_features[$name] = true;
 
         //Create the actual instance
-        $this->_features[ $name ] = $this->_featureFactory->createInstance( $name, [
+        $this->_features[$name] = $this->_featureFactory->createInstance($name, [
             $this,
             $options
-        ] );
+        ]);
 
         return $this;
     }
@@ -261,27 +253,28 @@ class App {
      *
      * @return $this
      */
-    public function addFeatures( array $features ) {
+    public function addFeatures(array $features)
+    {
 
-        foreach( $features as $name => $options )
-            $this->addFeature( $name, $options );
+        foreach ($features as $name => $options)
+            $this->addFeature($name, $options);
 
         return $this;
     }
 
-    public function run() {
+    public function run()
+    {
 
-        var_dump( array_keys( $this->_features ) );
+        foreach ($this->_features as $name => $feature) {
 
-        foreach( $this->_features as $name => $feature ) {
-            var_dump( "RUN $name" );
             $feature->run();
         }
 
         return $this;
     }
 
-    public function getOffsetProxyTarget() {
+    public function getOffsetProxyTarget()
+    {
 
         return $this->_features;
     }

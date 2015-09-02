@@ -14,7 +14,8 @@ namespace Tale;
  *
  * @package Tale
  */
-class Factory {
+class Factory
+{
 
     /**
      * The FQCN of the base class
@@ -34,9 +35,10 @@ class Factory {
      * Creates a new factory instance
      *
      * @param string     $baseClassName The base class child-classes should extend from
-     * @param array|null $aliases The aliases that can be used in favor of the FQCN (associative)
+     * @param array|null $aliases       The aliases that can be used in favor of the FQCN (associative)
      */
-    public function __construct( $baseClassName = null, array $aliases = null ) {
+    public function __construct($baseClassName = null, array $aliases = null)
+    {
 
         $this->_baseClassName = $baseClassName ? $baseClassName : null;
         $this->_aliases = $aliases ? $aliases : [];
@@ -47,7 +49,8 @@ class Factory {
      *
      * @return string
      */
-    public function getBaseClassName() {
+    public function getBaseClassName()
+    {
 
         return $this->_baseClassName;
     }
@@ -57,7 +60,8 @@ class Factory {
      *
      * @return array
      */
-    public function getAliases() {
+    public function getAliases()
+    {
 
         return $this->_aliases;
     }
@@ -70,9 +74,10 @@ class Factory {
      *
      * @return $this
      */
-    public function registerAlias( $alias, $className ) {
+    public function registerAlias($alias, $className)
+    {
 
-        $this->_aliases[ $alias ] = $className;
+        $this->_aliases[$alias] = $className;
 
         return $this;
     }
@@ -85,10 +90,11 @@ class Factory {
      *
      * @return $this
      */
-    public function registerAliases( array $aliases ) {
+    public function registerAliases(array $aliases)
+    {
 
-        foreach( $aliases as $alias => $className )
-            $this->registerAlias( $alias, $className );
+        foreach ($aliases as $alias => $className)
+            $this->registerAlias($alias, $className);
 
         return $this;
     }
@@ -103,10 +109,11 @@ class Factory {
      *
      * @return string The usable FQCN of the class
      */
-    public function resolveClassName( $className ) {
+    public function resolveClassName($className)
+    {
 
-        if( isset( $this->_aliases[ $className ] ) )
-            $className = $this->_aliases[ $className ];
+        if (isset($this->_aliases[$className]))
+            $className = $this->_aliases[$className];
 
         return $className;
     }
@@ -126,18 +133,20 @@ class Factory {
      *
      * @return object The newly created child-class instance
      */
-    public function createInstance( $className, array $args = null ) {
+    public function createInstance($className, array $args = null)
+    {
 
         $args = $args ? $args : [];
-        $className = $this->resolveClassName( $className );
+        $className = $this->resolveClassName($className);
 
-        if( !class_exists( $className ) || ( $this->_baseClassName && !is_subclass_of( $className, $this->_baseClassName ) ) )
+        if (!class_exists($className) || ($this->_baseClassName && !is_subclass_of($className, $this->_baseClassName)))
             throw new \RuntimeException(
                 "Failed to create factory instance: "
-                . "$className does not exist or is not a valid {$this->_baseClassName}"
+                ."$className does not exist or is not a valid {$this->_baseClassName}"
             );
 
-        $ref = new \ReflectionClass( $className );
-        return $ref->newInstanceArgs( $args );
+        $ref = new \ReflectionClass($className);
+
+        return $ref->newInstanceArgs($args);
     }
 }
