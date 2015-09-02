@@ -4,6 +4,7 @@ namespace Tale\Config;
 
 use Tale\Collection;
 use Tale\Config;
+use Tale\Util\ArrayUtil;
 
 trait OptionalTrait
 {
@@ -48,15 +49,27 @@ trait OptionalTrait
     public function prependOptions(array $options, $recursive = false)
     {
 
-        return $this->mergeOptions($options, $recursive);
+        return $this->mergeOptions($options, $recursive, true);
     }
 
-    public function mergeOptionFile($path, $recursive = false)
+    public function mergeOptionFile($path, $recursive = false, $reverse = false)
     {
 
-        $this->getConfig()->merge(Collection::fromFile($path), $recursive);
+        $this->mergeOptions(ArrayUtil::fromFile($path), $recursive, $reverse);
 
         return $this;
+    }
+
+    public function appendOptionFile($path, $recursive = false)
+    {
+
+        return $this->mergeOptionFile($path, $recursive);
+    }
+
+    public function prependOptionFile($path, $recursive = false)
+    {
+
+        return $this->mergeOptionFile($path, $recursive, true);
     }
 
     public function hasOption($key)

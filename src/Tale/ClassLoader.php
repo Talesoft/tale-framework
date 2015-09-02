@@ -8,11 +8,12 @@ namespace Tale;
  * You might just include the file containing this class and get a class-loader up and running easily
  *
  * @version 1.0
- * @featureState Stable
+ * @stability Stable
  *
  * @package Tale
  */
-class ClassLoader {
+class ClassLoader
+{
 
     /**
      * The default file name pattern to match the common PHP standard
@@ -67,20 +68,22 @@ class ClassLoader {
      * @param string|null $nameSpace       The namespace to filter to, null for all namespaces
      * @param string      $fileNamePattern The file name pattern, %s.php by default
      */
-    public function __construct( $path = null, $nameSpace = null, $fileNamePattern = null ) {
+    public function __construct($path = null, $nameSpace = null, $fileNamePattern = null)
+    {
 
         $this->_path = $path;
         $this->_nameSpace = $nameSpace;
         $this->_fileNamePattern = $fileNamePattern ? $fileNamePattern : self::DEFAULT_PATTERN;
-        $this->_handle = [ $this, 'load' ];
+        $this->_handle = [$this, 'load'];
     }
 
     /**
      * Unregisters the auto-loader automatically on object destruction
      */
-    public function __destruct() {
+    public function __destruct()
+    {
 
-        if( $this->_registered )
+        if ($this->_registered)
             $this->unregister();
     }
 
@@ -89,7 +92,8 @@ class ClassLoader {
      *
      * @return string|null
      */
-    public function getPath() {
+    public function getPath()
+    {
 
         return $this->_path;
     }
@@ -102,9 +106,11 @@ class ClassLoader {
      *
      * @return $this
      */
-    public function setPath( $path ) {
+    public function setPath($path)
+    {
 
         $this->_path = $path;
+
         return $this;
     }
 
@@ -113,7 +119,8 @@ class ClassLoader {
      *
      * @return string|null
      */
-    public function getNameSpace() {
+    public function getNameSpace()
+    {
 
         return $this->_nameSpace;
     }
@@ -126,7 +133,8 @@ class ClassLoader {
      *
      * @return $this
      */
-    public function setNameSpace( $nameSpace ) {
+    public function setNameSpace($nameSpace)
+    {
 
         $this->_nameSpace = $nameSpace;
 
@@ -139,7 +147,8 @@ class ClassLoader {
      *
      * @return string
      */
-    public function getFileNamePattern() {
+    public function getFileNamePattern()
+    {
 
         return $this->_fileNamePattern;
     }
@@ -151,7 +160,8 @@ class ClassLoader {
      *
      * @return $this
      */
-    public function setFileNamePattern( $fileNamePattern ) {
+    public function setFileNamePattern($fileNamePattern)
+    {
 
         $this->_fileNamePattern = $fileNamePattern;
 
@@ -163,7 +173,8 @@ class ClassLoader {
      *
      * @return callable
      */
-    public function getHandle() {
+    public function getHandle()
+    {
 
         return $this->_handle;
     }
@@ -174,9 +185,10 @@ class ClassLoader {
      *
      * @return $this
      */
-    public function register() {
+    public function register()
+    {
 
-        spl_autoload_register( $this->_handle );
+        spl_autoload_register($this->_handle);
         $this->_registered = true;
 
         return $this;
@@ -188,9 +200,10 @@ class ClassLoader {
      *
      * @return $this
      */
-    public function unregister() {
+    public function unregister()
+    {
 
-        spl_autoload_unregister( $this->_handle );
+        spl_autoload_unregister($this->_handle);
         $this->_registered = false;
 
         return $this;
@@ -201,7 +214,8 @@ class ClassLoader {
      *
      * @return bool
      */
-    public function isRegistered() {
+    public function isRegistered()
+    {
 
         return $this->_registered;
     }
@@ -218,29 +232,30 @@ class ClassLoader {
      *
      * @return bool Has the class been loaded or not
      */
-    public function load( $className ) {
+    public function load($className)
+    {
 
         $name = $className;
-        if( $this->_nameSpace ) {
+        if ($this->_nameSpace) {
 
-            $ns = rtrim( $this->_nameSpace, '\\' ).'\\';
+            $ns = rtrim($this->_nameSpace, '\\').'\\';
 
-            $nameLen = strlen( $className );
-            $nsLen = strlen( $ns );
+            $nameLen = strlen($className);
+            $nsLen = strlen($ns);
 
-            if( $nameLen < $nsLen || substr( $className, 0, $nsLen ) !== $ns )
+            if ($nameLen < $nsLen || substr($className, 0, $nsLen) !== $ns)
                 return false;
 
-            $name = substr( $name, $nsLen );
+            $name = substr($name, $nsLen);
         }
 
         $ds = \DIRECTORY_SEPARATOR;
         $path = $this->_path ? $this->_path.$ds : '';
-        $path .= str_replace( [ '_', '\\' ], $ds, sprintf( $this->_fileNamePattern, $name ) );
+        $path .= str_replace(['_', '\\'], $ds, sprintf($this->_fileNamePattern, $name));
 
-        if( ( $path = stream_resolve_include_path( $path ) ) !== false )
+        if (($path = stream_resolve_include_path($path)) !== false)
             include $path;
 
-        return class_exists( $className, false ); 
+        return class_exists($className, false);
     }
 }

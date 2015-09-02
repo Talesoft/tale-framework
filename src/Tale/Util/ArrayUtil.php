@@ -17,6 +17,7 @@
 namespace Tale\Util;
 
 use Tale\Util;
+use Tale\Dom\Xml\Element as XmlElement;
 
 class ArrayUtil extends Util
 {
@@ -71,5 +72,54 @@ class ArrayUtil extends Util
         //whereas interpolateMutable will accept it as a reference and work directly on the passed array
         //If you use this version, the return value contains your interpolated array, not the passed array
         return self::interpolateMutable($array, $source, $defaultValue, $delimeter);
+    }
+
+    /**
+     * Loads an array from a given file name
+     *
+     * json => json_decode
+     * php => include
+     * yml? => Tale\Yaml\Parser
+     * xml => Tale\Dom\Xml\Parser
+     *
+     * @param string $path The path of the array file to load
+     *
+     * @throws \Exception
+     *
+     * @return array The array parsed from the file
+     */
+    public static function fromFile($path)
+    {
+
+        $ext = pathinfo($path, \PATHINFO_EXTENSION);
+
+        $items = null;
+        switch ($ext) {
+            default:
+            case 'php':
+
+                $items = include($path);
+                break;
+            case 'json':
+
+                //Special tale flavor?
+                //Allows for //-style comments line-wise
+                $json = implode('', array_filter(array_map('trim', file($path)), function ($line) {
+
+                    return strpos($line, '//') !== 0;
+                }));
+
+                $items = json_decode($json, true);
+                break;
+            case 'xml':
+
+                $items = XmlElement::fromFile($path)->getArray();
+                break;
+        }
+
+        if (!is_array($items))
+            throw new \Exception("Failed to load array from file: $path doesnt contain a valid array");
+
+        return $items;
     }
 }

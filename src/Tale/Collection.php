@@ -8,7 +8,7 @@ use IteratorAggregate,
     ArrayAccess,
     Serializable,
     Traversable;
-use Tale\Dom\Xml\Element as XmlElement;
+use Tale\Util\ArrayUtil;
 
 /**
  * The Tale Frameworks own implementation of PHP's ArrayObject
@@ -294,25 +294,6 @@ class Collection implements IteratorAggregate, Countable, ArrayAccess, Serializa
     public static function fromFile($path)
     {
 
-        $ext = pathinfo($path, \PATHINFO_EXTENSION);
-
-        $items = null;
-        switch ($ext) {
-            default:
-            case 'php':
-
-                $items = include($path);
-                break;
-            case 'json':
-
-                $items = json_decode(file_get_contents($path), true);
-                break;
-            case 'xml':
-
-                $items = XmlElement::fromFile($path)->getArray();
-                break;
-        }
-
-        return new static($items);
+        return ArrayUtil::fromFile($path);
     }
 }

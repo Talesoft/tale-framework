@@ -450,11 +450,6 @@ class StringUtil extends Util
     ];
 
     /**
-     * The constructor is blocked for a Util, we don't want instances of this class
-     */
-    private function __construct() { }
-
-    /**
      * Returns the plural representation of a singular string
      * e.g. car => cars, house => houses, user-group => user-groups
      *

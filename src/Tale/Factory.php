@@ -77,7 +77,7 @@ class Factory
     public function registerAlias($alias, $className)
     {
 
-        $this->_aliases[$alias] = $className;
+        $this->_aliases[$alias] = $this->resolveClassName($className);
 
         return $this;
     }
@@ -115,6 +115,12 @@ class Factory
         if (isset($this->_aliases[$className]))
             $className = $this->_aliases[$className];
 
+        if (!class_exists($className) || ($this->_baseClassName && !is_subclass_of($className, $this->_baseClassName)))
+            throw new \RuntimeException(
+                "Failed to resolve factory classname: "
+                ."$className does not exist or is not a valid {$this->_baseClassName}"
+            );
+
         return $className;
     }
 
@@ -138,12 +144,6 @@ class Factory
 
         $args = $args ? $args : [];
         $className = $this->resolveClassName($className);
-
-        if (!class_exists($className) || ($this->_baseClassName && !is_subclass_of($className, $this->_baseClassName)))
-            throw new \RuntimeException(
-                "Failed to create factory instance: "
-                ."$className does not exist or is not a valid {$this->_baseClassName}"
-            );
 
         $ref = new \ReflectionClass($className);
 

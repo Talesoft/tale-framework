@@ -22,12 +22,4 @@ class Config extends Collection {
         //Configs can be read-only though, which still makes them mutable, but you can't simply set single keys
         parent::__construct( $options, ( $flags ? $flags : 0 ) | self::FLAG_MUTABLE | self::FLAG_PROPERTY_ACCESS );
     }
-
-    public function setDefaults( array $defaults, $recursive = false ) {
-
-        $this->mergeArray( $defaults, $recursive, true )
-             ->interpolate();
-
-        return $this;
-    }
 }
