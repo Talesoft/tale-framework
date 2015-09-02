@@ -28,7 +28,8 @@ use Exception;
  *
  * @package Tale
  */
-class StringUtil {
+class StringUtil
+{
 
     /**
      * Array of uncountable english words
@@ -36,13 +37,13 @@ class StringUtil {
      * @var array
      */
     private static $_uncountables = [
-        'equipment', 
-        'information', 
-        'rice', 
-        'money', 
-        'species', 
-        'series', 
-        'fish', 
+        'equipment',
+        'information',
+        'rice',
+        'money',
+        'species',
+        'series',
+        'fish',
         'sheep'
     ];
 
@@ -80,11 +81,11 @@ class StringUtil {
         '/([ti])um$/i' => '$1a',
         '/(buffal|tomat)o$/i' => '$1oes',
         '/(bu)s$/i' => '$1ses',
-        '/(alias|status)/i'=> '$1es',
-        '/(octop|vir)us$/i'=> '$1i',
-        '/(ax|test)is$/i'=> '$1es',
-        '/s$/i'=> 's',
-        '/$/'=> 's'
+        '/(alias|status)/i' => '$1es',
+        '/(octop|vir)us$/i' => '$1i',
+        '/(ax|test)is$/i' => '$1es',
+        '/s$/i' => 's',
+        '/$/' => 's'
     ];
 
     /**
@@ -460,22 +461,23 @@ class StringUtil {
      *
      * @return string The plural representation of the passed singular string
      */
-    public static function pluralize( $string ) {
+    public static function pluralize($string)
+    {
 
-        $lowerCased = strtolower( $string );
+        $lowerCased = strtolower($string);
 
-        foreach( self::$_uncountables as $uncountable )
-            if( substr( $lowerCased, ( -1 * strlen( $uncountable ) ) ) == $uncountable )
+        foreach (self::$_uncountables as $uncountable)
+            if (substr($lowerCased, (-1 * strlen($uncountable))) == $uncountable)
                 return $string;
 
-        foreach( self::$_irregulars as $singular => $plural )
-            if( preg_match( '/('.$singular.')$/i', $string, $matches ) )
-                return preg_replace( '/('.$singular.')$/i', substr( $matches[ 0 ], 0, 1 ).substr( $plural, 1 ), $string );
+        foreach (self::$_irregulars as $singular => $plural)
+            if (preg_match('/(' . $singular . ')$/i', $string, $matches))
+                return preg_replace('/(' . $singular . ')$/i', substr($matches[0], 0, 1) . substr($plural, 1), $string);
 
 
-        foreach( self::$_plurals as $rule => $replacement )
-            if( preg_match( $rule, $string ) )
-                return preg_replace( $rule, $replacement, $string );
+        foreach (self::$_plurals as $rule => $replacement)
+            if (preg_match($rule, $string))
+                return preg_replace($rule, $replacement, $string);
 
         return $string;
     }
@@ -488,22 +490,23 @@ class StringUtil {
      *
      * @return string The singular representation of the passed singular string
      */
-    public static function singularize( $string ) {
+    public static function singularize($string)
+    {
 
-        $lowerCased = strtolower( $string );
+        $lowerCased = strtolower($string);
 
-        foreach( self::$_uncountables as $uncountable )
-            if( substr( $lowerCased, ( -1 * strlen( $uncountable ) ) ) == $uncountable )
+        foreach (self::$_uncountables as $uncountable)
+            if (substr($lowerCased, (-1 * strlen($uncountable))) == $uncountable)
                 return $string;
 
-        foreach( self::$_irregulars as $singular => $plural )
-            if( preg_match( '/('.$plural.')$/i', $string, $matches ) )
-                return preg_replace( '/('.$plural.')$/i', substr( $matches[ 0 ], 0, 1 ).substr( $singular, 1 ), $string );
+        foreach (self::$_irregulars as $singular => $plural)
+            if (preg_match('/(' . $plural . ')$/i', $string, $matches))
+                return preg_replace('/(' . $plural . ')$/i', substr($matches[0], 0, 1) . substr($singular, 1), $string);
 
 
-        foreach( self::$_singulars as $rule => $replacement )
-            if( preg_match( $rule, $string ) )
-                return preg_replace( $rule, $replacement, $string );
+        foreach (self::$_singulars as $rule => $replacement)
+            if (preg_match($rule, $string))
+                return preg_replace($rule, $replacement, $string);
 
         return $string;
     }
@@ -521,30 +524,31 @@ class StringUtil {
      * @todo There is a problem translating all-uppercase-strings right now,
      *       sometimes it's preferrable to strtolower() the string first
      *
-     * @param string        $string    The subject string to be re-joined
-     * @param string        $delimeter The delimeter to re-join single words with
-     * @param string|null   $ignore    Characters to ignore
+     * @param string $string The subject string to be re-joined
+     * @param string $delimeter The delimeter to re-join single words with
+     * @param string|null $ignore Characters to ignore
      *
      * @return string The re-joined string
      */
-    public static function reJoin( $string, $delimeter = null, $ignore = null ) {
+    public static function reJoin($string, $delimeter = null, $ignore = null)
+    {
 
-        $delimeter = !is_null( $delimeter ) ? $delimeter : ' ';
-        $ignore = $ignore ? preg_quote( $ignore, '/' ) : '';
+        $delimeter = !is_null($delimeter) ? $delimeter : ' ';
+        $ignore = $ignore ? preg_quote($ignore, '/') : '';
 
         //All non-alphanumeric characters
-        $string = preg_replace( [ '/[^a-z0-9'.$ignore.']/i' ], $delimeter, $string );
+        $string = preg_replace(['/[^a-z0-9' . $ignore . ']/i'], $delimeter, $string);
 
         //Between lowercase and UPPERCASE, e.g. some|Camel|Case|String
         //or uppercase notations, abbrevations etc., e.g. Xml|HTTP|Request
-        $string = preg_replace( 
-            [ '/([a-z0-9])([A-Z])/', '/([A-Z]+)([A-Z])/' ],
-            '$1'.$delimeter.'$2',
-            $string 
+        $string = preg_replace(
+            ['/([a-z0-9])([A-Z])/', '/([A-Z]+)([A-Z])/'],
+            '$1' . $delimeter . '$2',
+            $string
         );
 
         //finally remove repeating chars, so "something & something" wont end in "something---something"
-        return preg_replace( '/'.$delimeter.'+/', $delimeter, $string );
+        return preg_replace('/' . $delimeter . '+/', $delimeter, $string);
     }
 
     /**
@@ -554,14 +558,15 @@ class StringUtil {
      * e.g. SomeClassName   => Some Class Name
      *      some_table_name => Some Table Name
      *
-     * @param string        $string The subject string
-     * @param string|null   $ignore Characters to ignore in re-joinment
+     * @param string $string The subject string
+     * @param string|null $ignore Characters to ignore in re-joinment
      *
      * @return string The "Human Readable" string
      */
-    public static function humanize( $string, $ignore = null ) {
+    public static function humanize($string, $ignore = null)
+    {
 
-        return ucwords( strtolower( self::reJoin( $string, ' ', $ignore ) ) );
+        return ucwords(strtolower(self::reJoin($string, ' ', $ignore)));
     }
 
     /**
@@ -573,14 +578,15 @@ class StringUtil {
      * e.g. Some String     => SomeString
      *      some_table_name => SomeTableName
      *
-     * @param string        $string The subject string
-     * @param string|null   $ignore Characters to ignore in re-joinment
+     * @param string $string The subject string
+     * @param string|null $ignore Characters to ignore in re-joinment
      *
      * @return string The CamelCased string
      */
-    public static function camelize( $string, $ignore = null ) {
+    public static function camelize($string, $ignore = null)
+    {
 
-        return str_replace( ' ', '', self::humanize( $string, $ignore ) );
+        return str_replace(' ', '', self::humanize($string, $ignore));
     }
 
     /**
@@ -591,14 +597,15 @@ class StringUtil {
      * e.g. SomeClassName   => Some-Class-Name
      *      some_table_name => some-table-name
      *
-     * @param string        $string The subject string
-     * @param string|null   $ignore Characters to ignore in re-joinment
+     * @param string $string The subject string
+     * @param string|null $ignore Characters to ignore in re-joinment
      *
      * @return string The dash-separated string
      */
-    public static function dasherize( $string, $ignore = null ) {
+    public static function dasherize($string, $ignore = null)
+    {
 
-        return self::reJoin( $string, '-', $ignore );
+        return self::reJoin($string, '-', $ignore);
     }
 
     /**
@@ -609,14 +616,15 @@ class StringUtil {
      * e.g. SomeClassName   => Some_Class_Name
      *      some-view-name  => some_view_name
      *
-     * @param string        $string The subject string
-     * @param string|null   $ignore Characters to ignore in re-joinment
+     * @param string $string The subject string
+     * @param string|null $ignore Characters to ignore in re-joinment
      *
      * @return string The underscore_separated string
      */
-    public static function underscorize( $string, $ignore = null ) {
+    public static function underscorize($string, $ignore = null)
+    {
 
-        return self::rejoin( $string, '_', $ignore );
+        return self::rejoin($string, '_', $ignore);
     }
 
     /**
@@ -628,14 +636,15 @@ class StringUtil {
      * e.g. SomeClassName   => someClassName
      *      some_table_name => someTableName
      *
-     * @param string        $string The subject string
-     * @param string|null   $ignore Characters to ignore in re-joinment
+     * @param string $string The subject string
+     * @param string|null $ignore Characters to ignore in re-joinment
      *
      * @return string The camelCased string
      */
-    public static function variablize( $string, $ignore = null ) {
+    public static function variablize($string, $ignore = null)
+    {
 
-        return lcfirst( self::camelize( $string, $ignore ) );
+        return lcfirst(self::camelize($string, $ignore));
     }
 
     /**
@@ -647,14 +656,15 @@ class StringUtil {
      * e.g. SomeClassName   => some_class_name
      *      some-view-name  => some_view_name
      *
-     * @param string        $string The subject string
-     * @param string|null   $ignore Characters to ignore in re-joinment
+     * @param string $string The subject string
+     * @param string|null $ignore Characters to ignore in re-joinment
      *
      * @return string The lower_cased_dash_separated string
      */
-    public static function tableize( $string, $ignore = null ) {
+    public static function tableize($string, $ignore = null)
+    {
 
-        return strtolower( self::underscorize( $string, $ignore ) );
+        return strtolower(self::underscorize($string, $ignore));
     }
 
     /**
@@ -666,14 +676,15 @@ class StringUtil {
      * e.g. SomeClassName   => some-class-name
      *      some_table_name => some-table-name
      *
-     * @param string        $string The subject string
-     * @param string|null   $ignore Characters to ignore in re-joinment
+     * @param string $string The subject string
+     * @param string|null $ignore Characters to ignore in re-joinment
      *
      * @return string The lower-cased-dash-separated string
      */
-    public static function canonicalize( $string, $ignore = null ) {
+    public static function canonicalize($string, $ignore = null)
+    {
 
-        return strtolower( self::dasherize( $string, $ignore ) );
+        return strtolower(self::dasherize($string, $ignore));
     }
 
     /**
@@ -687,19 +698,20 @@ class StringUtil {
      * e.g. SomeClassName   => class-name
      *      some_table_name => table-name
      *
-     * @param string        $string The subject string
-     * @param string|null   $ignore Characters to ignore in re-joinment
+     * @param string $string The subject string
+     * @param string|null $ignore Characters to ignore in re-joinment
      *
      * @return string The lower-cased-dash-separated string
      */
-    public static function slugify( $string, $ignore = null ) {
+    public static function slugify($string, $ignore = null)
+    {
 
-        $string = self::canonicalize( $string, $ignore );
+        $string = self::canonicalize($string, $ignore);
         $stopWords = self::$_stopWords;
-        $string = implode( '-', array_filter( explode( '-', $string ), function( $val ) use( $stopWords ) {
+        $string = implode('-', array_filter(explode('-', $string), function ($val) use ($stopWords) {
 
-            return !in_array( $val, $stopWords );
-        } ) );
+            return !in_array($val, $stopWords);
+        }));
 
         return $string;
     }
@@ -713,21 +725,26 @@ class StringUtil {
      *      4    => 4th
      *      123  => 123rd
      *
-     * @param string|int    $string The input number or number-string
+     * @param string|int $string The input number or number-string
      *
      * @return string       The ordinalized representation of the input number
      */
-    public static function ordinalize( $string ) {
-        
-        $number = intval( $string );
-        if( in_array( $number % 100, [ 11, 12, 13 ] ) )
-            return $number.'th';
+    public static function ordinalize($string)
+    {
 
-        switch( $number % 10 ) {
-            case 1:  return $number.'st';
-            case 2:  return $number.'nd';
-            case 3:  return $number.'rd';
-            default: return $number.'th';
+        $number = intval($string);
+        if (in_array($number % 100, [11, 12, 13]))
+            return $number . 'th';
+
+        switch ($number % 10) {
+            case 1:
+                return $number . 'st';
+            case 2:
+                return $number . 'nd';
+            case 3:
+                return $number . 'rd';
+            default:
+                return $number . 'th';
         }
     }
 
@@ -745,23 +762,24 @@ class StringUtil {
      * @todo Maybe try to make an array to $base instead of $base and $unit, e.g.
      *       [ 'ms', 1000 => 's', 60 => 'm', 60 => 'h', 24 => 'Days', 7 => 'Weeks', 52 => 'Years' ] etc.
      *
-     * @param string|int   $number      The number to add a unit to
-     * @param int          $base        The base number we're working on (1000 mostly, 60 for time, 1024 for bytes etc.)
-     * @param array        $units       An array of units mapping on the units from low to high
-     * @param int          $precision   The precision of float values that should be kept
+     * @param string|int $number The number to add a unit to
+     * @param int $base The base number we're working on (1000 mostly, 60 for time, 1024 for bytes etc.)
+     * @param array $units An array of units mapping on the units from low to high
+     * @param int $precision The precision of float values that should be kept
      *
      * @return string The converted number with the unit appended
      */
-    public static function sizify( $number, $base, array $units, $precision = 3 ) {
+    public static function sizify($number, $base, array $units, $precision = 3)
+    {
 
         $i = 0;
-        foreach( $units as $unit ) {
+        foreach ($units as $unit) {
 
-            $currentSize = pow( $base, $i );
-            $nextSize = pow( $base, $i + 1 );
+            $currentSize = pow($base, $i);
+            $nextSize = pow($base, $i + 1);
 
-            if( $number < $nextSize || $i >= count( $units ) - 1 )
-                return round( $number / $currentSize, $precision ).$unit;
+            if ($number < $nextSize || $i >= count($units) - 1)
+                return round($number / $currentSize, $precision) . $unit;
 
             $i++;
         }
@@ -774,9 +792,10 @@ class StringUtil {
      *
      * @return string The converted amount with the unit appended
      */
-    public static function bytify( $size ) {
+    public static function bytify($size)
+    {
 
-        return self::sizify( $size, 1024, [ 'Byte', 'KByte', 'MByte', 'GByte', 'TByte' ] );
+        return self::sizify($size, 1024, ['Byte', 'KByte', 'MByte', 'GByte', 'TByte']);
     }
 
     /**
@@ -786,9 +805,10 @@ class StringUtil {
      *
      * @return string The converted amount with the unit appended
      */
-    public static function timify( $size ) {
+    public static function timify($size)
+    {
 
-        return self::sizify( $size, 1000, [ 'ms', 's' ] );
+        return self::sizify($size, 1000, ['ms', 's']);
     }
 
     /**
@@ -799,27 +819,28 @@ class StringUtil {
      * @protip If you want to throw an exception if no key is found, pass the exception as the default value
      *         and throw it, if the result is an Exception-type
      *
-     * @param string        $key            The input key to operate on
-     * @param array         $source         The array to search values in
-     * @param mixed         $defaultValue   The default value if no key is found
-     * @param string|null   $delimeter      The delimeter to access dimensions (Default: Dot (.))
+     * @param string $key The input key to operate on
+     * @param array $source The array to search values in
+     * @param mixed $defaultValue The default value if no key is found
+     * @param string|null $delimeter The delimeter to access dimensions (Default: Dot (.))
      *
      * @return array|null The found value or the default value, if none found (Default: null)
      */
-    public static function resolve( $key, array $source, $defaultValue = null, $delimeter = null ) {
+    public static function resolve($key, array $source, $defaultValue = null, $delimeter = null)
+    {
 
         $delimeter = $delimeter ? $delimeter : '.';
         $current = &$source;
-        $keys = explode( $delimeter, $key );
-        foreach( $keys as $key ) {
+        $keys = explode($delimeter, $key);
+        foreach ($keys as $key) {
 
-            if( is_numeric( $key ) )
-                $key = intval( $key );
+            if (is_numeric($key))
+                $key = intval($key);
 
-            if( !isset( $current[ $key ] ) )
+            if (!isset($current[$key]))
                 return $defaultValue;
 
-            $current = &$current[ $key ];
+            $current = &$current[$key];
         }
 
         return $current;
@@ -830,19 +851,20 @@ class StringUtil {
      *
      * Dimensions in the source array are accessed with a passed delimeter (Default: Dot (.))
      *
-     * @param string        $string        The input string to operate on
-     * @param array         $source        The associative source array
-     * @param mixed         $defaultValue  The default value for indices that dont exist
-     * @param string|null   $delimeter     The delimeter for multi-dimension access (Default: Dot (.))
+     * @param string $string The input string to operate on
+     * @param array $source The associative source array
+     * @param mixed $defaultValue The default value for indices that dont exist
+     * @param string|null $delimeter The delimeter for multi-dimension access (Default: Dot (.))
      *
      * @return string The interpolated string with the variables replaced with their values
      */
-    public static function interpolate( $string, array $source, $defaultValue = null, $delimeter = null ) {
+    public static function interpolate($string, array $source, $defaultValue = null, $delimeter = null)
+    {
 
-        return preg_replace_callback( '/\{\{([^\}]+)\}\}/i', function( $m ) use( $source, $defaultValue, $delimeter ) {
+        return preg_replace_callback('/\{\{([^\}]+)\}\}/i', function ($m) use ($source, $defaultValue, $delimeter) {
 
-            return StringUtil::resolve( $m[ 1 ], $source, $defaultValue, $delimeter );
-        }, $string );
+            return StringUtil::resolve($m[1], $source, $defaultValue, $delimeter);
+        }, $string);
     }
 
     /**
@@ -873,25 +895,26 @@ class StringUtil {
      *     'id' => 'some-id'
      * ];
      *
-     * @param string    $string     The delimeted string to operator on
-     * @param string    $delimeter  The delimeter to split the string by
-     * @param array     $vars       The variables to map the string to
+     * @param string $string The delimeted string to operator on
+     * @param string $delimeter The delimeter to split the string by
+     * @param array $vars The variables to map the string to
      *
      * @return array An associative array with the $string-values inserted
      */
-    public static function map( $string, $delimeter, array $vars ) {
+    public static function map($string, $delimeter, array $vars)
+    {
 
-        $parts = explode( $delimeter, $string, count( $vars ) );
+        $parts = explode($delimeter, $string, count($vars));
 
         $result = [];
         $x = 0;
-        foreach( $vars as $name => $var ) {
+        foreach ($vars as $name => $var) {
 
-            $index = is_int( $name ) ? $var : $name;
+            $index = is_int($name) ? $var : $name;
 
-            $result[ $index ] = empty( $parts[ $x ] )
-                              ? ( is_int( $name ) ? null : $var )
-                              : $parts[ $x ];
+            $result[$index] = empty($parts[$x])
+                ? (is_int($name) ? null : $var)
+                : $parts[$x];
 
             $x++;
         }
@@ -904,15 +927,17 @@ class StringUtil {
      *
      * @see StringUtil::map
      *
-     * @param string    $string     The delimeted string to operator on
-     * @param string    $delimeter  The delimeter to split the string by
-     * @param array     $vars       The variables to map the string to
+     * @param string $string The delimeted string to operator on
+     * @param string $delimeter The delimeter to split the string by
+     * @param array $vars The variables to map the string to
      *
      * @return array An associative array with the $string-values inserted
      */
-    public static function mapReverse( $string, $delimeter, array $vars ) {
+    public static function mapReverse($string, $delimeter, array $vars)
+    {
 
-        return array_map( 'strrev', self::map( strrev( $string ), $delimeter, $vars ) );
+        //TODO: Maybe array_reverse would make more sense?
+        return array_map('strrev', self::map(strrev($string), $delimeter, $vars));
     }
 
     /**
@@ -924,14 +949,15 @@ class StringUtil {
      * @return array The parse_url result with all keys existent
      * @throws Exception
      */
-    public static function parseUrl( $string ) {
+    public static function parseUrl($string)
+    {
 
-        $parts = parse_url( $string );
+        $parts = parse_url($string);
 
-        if( !$parts )
-            throw new Exception( "Failed to parse URL $string, it seems it's not a valid URL" );
+        if (!$parts)
+            throw new Exception("Failed to parse URL $string, it seems it's not a valid URL");
 
-        return array_replace( [
+        return array_replace([
             'scheme' => null,
             'user' => null,
             'pass' => null,
@@ -940,7 +966,7 @@ class StringUtil {
             'path' => null,
             'query' => null,
             'fragment' => null
-        ], $parts );
+        ], $parts);
     }
 
     /**
@@ -952,13 +978,14 @@ class StringUtil {
      *
      * @return string The normalized, joined path
      */
-    public static function joinPath( $path, $subPath ) {
+    public static function joinPath($path, $subPath)
+    {
 
         $ds = \DIRECTORY_SEPARATOR;
-        $path = self::normalizePath( $path );
-        $subPath = self::normalizePath( $subPath );
+        $path = self::normalizePath($path);
+        $subPath = self::normalizePath($subPath);
 
-        $subPath = $ds.ltrim( $subPath, $ds );
+        $subPath = $ds . ltrim($subPath, $ds);
 
         return "$path$subPath";
     }
@@ -976,14 +1003,15 @@ class StringUtil {
      *
      * @return string The normalized path
      */
-    public static function normalizePath( $path ) {
+    public static function normalizePath($path)
+    {
 
         $ds = \DIRECTORY_SEPARATOR;
-        $path = str_replace( $ds === '\\' ? '/' : '\\', $ds, $path );
-        $path = rtrim( $path, $ds );
+        $path = str_replace($ds === '\\' ? '/' : '\\', $ds, $path);
+        $path = rtrim($path, $ds);
 
-        if( strncmp( $path, ".$ds", 3 ) === 0 )
-            $path = substr( $path, 2 );
+        if (strncmp($path, ".$ds", 3) === 0)
+            $path = substr($path, 2);
 
         return $path;
     }
