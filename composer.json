@@ -1,0 +1,24 @@
+{
+    "name": "talesoft/tale-framework",
+    "description": "The Tale Framework",
+    "minimum-stability": "stable",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Torben Köhn",
+            "email": "tk@talesoft.io"
+        },
+        {
+            "name": "Cagatay Ulubay",
+            "email": "cu@talesoft.io"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0"
+    },
+    "autoload": {
+        "psr-0": {
+            "Tale": "src/"
+        }
+    }
+}
