@@ -55,10 +55,10 @@ class StringUtil
      */
     private static $_irregulars = [
         'person' => 'people',
-        'man' => 'men',
-        'child' => 'children',
-        'sex' => 'sexes',
-        'move' => 'moves'
+        'man'    => 'men',
+        'child'  => 'children',
+        'sex'    => 'sexes',
+        'move'   => 'moves'
     ];
 
     /**
@@ -68,24 +68,24 @@ class StringUtil
      * @var array
      */
     private static $_plurals = [
-        '/(quiz)$/i' => '$1zes',
-        '/^(ox)$/i' => '$1en',
-        '/([m|l])ouse$/i' => '$1ice',
+        '/(quiz)$/i'               => '$1zes',
+        '/^(ox)$/i'                => '$1en',
+        '/([m|l])ouse$/i'          => '$1ice',
         '/(matr|vert|ind)ix|ex$/i' => '$1ices',
-        '/(x|ch|ss|sh)$/i' => '$1es',
-        '/([^aeiouy]|qu)ies$/i' => '$1y',
-        '/([^aeiouy]|qu)y$/i' => '$1ies',
-        '/(hive)$/i' => '$1s',
+        '/(x|ch|ss|sh)$/i'         => '$1es',
+        '/([^aeiouy]|qu)ies$/i'    => '$1y',
+        '/([^aeiouy]|qu)y$/i'      => '$1ies',
+        '/(hive)$/i'               => '$1s',
         '/(?:([^f])fe|([lr])f)$/i' => '$1$2ves',
-        '/sis$/i' => 'ses',
-        '/([ti])um$/i' => '$1a',
-        '/(buffal|tomat)o$/i' => '$1oes',
-        '/(bu)s$/i' => '$1ses',
-        '/(alias|status)/i' => '$1es',
-        '/(octop|vir)us$/i' => '$1i',
-        '/(ax|test)is$/i' => '$1es',
-        '/s$/i' => 's',
-        '/$/' => 's'
+        '/sis$/i'                  => 'ses',
+        '/([ti])um$/i'             => '$1a',
+        '/(buffal|tomat)o$/i'      => '$1oes',
+        '/(bu)s$/i'                => '$1ses',
+        '/(alias|status)/i'        => '$1es',
+        '/(octop|vir)us$/i'        => '$1i',
+        '/(ax|test)is$/i'          => '$1es',
+        '/s$/i'                    => 's',
+        '/$/'                      => 's'
     ];
 
     /**
@@ -95,30 +95,30 @@ class StringUtil
      * @var array
      */
     private static $_singulars = [
-        '/(quiz)zes$/i' => '\1',
-        '/(matr)ices$/i' => '\1ix',
-        '/(vert|ind)ices$/i' => '\1ex',
-        '/^(ox)en/i' => '\1',
-        '/(alias|status)es$/i' => '\1',
-        '/([octop|vir])i$/i' => '\1us',
-        '/(cris|ax|test)es$/i' => '\1is',
-        '/(shoe)s$/i' => '\1',
-        '/(o)es$/i' => '\1',
-        '/(bus)es$/i' => '\1',
-        '/([m|l])ice$/i' => '\1ouse',
-        '/(x|ch|ss|sh)es$/i' => '\1',
-        '/(m)ovies$/i' => '\1ovie',
-        '/(s)eries$/i' => '\1eries',
-        '/([^aeiouy]|qu)ies$/i' => '\1y',
-        '/([lr])ves$/i' => '\1f',
-        '/(tive)s$/i' => '\1',
-        '/(hive)s$/i' => '\1',
-        '/([^f])ves$/i' => '\1fe',
-        '/(^analy)ses$/i' => '\1sis',
+        '/(quiz)zes$/i'                                                    => '\1',
+        '/(matr)ices$/i'                                                   => '\1ix',
+        '/(vert|ind)ices$/i'                                               => '\1ex',
+        '/^(ox)en/i'                                                       => '\1',
+        '/(alias|status)es$/i'                                             => '\1',
+        '/([octop|vir])i$/i'                                               => '\1us',
+        '/(cris|ax|test)es$/i'                                             => '\1is',
+        '/(shoe)s$/i'                                                      => '\1',
+        '/(o)es$/i'                                                        => '\1',
+        '/(bus)es$/i'                                                      => '\1',
+        '/([m|l])ice$/i'                                                   => '\1ouse',
+        '/(x|ch|ss|sh)es$/i'                                               => '\1',
+        '/(m)ovies$/i'                                                     => '\1ovie',
+        '/(s)eries$/i'                                                     => '\1eries',
+        '/([^aeiouy]|qu)ies$/i'                                            => '\1y',
+        '/([lr])ves$/i'                                                    => '\1f',
+        '/(tive)s$/i'                                                      => '\1',
+        '/(hive)s$/i'                                                      => '\1',
+        '/([^f])ves$/i'                                                    => '\1fe',
+        '/(^analy)ses$/i'                                                  => '\1sis',
         '/((a)naly|(b)a|(d)iagno|(p)arenthe|(p)rogno|(s)ynop|(t)he)ses$/i' => '\1\2sis',
-        '/([ti])a$/i' => '\1um',
-        '/(n)ews$/i' => '\1ews',
-        '/s$/i' => '',
+        '/([ti])a$/i'                                                      => '\1um',
+        '/(n)ews$/i'                                                       => '\1ews',
+        '/s$/i'                                                            => '',
     ];
 
     /**
@@ -451,7 +451,7 @@ class StringUtil
     /**
      * The constructor is blocked for a Util, we don't want instances of this class
      */
-    private function __construct() {}
+    private function __construct() { }
 
     /**
      * Returns the plural representation of a singular string
@@ -471,8 +471,8 @@ class StringUtil
                 return $string;
 
         foreach (self::$_irregulars as $singular => $plural)
-            if (preg_match('/(' . $singular . ')$/i', $string, $matches))
-                return preg_replace('/(' . $singular . ')$/i', substr($matches[0], 0, 1) . substr($plural, 1), $string);
+            if (preg_match('/('.$singular.')$/i', $string, $matches))
+                return preg_replace('/('.$singular.')$/i', substr($matches[0], 0, 1).substr($plural, 1), $string);
 
 
         foreach (self::$_plurals as $rule => $replacement)
@@ -500,8 +500,8 @@ class StringUtil
                 return $string;
 
         foreach (self::$_irregulars as $singular => $plural)
-            if (preg_match('/(' . $plural . ')$/i', $string, $matches))
-                return preg_replace('/(' . $plural . ')$/i', substr($matches[0], 0, 1) . substr($singular, 1), $string);
+            if (preg_match('/('.$plural.')$/i', $string, $matches))
+                return preg_replace('/('.$plural.')$/i', substr($matches[0], 0, 1).substr($singular, 1), $string);
 
 
         foreach (self::$_singulars as $rule => $replacement)
@@ -537,18 +537,18 @@ class StringUtil
         $ignore = $ignore ? preg_quote($ignore, '/') : '';
 
         //All non-alphanumeric characters
-        $string = preg_replace(['/[^a-z0-9' . $ignore . ']/i'], $delimeter, $string);
+        $string = preg_replace(['/[^a-z0-9'.$ignore.']/i'], $delimeter, $string);
 
         //Between lowercase and UPPERCASE, e.g. some|Camel|Case|String
         //or uppercase notations, abbrevations etc., e.g. Xml|HTTP|Request
         $string = preg_replace(
             ['/([a-z0-9])([A-Z])/', '/([A-Z]+)([A-Z])/'],
-            '$1' . $delimeter . '$2',
+            '$1'.$delimeter.'$2',
             $string
         );
 
         //finally remove repeating chars, so "something & something" wont end in "something---something"
-        return preg_replace('/' . $delimeter . '+/', $delimeter, $string);
+        return preg_replace('/'.$delimeter.'+/', $delimeter, $string);
     }
 
     /**
@@ -734,17 +734,17 @@ class StringUtil
 
         $number = intval($string);
         if (in_array($number % 100, [11, 12, 13]))
-            return $number . 'th';
+            return $number.'th';
 
         switch ($number % 10) {
             case 1:
-                return $number . 'st';
+                return $number.'st';
             case 2:
-                return $number . 'nd';
+                return $number.'nd';
             case 3:
-                return $number . 'rd';
+                return $number.'rd';
             default:
-                return $number . 'th';
+                return $number.'th';
         }
     }
 
@@ -779,7 +779,7 @@ class StringUtil
             $nextSize = pow($base, $i + 1);
 
             if ($number < $nextSize || $i >= count($units) - 1)
-                return round($number / $currentSize, $precision) . $unit;
+                return round($number / $currentSize, $precision).$unit;
 
             $i++;
         }
@@ -958,13 +958,13 @@ class StringUtil
             throw new Exception("Failed to parse URL $string, it seems it's not a valid URL");
 
         return array_replace([
-            'scheme' => null,
-            'user' => null,
-            'pass' => null,
-            'host' => null,
-            'port' => null,
-            'path' => null,
-            'query' => null,
+            'scheme'   => null,
+            'user'     => null,
+            'pass'     => null,
+            'host'     => null,
+            'port'     => null,
+            'path'     => null,
+            'query'    => null,
             'fragment' => null
         ], $parts);
     }
@@ -985,7 +985,7 @@ class StringUtil
         $path = self::normalizePath($path);
         $subPath = self::normalizePath($subPath);
 
-        $subPath = $ds . ltrim($subPath, $ds);
+        $subPath = $ds.ltrim($subPath, $ds);
 
         return "$path$subPath";
     }
