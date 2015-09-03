@@ -68,7 +68,9 @@ class Controller extends FeatureBase
             $this->_args = $this->getOption('args');
             $this->_helpers = $this->getOption('helpers');
 
-            var_dump('CONTROLLERS LOADED');
+            $this->registerHelper('dispatch', [$this, 'dispatch']);
+
+            var_dump('CONTROLLERS LOADED', $this);
         });
 
         $this->bind('unload', function () {
@@ -204,7 +206,7 @@ class Controller extends FeatureBase
             $controllerInstance->setArg('dispatchRequest', $request);
 
 
-            if($controllerInstance->emit('beforeInit')) {
+            if ($controllerInstance->emit('beforeInit')) {
 
                 //Have a look at Tale\Dispatcher\Instance to grasp the magic behind this
                 //__get calls __call and __call returns a Tale\Dispatcher\CallIterator instance with all init.* methods contained
@@ -215,7 +217,7 @@ class Controller extends FeatureBase
 
             if (!$response) {
 
-                if($controllerInstance->emit('beforeAction')) {
+                if ($controllerInstance->emit('beforeAction')) {
 
                     $response = $instance->call($action, $args);
                     $controllerInstance->emit('afterAction');

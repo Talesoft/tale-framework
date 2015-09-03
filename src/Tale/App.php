@@ -59,13 +59,13 @@ class App
         // $this->getFeatureFactory()->registerAlias($alias, $className)
         $this->_featureFactory = new Factory(
             'Tale\\App\\FeatureBase', [
-            'cache'       => 'Tale\\App\\Feature\\Cache',
-            'controller'  => 'Tale\\App\\Feature\\Controller',
-            'data'        => 'Tale\\App\\Feature\\Data',
-            'model'       => 'Tale\\App\\Feature\\Model',
-            'view'        => 'Tale\\App\\Feature\\View',
-            'router'      => 'Tale\\App\\Feature\\Router',
-            'logger'      => 'Tale\\App\\Feature\\Logger'
+            'cache'      => 'Tale\\App\\Feature\\Cache',
+            'controller' => 'Tale\\App\\Feature\\Controller',
+            'data'       => 'Tale\\App\\Feature\\Data',
+            'model'      => 'Tale\\App\\Feature\\Model',
+            'view'       => 'Tale\\App\\Feature\\View',
+            'router'     => 'Tale\\App\\Feature\\Router',
+            'logger'     => 'Tale\\App\\Feature\\Logger'
         ]);
 
         //Set default options
@@ -164,13 +164,13 @@ class App
         $configPath = $this->resolveOption('configure.path');
         $includes = $this->resolveOption('configure.include');
 
-        foreach($includes as $pattern) {
+        foreach ($includes as $pattern) {
 
             $path = StringUtil::joinPath($configPath, $pattern);
 
             $configFiles = glob($path);
 
-            foreach($configFiles as $configFile) {
+            foreach ($configFiles as $configFile) {
 
                 $this->appendOptionFile($configFile);
             }
@@ -179,7 +179,7 @@ class App
 
     private function _setPhpOptions()
     {
-        foreach($this->getOption('phpOptions') as $option => $value) {
+        foreach ($this->getOption('phpOptions') as $option => $value) {
 
             $option = StringUtil::tableize($option, '.');
             var_dump("OPT $option => $value");
@@ -189,11 +189,37 @@ class App
 
     private function _registerFeatureAliases()
     {
-        foreach($this->getOption('featureAliases') as $alias => $className) {
+        foreach ($this->getOption('featureAliases') as $alias => $className) {
 
             var_dump("ALIAS $alias => $className");
             $this->_featureFactory->registerAlias($alias, $className);
         }
+    }
+
+    public function getFirstFeatureOfType($className)
+    {
+
+        if ($this->_features === null)
+            throw new RuntimeException("Failed to check features: Features only exist while the app is ran");
+
+        foreach ($this->_features as $feature)
+            if (is_a($feature, $className, true))
+                return $feature;
+
+        return null;
+    }
+
+    public function getAllFeaturesOfType($className)
+    {
+        if ($this->_features === null)
+            throw new RuntimeException("Failed to check features: Features only exist while the app is ran");
+
+        $features = [];
+        foreach ($this->_features as $feature)
+            if (is_a($feature, $className, true))
+                $features[] = $feature;
+
+        return $features;
     }
 
     public function run(App $previousApp = null)
@@ -231,6 +257,7 @@ class App
                 $feature->emit('load');
 
 
+            //Run features
             foreach ($this->_features as $feature) {
 
                 if ($feature->emit('beforeRun') && $feature->emit('run')) {
@@ -252,7 +279,7 @@ class App
     }
 
     //Cloning this would be wise, would it?
-    private function __clone() {}
+    private function __clone() { }
 
     public static function getTypeFromPhpSapiName()
     {

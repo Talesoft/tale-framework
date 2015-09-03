@@ -31,7 +31,8 @@ class Manager
             'options'        => []
         ]);
 
-        $this->appendOptions($options);
+        if($options)
+            $this->appendOptions($options);
 
         foreach ($this->getOption('adapterAliases') as $alias => $className)
             $this->_adapterFactory->registerAlias($alias, $className);

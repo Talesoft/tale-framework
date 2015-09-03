@@ -3,25 +3,65 @@
 namespace Tale\App\Feature;
 
 use Tale\App\FeatureBase;
-use Tale\Proxy,
-    Tale\Data\Source;
+use Tale\Data\Source;
 
 class Data extends FeatureBase {
-    use Proxy\CallTrait;
 
-    private $_source;
+    private $_sources;
 
-    public function run() {
+    protected function init() {
 
-        //Tale\Data is a optional TF-module so we check its existence first
-        if( !class_exists( 'Tale\\Data\\Source' ) )
+        if (!class_exists('Tale\\Data\\Source'))
             throw new \RuntimeException(
-                "Failed to initialize \"data\"-feature: Tale Data Module not found. "
-              . "You might need to pull tale-data submodule"
+                "Failed to load data feature: "
+                ."The data source class wasnt found. "
+                ."Maybe you need the Tale\\Data namespace?"
             );
 
         $app = $this->getApp();
-        $config = $this->getConfig();
+
+        $cache =
+        $this->prependOptions([
+            'path'              => $app->getOption('path').'/controllers',
+            'nameSpace'         => null,
+            'loadPattern'       => null,
+            'classNamePattern'  => '%sController',
+            'methodNamePattern' => '%Action',
+            'args'              => [],
+            'helpers'           => [],
+            'createLoader'      => true,
+            'errorController'   => 'error'
+        ]);
+
+        $this->bind('load', function () {
+
+            $this->_initLoader();
+            $this->_initFactory();
+            $this->_initDispatcher();
+
+            $this->_instances = [];
+
+            $this->_args = $this->getOption('args');
+            $this->_helpers = $this->getOption('helpers');
+
+            $this->registerHelper('dispatch', [$this, 'dispatch']);
+
+            var_dump('CONTROLLERS LOADED', $this);
+        });
+
+        $this->bind('unload', function () {
+
+            if ($this->_loader)
+                $this->_loader->unregister();
+
+            unset($this->_loader);
+            unset($this->_factory);
+            unset($this->_dispatcher);
+
+            unset($this->_instances);
+
+            var_dump('CONTROLLERS UNLOADED');
+        });
 
         var_dump( "DATA", $config );
 

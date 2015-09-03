@@ -19,7 +19,8 @@ namespace Tale\Data;
 * 'or' => []                => OR ( .... )
 * 'any........*'            => `any` (Can also be used for multiple 'ands' or 'ors' ('and.', 'and..', 'and...', 'and....')
 */
-class Query {
+class Query
+{
 
     const DEFAULT_ROW_TYPE = 'Tale\\Data\\Row';
 
@@ -30,7 +31,8 @@ class Query {
     private $_limit;
     private $_limitStart;
 
-    public function __construct( Table $table, array $clauses = null, array $sortings = null, $limit = null, $limitStart = null ) {
+    public function __construct(Table $table, array $clauses = null, array $sortings = null, $limit = null, $limitStart = null)
+    {
 
         $this->_table = $table;
         $this->_clauses = $clauses ? $clauses : [];
@@ -40,39 +42,46 @@ class Query {
         $this->_limitStart = null;
     }
 
-    public function getTable() {
+    public function getTable()
+    {
 
         return $this->_table;
     }
 
-    public function getDatabase() {
+    public function getDatabase()
+    {
 
         return $this->_table->getDatabase();
     }
 
-    public function getSource() {
+    public function getSource()
+    {
 
         return $this->_table->getSource();
     }
 
-    public function getClauses() {
+    public function getClauses()
+    {
 
         return $this->_clauses;
     }
 
-    public function setClauses( array $clauses ) {
+    public function setClauses(array $clauses)
+    {
 
         $this->_clauses = $clauses;
 
         return $this;
     }
 
-    public function getSortings() {
+    public function getSortings()
+    {
 
         return $this->_sortings;
     }
 
-    public function setSortings( array $sortings ) {
+    public function setSortings(array $sortings)
+    {
 
         $this->_random = false;
         $this->_sortings = $sortings;
@@ -80,24 +89,28 @@ class Query {
         return $this;
     }
 
-    public function getLimit() {
+    public function getLimit()
+    {
 
         return $this->_limit;
     }
 
-    public function setLimit( $limit ) {
+    public function setLimit($limit)
+    {
 
         $this->_limit = $limit;
 
         return $this;
     }
 
-    public function getLimitStart() {
+    public function getLimitStart()
+    {
 
         return $this->_limitStart;
     }
 
-    public function setLimitStart( $limitStart ) {
+    public function setLimitStart($limitStart)
+    {
 
         $this->_limitStart = $limitStart;
 
@@ -105,35 +118,39 @@ class Query {
     }
 
 
+    public function where(array $clauses)
+    {
 
-    public function where( array $clauses ) {
-
-        $this->_clauses = array_replace_recursive( $this->_clauses, $clauses );
+        $this->_clauses = array_replace_recursive($this->_clauses, $clauses);
 
         return $this;
     }
 
-    public function sortBy( array $sortings ) {
+    public function sortBy(array $sortings)
+    {
 
         $this->_random = false;
-        $this->_sortings = array_replace_recursive( $this->_sortings, $sortings );
+        $this->_sortings = array_replace_recursive($this->_sortings, $sortings);
 
         return $this;
     }
 
-    public function isRandomSorted() {
+    public function isRandomSorted()
+    {
 
         return $this->_random;
     }
 
-    public function sortRandom() {
+    public function sortRandom()
+    {
 
         $this->_random = true;
 
         return $this;
     }
 
-    public function limit( $limit, $start = null ) {
+    public function limit($limit, $start = null)
+    {
 
         $this->_limit = $limit;
         $this->_limitStart = $start;
@@ -141,41 +158,47 @@ class Query {
         return $this;
     }
 
-    public function count( $field = null, $distinct = false ) {
+    public function count($field = null, $distinct = false)
+    {
 
-        return $this->getSource()->countRows( $this, $field, $distinct );
+        return $this->getSource()->countRows($this, $field, $distinct);
     }
 
-    public function select( array $fields = null, $as = null ) {
+    public function select(array $fields = null, $as = null)
+    {
 
-        if( $as === null )
+        if ($as === null)
             $as = $this->_table->getRowClassName();
 
-        return $this->getSource()->loadRows( $this, $fields, $as );
+        return $this->getSource()->loadRows($this, $fields, $as);
     }
 
-    public function selectArray( array $fields = null, $as = null ) {
+    public function selectArray(array $fields = null, $as = null)
+    {
 
-        return iterator_to_array( $this->select( $fields ) );
+        return iterator_to_array($this->select($fields));
     }
 
-    public function selectOne( array $fields = null, $as = null ) {
+    public function selectOne(array $fields = null, $as = null)
+    {
 
-        $result = $this->limit( 1 )->selectArray();
+        $result = $this->limit(1)->selectArray();
 
-        return count( $result ) ? $result[ 0 ] : $result;
+        return count($result) ? $result[0] : $result;
     }
 
-    public function update( array $data ) {
+    public function update(array $data)
+    {
 
-        $this->getSource()->saveRows( $this, $data );
+        $this->getSource()->saveRows($this, $data);
 
         return $this;
     }
 
-    public function remove() {
+    public function remove()
+    {
 
-        $this->getSource()->removeRows( $this );
+        $this->getSource()->removeRows($this);
 
         return $this;
     }

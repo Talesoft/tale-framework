@@ -4,99 +4,93 @@ namespace Tale\Data;
 
 use Tale\StringUtil;
 
-class Database extends NamedEntityBase {
+class Database extends NamedEntityBase
+{
 
 	private $_source;
 
-	public function __construct( Source $source, $name, $load = false ) {
-		parent::__construct( $name );
+	public function __construct(Source $source, $name, $load = false)
+	{
+		parent::__construct($name);
 
 		$this->_source = $source;
 
-		if( $load )
+		if ($load)
 			$this->load();
 	}
 
-	public function getSource() {
+	public function getSource()
+	{
 
 		return $this->_source;
 	}
 
-	public function exists() {
+	public function exists()
+	{
 
-		return $this->getSource()->hasDatabase( $this );
+		return $this->getSource()->hasDatabase($this);
 	}
 
-    public function load() {
+	public function load()
+	{
 
-    	$this->getSource()->loadDatabase( $this );
+		$this->getSource()->loadDatabase($this);
 
-    	return $this->sync();
-    }
-
-    public function save() {
-
-    	$this->getSource()->saveDatabase( $this );
-
-    	return $this->sync();
+		return $this->sync();
 	}
 
-    public function create( array $data = null ) {
+	public function save()
+	{
 
-    	$this->getSource()->createDatabase( $this );
+		$this->getSource()->saveDatabase($this);
 
-    	return $this->sync();
-    }
-
-    public function remove() {
-
-    	$this->getSource()->removeDatabase( $this );
-
-    	return $this->unsync();
-    }
-
-	public function getModelClassName( $tableName ) {
-
-		$config = $this->getSource()->getConfig();
-
-		if( !isset( $config->modelNameSpaces ) )
-			return null;
-
-		foreach( $config->modelNameSpaces as $nameSpace => $path ) {
-
-			$className = ltrim( $nameSpace, '\\' ).'\\'.StringUtil::camelize( StringUtil::singularize( $tableName ) );
-
-			if( class_exists( $className ) )
-				return $className;
-		}
-
-		return null;
+		return $this->sync();
 	}
 
-    public function getTables( $load = false ) {
+	public function create(array $data = null)
+	{
 
-    	foreach( $this->getSource()->getTableNames( $this ) as $name )
-    		yield $name => $this->getTable( $name, $load );
-    }
+		$this->getSource()->createDatabase($this);
 
-    public function getTableArray( $load = false ) {
+		return $this->sync();
+	}
 
-    	return iterator_to_array( $this->getTables( $load ) );
-    }
+	public function remove()
+	{
 
-    public function getTable( $name, $load = false ) {
+		$this->getSource()->removeDatabase($this);
+
+		return $this->unsync();
+	}
+
+	public function getTables($load = false)
+	{
+
+		foreach ($this->getSource()->getTableNames($this) as $name)
+			yield $name => $this->getTable($name, $load);
+	}
+
+	public function getTableArray($load = false)
+	{
+
+		return iterator_to_array($this->getTables($load));
+	}
+
+	public function getTable($name, $load = false)
+	{
 
 		$config = $this->getSource()->getConfig();
 		$className = $config->tableClassName;
 
-		if( $modelClassName = $this->getModelClassName( $name ) )
+		if ($modelClassName = $this->getModelClassName($name))
 			$className = $modelClassName;
 
-    	return new $className( $this, $name, $load );
-    }
+		return new $className($this, $name, $load);
+	}
 
-	public function __get( $name ) {
+	public function __get($name)
+	{
 
-		return $this->getTable( $this->getSource()->inflectTableName( $name ) );
+		return $this->getTable($this->getSource()->inflectTableName($name));
 	}
 }

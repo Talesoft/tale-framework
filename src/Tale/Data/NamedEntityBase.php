@@ -2,22 +2,26 @@
 
 namespace Tale\Data;
 
-abstract class NamedEntityBase extends EntityBase {
+abstract class NamedEntityBase extends EntityBase
+{
 
     private $_name;
 
-    public function __construct( $name ) {
+    public function __construct($name)
+    {
         parent::__construct();
 
         $this->_name = $name;
     }
 
-    public function getName() {
+    public function getName()
+    {
 
         return $this->_name;
     }
 
-    public function __toString() {
+    public function __toString()
+    {
 
         return $this->getName();
     }

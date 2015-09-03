@@ -6,37 +6,31 @@ use Tale\Cache;
 
 trait OptionalTrait {
 
-    /* @var Cache */
-    private $_cache;
+    /* @var \Tale\Cache\Manager */
+    private $_cacheManager;
 
-    public function hasCache() {
+    public function hasCacheManager() {
 
-        return $this->_cache instanceof Cache;
+        return $this->_cacheManager instanceof Manager;
     }
 
-    public function getCache() {
+    public function getCacheManager() {
 
-        return $this->_cache;
+        return $this->_cacheManager;
     }
 
-    public function setCache( Cache $cache ) {
+    public function setCacheManager( Manager $manager ) {
 
-        $this->_cache = $cache;
-        $cache->bind( $this );
+        $this->_cacheManager = $manager;
 
         return $this;
     }
 
-    protected function createSubCache( $nameSpace ) {
+    protected function fetchCached( $key, callable $action, $lifeTime = null ) {
 
-        return $this->_cache->createSubCache( $nameSpace );
-    }
-
-    protected function loadWithCache( $key, callable $action, $lifeTime = null ) {
-
-        if( !$this->_cache )
+        if( !$this->_cacheManager )
             return call_user_func( $key );
 
-        return $this->_cache->load( $key, $action, $lifeTime );
+        return $this->_cacheManager->fetch( $key, $action, $lifeTime );
     }
 }

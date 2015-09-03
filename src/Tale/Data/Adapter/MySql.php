@@ -5,122 +5,133 @@ namespace Tale\Data\Adapter;
 //TODO: Implement table prefixes
 //TODO: Documentation. ASAP!!
 
-use Tale\Data\PdoAdapterBase,
-	Tale\Data\Database,
+use Tale\Data\Pdo\AdapterBase;
+use Tale\Data\Database,
 	Tale\Data\Table,
 	Tale\Data\Column,
 	Tale\Data\Query,
 	Exception;
 
-class MySql extends PdoAdapterBase {
+class MySql extends AdapterBase
+{
 
 	private static $_typeMap = [
-		'bool' => 'tinyint',
-		'byte' => 'tinyint',
-		'short' => 'smallint',
-		'long' => 'bigint',
+		'bool'   => 'tinyint',
+		'byte'   => 'tinyint',
+		'short'  => 'smallint',
+		'long'   => 'bigint',
 		'string' => 'varchar',
 		'binary' => 'varbinary'
 	];
 
-    private static $_reverseTypeMap = [
-        'tinyint' => 'bool',
-        'smallint' => 'short',
-        'bigint' => 'long',
-        'varchar' => 'string',
-        'varbinary' => 'binary',
-        'text' => 'string'
-    ];
+	private static $_reverseTypeMap = [
+		'tinyint'   => 'bool',
+		'smallint'  => 'short',
+		'bigint'    => 'long',
+		'varchar'   => 'string',
+		'varbinary' => 'binary',
+		'text'      => 'string'
+	];
 
 	private $_preparedQueries;
 
-	public function __construct( array $options = null ) {
-		parent::__construct( array_replace_recursive( [
-			'driver' => 'mysql',
-			'data' => [
-				'host' => 'localhost',
-                'encoding' => 'utf8'
+	public function __construct(array $options = null)
+	{
+		parent::__construct([
+			'driver'      => 'mysql',
+			'data'        => [
+				'encoding' => 'utf8'
 			],
-			'user' => 'root',
-			'password' => '',
-			'collation' => 'utf8_general_ci',
-			'engine' => 'InnoDB',
+			'user'        => 'root',
+			'password'    => '',
+			'collation'   => 'utf8_general_ci',
+			'engine'      => 'InnoDB',
 			'inflections' => [
-				'databases' => 'Tale\\StringUtil::tableize',
-				'tables' => 'Tale\\StringUtil::tableize',
-				'columns' => 'Tale\\StringUtil::tableize',
-				'inputColumns' => 'Tale\\StringUtil::tableize',
+				'databases'     => 'Tale\\StringUtil::tableize',
+				'tables'        => 'Tale\\StringUtil::tableize',
+				'columns'       => 'Tale\\StringUtil::tableize',
+				'inputColumns'  => 'Tale\\StringUtil::tableize',
 				'outputColumns' => 'Tale\\StringUtil::variablize'
 			]
-		], $options ? $options : [] ) );
+		]);
+
+		if($options)
+			$this->appendOptions($options);
 
 		$this->_preparedQueries = [];
 	}
 
-    public function open() {
+	public function open()
+	{
 
-        parent::open();
+		parent::open();
 
-        $this->query( 'SET NAMES ?', [ $this->getConfig()->data[ 'encoding' ] ] );
-    }
+		$this->query('SET NAMES ?', [$this->resolveOption('data.encoding')]);
+	}
 
 
-	public function prepare( $query ) {
+	public function prepare($query)
+	{
 
-		$hash = strlen( $query ) > 16 ? md5( $query ) : $query;
+		$hash = strlen($query) > 16 ? md5($query) : $query;
 
-		if( isset( $this->_preparedQueries[ $hash ] ) )
-			return $this->_preparedQueries[ $hash ];
+		if (isset($this->_preparedQueries[$hash]))
+			return $this->_preparedQueries[$hash];
 
-		$stmt = $this->getPdoHandle()->prepare( $query );
-		$this->_preparedQueries[ $hash ] = $stmt;
+		$stmt = $this->getHandle()->prepare($query);
+		$this->_preparedQueries[$hash] = $stmt;
 
 		return $stmt;
 	}
 
-	public function query( $query, array $args = null ) {
+	public function query($query, array $args = null)
+	{
 
 		$args = $args ? $args : [];
 
-        var_dump( "QRY: $query", $args );
+		var_dump("QRY: $query", $args);
 
-		$stmt = $this->prepare( $query );
-		$stmt->execute( $args );
+		$stmt = $this->prepare($query);
+		$stmt->execute($args);
 
 		return $stmt;
 	}
 
-	public function quoteName() {
+	public function quoteName()
+	{
 
 		$args = func_get_args();
 
-		if( count( $args ) === 1 ) {
+		if (count($args) === 1) {
 
-			$name = $args[ 0 ];
+			$name = $args[0];
+
 			return "`$name`";
 		}
 
-		return implode( '.', array_map( [ $this, 'quoteName' ], func_get_args() ) );
+		return implode('.', array_map([$this, 'quoteName'], func_get_args()));
 	}
 
-	public function mapColumnType( $type, $reverse = false ) {
+	public function mapColumnType($type, $reverse = false)
+	{
 
-        $type = strtolower( $type );
+		$type = strtolower($type);
 
-		if( $reverse ) {
+		if ($reverse) {
 
-			if( array_key_exists( $type, self::$_reverseTypeMap ) )
-                return self::$_reverseTypeMap[ $type ];
-        } else {
+			if (array_key_exists($type, self::$_reverseTypeMap))
+				return self::$_reverseTypeMap[$type];
+		} else {
 
-    		if( array_key_exists( $type, self::$_typeMap ) )
-    			return self::$_typeMap[ $type ];
-        }
+			if (array_key_exists($type, self::$_typeMap))
+				return self::$_typeMap[$type];
+		}
 
 		return $type;
 	}
 
-	public function getColumnSql( Column $column ) {
+	public function getColumnSql(Column $column)
+	{
 
 		$type = $column->getType();
 		$maxLen = $column->getMaxLength();
@@ -130,798 +141,850 @@ class MySql extends PdoAdapterBase {
 		$primary = $column->isPrimary();
 		$auto = $column->isAutoIncreased();
 
-		if( !$type )
-			throw new Exception( "Failed to put together column SQL: Column $column has no type specified" );
+		if (!$type)
+			throw new Exception("Failed to put together column SQL: Column $column has no type specified");
 
-		$type = $this->mapColumnType( $type );
+		$type = $this->mapColumnType($type);
 
-		if( $type === 'varchar' && !$maxLen )
+		if ($type === 'varchar' && !$maxLen)
 			$type = 'text';
 
-		$sql = $this->quoteName( $column );
-		$sql .= ' '.strtoupper( $type );
+		$sql = $this->quoteName($column);
+		$sql .= ' '.strtoupper($type);
 
-		if( $maxLen )
+		if ($maxLen)
 			$sql .= "($maxLen)";
-		else if( !empty( $allowed ) )
-			$sql .= '('.implode( ',', array_map( [ $this, 'encode' ], $allowed ) ).')';
+		else if (!empty($allowed))
+			$sql .= '('.implode(',', array_map([$this, 'encode'], $allowed)).')';
 
-		if( $optional )
+		if ($optional)
 			$sql .= ' NULL';
 		else
 			$sql .= ' NOT NULL';
 
-		if( $default )
-			$sql .= ' DEFAULT '.$this->encode( $default );
+		if ($default)
+			$sql .= ' DEFAULT '.$this->encode($default);
 
-		if( $primary )
+		if ($primary)
 			$sql .= ' PRIMARY KEY';
 
-		if( $auto )
+		if ($auto)
 			$sql .= ' AUTO_INCREMENT';
 
 		return $sql;
 	}
 
-	public function encode( $value ) {
+	public function encode($value)
+	{
 
-		return $this->getPdoHandle()->quote( $value );
+		return $this->getHandle()->quote($value);
 	}
 
-	public function decode( $value ) {
+	public function decode($value)
+	{
 
 		return $value;
 	}
 
-	public function getDatabaseNames() {
+	public function getDatabaseNames()
+	{
 
-		$stmt = $this->query( 'SHOW DATABASES' );
+		$stmt = $this->query('SHOW DATABASES');
 
-		while( $name = $stmt->fetchColumn( 0 ) )
+		while ($name = $stmt->fetchColumn(0))
 			yield $name;
 	}
 
-	public function hasDatabase( Database $database ) {
+	public function hasDatabase(Database $database)
+	{
 
-    	$stmt = $this->query( 'SHOW DATABASES WHERE `Database`=?', [ $database ] );
+		$stmt = $this->query('SHOW DATABASES WHERE `Database`=?', [$database]);
 
-    	return $stmt->fetchColumn( 0 ) ? true : false;
+		return $stmt->fetchColumn(0) ? true : false;
 	}
 
-	public function loadDatabase( Database $database ) {
+	public function loadDatabase(Database $database)
+	{
 
-		if( !$database->exists() )
-			throw new Exception( "Failed to load database $database: Database does not exist. Use exists() and create() to solve this." );
+		if (!$database->exists())
+			throw new Exception("Failed to load database $database: Database does not exist. Use exists() and create() to solve this.");
 
 		return $this;
 	}
 
-	public function saveDatabase( Database $database ) {
+	public function saveDatabase(Database $database)
+	{
 
-		if( !$database->exists() )
-			throw new Exception( "Failed to save database $database: Database does not exist. Use exists() and create() to solve this." );
-
-		return $this;
-	}
-
-	public function createDatabase( Database $database ) {
-
-		if( $database->exists() )
-			throw new Exception( "Failed to create database $database: Database already exists. Use exists() to solve this." );
-
-		$this->query( 'CREATE DATABASE '.$this->quoteName( $database ) );
+		if (!$database->exists())
+			throw new Exception("Failed to save database $database: Database does not exist. Use exists() and create() to solve this.");
 
 		return $this;
 	}
 
-	public function removeDatabase( Database $database ) {
+	public function createDatabase(Database $database)
+	{
 
-		if( !$database->exists() )
-			throw new Exception( "Failed to remove database $database: Database doesnt exist. Use exists() to solve this." );
-	
-		$this->query( 'DROP DATABASE '.$this->quoteName( $database ) );
+		if ($database->exists())
+			throw new Exception("Failed to create database $database: Database already exists. Use exists() to solve this.");
+
+		$this->query('CREATE DATABASE '.$this->quoteName($database));
+
+		return $this;
+	}
+
+	public function removeDatabase(Database $database)
+	{
+
+		if (!$database->exists())
+			throw new Exception("Failed to remove database $database: Database doesnt exist. Use exists() to solve this.");
+
+		$this->query('DROP DATABASE '.$this->quoteName($database));
 
 		return $this;
 	}
 
 
+	public function getTableNames(Database $database)
+	{
 
+		$stmt = $this->query('SHOW TABLES IN '.$this->quoteName($database));
 
-	public function getTableNames( Database $database ) {
-
-		$stmt = $this->query( 'SHOW TABLES IN '.$this->quoteName( $database ) );
-
-		while( $name = $stmt->fetchColumn( 0 ) )
+		while ($name = $stmt->fetchColumn(0))
 			yield $name;
 	}
 
-	public function hasTable( Table $table ) {
+	public function hasTable(Table $table)
+	{
 
-		$db = $this->quoteName( $table->getDatabase() );
-		$col = $this->quoteName( 'Tables_in_'.$table->getDatabase() );
+		$db = $this->quoteName($table->getDatabase());
+		$col = $this->quoteName('Tables_in_'.$table->getDatabase());
 
-		$stmt = $this->query( "SHOW TABLES IN $db WHERE $col=?", [ $table->getName() ] );
+		$stmt = $this->query("SHOW TABLES IN $db WHERE $col=?", [$table->getName()]);
 
-		return $stmt->fetchColumn( 0 ) ? true : false;
+		return $stmt->fetchColumn(0) ? true : false;
 	}
 
-	public function loadTable( Table $table ) {
+	public function loadTable(Table $table)
+	{
 
-		if( !$table->exists() )
-			throw new Exception( "Failed to load table $table: Table does not exist. Use exists() and create() to solve this." );
+		if (!$table->exists())
+			throw new Exception("Failed to load table $table: Table does not exist. Use exists() and create() to solve this.");
 
 		return $this;
 	}
 
-	public function saveTable( Table $table ) {
+	public function saveTable(Table $table)
+	{
 
-		if( !$table->exists() )
-			throw new Exception( "Failed to save table $table: Table does not exist. Use exists() and create() to solve this." );
+		if (!$table->exists())
+			throw new Exception("Failed to save table $table: Table does not exist. Use exists() and create() to solve this.");
 
 		return $this;
 	}
 
-	public function createTable( Table $table, array $columns ) {
+	public function createTable(Table $table, array $columns)
+	{
 
-		if( $table->exists() )
-			throw new Exception( "Failed to create table $table: Table does already exist. Use exists() to solve this." );
+		if ($table->exists())
+			throw new Exception("Failed to create table $table: Table does already exist. Use exists() to solve this.");
 
 		$cols = [];
 		$extras = [];
-		foreach( $columns as $col ) {
+		foreach ($columns as $col) {
 
-			$cols[] = $this->getColumnSql( $col );
+			$cols[] = $this->getColumnSql($col);
 
-            $idxName = $this->quoteName( "{$col}_IDX" );;
+			$idxName = $this->quoteName("{$col}_IDX");;
 
-			if( $col->isUnique() ) {
+			if ($col->isUnique()) {
 
-				$idxName = $this->quoteName( "{$col}_UQ_IDX" );
-				$extras[] = "UNIQUE KEY $idxName(".$this->quoteName( $col ).')';
+				$idxName = $this->quoteName("{$col}_UQ_IDX");
+				$extras[] = "UNIQUE KEY $idxName(".$this->quoteName($col).')';
 			}
 
-            if( $col->isIndex() )
-                $extras[] = "INDEX $idxName(".$this->quoteName( $col ).')';
+			if ($col->isIndex())
+				$extras[] = "INDEX $idxName(".$this->quoteName($col).')';
 
-            $ref = null;
-            if( $ref = $col->getReference() ) {
+			$ref = null;
+			if ($ref = $col->getReference()) {
 
-                $fkName = $this->quoteName( "{$table}_{$col}_FK" );
-                $refTbl = $ref->getTable();
-                $refDb = $ref->getDatabase();
-                $extras[] = "CONSTRAINT $fkName FOREIGN KEY("
-                          .$this->quoteName( $col )
-                          .") REFERENCES ".$this->quoteName( $refDb, $refTbl )."(".$this->quoteName( $ref ).")";
-            }
+				$fkName = $this->quoteName("{$table}_{$col}_FK");
+				$refTbl = $ref->getTable();
+				$refDb = $ref->getDatabase();
+				$extras[] = "CONSTRAINT $fkName FOREIGN KEY("
+					.$this->quoteName($col)
+					.") REFERENCES ".$this->quoteName($refDb, $refTbl)."(".$this->quoteName($ref).")";
+			}
 		}
 
-		$colSql = implode( ',', array_merge( $cols, $extras ) );
-		$name = $this->quoteName( $table->getDatabase(), $table );
+		$colSql = implode(',', array_merge($cols, $extras));
+		$name = $this->quoteName($table->getDatabase(), $table);
 
-		$this->query( "CREATE TABLE $name($colSql) ENGINE=? COLLATE=?", [ $this->getConfig()->engine, $this->getConfig()->collation ] );
-
-		return $this;
-	}
-
-	public function removeTable( Table $table ) {
-
-		if( !$table->exists() )
-			throw new Exception( "Failed to remove table $table: Table does not exist. Use exists() to solve this." );
-
-        /* It's important that we drop all CONSTRAINTs first, so we iterate the columns and save them without a reference (triggers saveColumn()) */
-        /* We also need to drop all CONSTRAINTs, that reference THIS table. This will take a lot of performance right now */
-        //TODO: OPTIMIZE PERFORMANCE!!!
-        foreach( $table->getColumns( true ) as $col ) {
-            $this->dropConstraint( $col );
-            $this->dropForeignConstraints( $col );
-        }
-
-		$name = $this->quoteName( $table->getDatabase(), $table );
-		$this->query( "DROP TABLE $name" );
+		$this->query("CREATE TABLE $name($colSql) ENGINE=? COLLATE=?", [$this->getConfig()->engine, $this->getConfig()->collation]);
 
 		return $this;
 	}
 
+	public function removeTable(Table $table)
+	{
 
-    protected function getUniqueIndexName( Column $column, $quote = true ) {
+		if (!$table->exists())
+			throw new Exception("Failed to remove table $table: Table does not exist. Use exists() to solve this.");
 
-        $str = "{$column}_UQ_IDX";
-        return $quote ? $this->quoteName( $str ) : $str;
-    }
+		/* It's important that we drop all CONSTRAINTs first, so we iterate the columns and save them without a reference (triggers saveColumn()) */
+		/* We also need to drop all CONSTRAINTs, that reference THIS table. This will take a lot of performance right now */
+		//TODO: OPTIMIZE PERFORMANCE!!!
+		foreach ($table->getColumns(true) as $col) {
+			$this->dropConstraint($col);
+			$this->dropForeignConstraints($col);
+		}
 
-    protected function getIndexName( Column $column, $quote = true ) {
+		$name = $this->quoteName($table->getDatabase(), $table);
+		$this->query("DROP TABLE $name");
 
-        $str = "{$column}_IDX";
-        return $quote ? $this->quoteName( $str ) : $str;
-    }
-
-    protected function getConstraintName( Column $column, $quote = true ) {
-
-        $table = $column->getTable();
-        $str = "{$table}_{$column}_FK";
-        return $quote ? $this->quoteName( $str ) : $str;
-    }
-
-    protected function addUniqueIndex( Column $column ) {
-
-        $table = $column->getTable();
-        $tbl = $this->quoteName( $table->getDatabase(), $table );
-        $keyName = $this->getUniqueIndexName( $column );
-        $this->query( "ALTER TABLE $tbl ADD UNIQUE KEY $keyName(".$this->quoteName( $column ).')' );
-    }
-
-    protected function dropUniqueIndex( Column $column ) {
-
-        $table = $column->getTable();
-        $tbl = $this->quoteName( $table->getDatabase(), $table );
-        $keyName = $this->getUniqueIndexName( $column );
-        $this->query( "ALTER TABLE $tbl DROP INDEX $keyName" );
-    }
-
-    protected function addIndex( Column $column ) {
-
-        $table = $column->getTable();
-        $tbl = $this->quoteName( $table->getDatabase(), $table );
-        $keyName = $this->getIndexName( $column );
-        $this->query( "ALTER TABLE $tbl ADD INDEX $keyName(".$this->quoteName( $column ).')' );
-    }
-
-    protected function dropIndex( Column $column ) {
-
-        $table = $column->getTable();
-        $tbl = $this->quoteName( $table->getDatabase(), $table );
-        $keyName = $this->getIndexName( $column );
-        $this->query( "ALTER TABLE $tbl DROP INDEX $keyName" );
-    }
-
-    protected function addConstraint( Column $column ) {
-
-        $ref = $column->getReference();
-
-        if( !$ref )
-            return;
-
-        $table = $column->getTable();
-        $fkName = $this->getConstraintName( $column );
-        $tbl = $this->quoteName( $table->getDatabase(), $table );
-
-        $refTbl = $ref->getTable();
-        $refDb = $ref->getDatabase();
-        $tblName = $this->quoteName( $refDb, $refTbl );
-
-        $this->query( "ALTER TABLE $tbl ADD CONSTRAINT $fkName FOREIGN KEY("
-              .$this->quoteName( $column )
-              .") REFERENCES $tblName(".$this->quoteName( $ref ).")" );
-    }
-
-    protected function dropConstraint( Column $column, $dropIndex = false ) {
-
-        $ref = $column->getReference();
-
-        if( !$ref )
-            return;
-
-        $table = $column->getTable();
-        $fkName = $this->getConstraintName( $column );
-        $tbl = $this->quoteName( $table->getDatabase(), $table );
-
-        $this->query( "ALTER TABLE $tbl DROP FOREIGN KEY $fkName" );
-
-        if( $dropIndex )
-            $this->dropIndex( $column );
-    }
-
-    protected function dropForeignConstraints( Column $column ) {
-
-        $table = $column->getTable();
-        foreach( $table->getDatabase()->getTables() as $tbl )
-            foreach( $tbl->getColumns( true ) as $col ) {
-
-                $ref = $col->getReference();
-                if( $ref && $ref->equals( $column ) )
-                    $this->dropConstraint( $col, true );
-            }
-    }
+		return $this;
+	}
 
 
-	public function getColumnNames( Table $table ) {
+	protected function getUniqueIndexName(Column $column, $quote = true)
+	{
 
-		$stmt = $this->query( 'SHOW COLUMNS IN '.$this->quoteName( $table->getDatabase(), $table ) );
+		$str = "{$column}_UQ_IDX";
 
-		while( $name = $stmt->fetchColumn( 0 ) )
+		return $quote ? $this->quoteName($str) : $str;
+	}
+
+	protected function getIndexName(Column $column, $quote = true)
+	{
+
+		$str = "{$column}_IDX";
+
+		return $quote ? $this->quoteName($str) : $str;
+	}
+
+	protected function getConstraintName(Column $column, $quote = true)
+	{
+
+		$table = $column->getTable();
+		$str = "{$table}_{$column}_FK";
+
+		return $quote ? $this->quoteName($str) : $str;
+	}
+
+	protected function addUniqueIndex(Column $column)
+	{
+
+		$table = $column->getTable();
+		$tbl = $this->quoteName($table->getDatabase(), $table);
+		$keyName = $this->getUniqueIndexName($column);
+		$this->query("ALTER TABLE $tbl ADD UNIQUE KEY $keyName(".$this->quoteName($column).')');
+	}
+
+	protected function dropUniqueIndex(Column $column)
+	{
+
+		$table = $column->getTable();
+		$tbl = $this->quoteName($table->getDatabase(), $table);
+		$keyName = $this->getUniqueIndexName($column);
+		$this->query("ALTER TABLE $tbl DROP INDEX $keyName");
+	}
+
+	protected function addIndex(Column $column)
+	{
+
+		$table = $column->getTable();
+		$tbl = $this->quoteName($table->getDatabase(), $table);
+		$keyName = $this->getIndexName($column);
+		$this->query("ALTER TABLE $tbl ADD INDEX $keyName(".$this->quoteName($column).')');
+	}
+
+	protected function dropIndex(Column $column)
+	{
+
+		$table = $column->getTable();
+		$tbl = $this->quoteName($table->getDatabase(), $table);
+		$keyName = $this->getIndexName($column);
+		$this->query("ALTER TABLE $tbl DROP INDEX $keyName");
+	}
+
+	protected function addConstraint(Column $column)
+	{
+
+		$ref = $column->getReference();
+
+		if (!$ref)
+			return;
+
+		$table = $column->getTable();
+		$fkName = $this->getConstraintName($column);
+		$tbl = $this->quoteName($table->getDatabase(), $table);
+
+		$refTbl = $ref->getTable();
+		$refDb = $ref->getDatabase();
+		$tblName = $this->quoteName($refDb, $refTbl);
+
+		$this->query("ALTER TABLE $tbl ADD CONSTRAINT $fkName FOREIGN KEY("
+			.$this->quoteName($column)
+			.") REFERENCES $tblName(".$this->quoteName($ref).")");
+	}
+
+	protected function dropConstraint(Column $column, $dropIndex = false)
+	{
+
+		$ref = $column->getReference();
+
+		if (!$ref)
+			return;
+
+		$table = $column->getTable();
+		$fkName = $this->getConstraintName($column);
+		$tbl = $this->quoteName($table->getDatabase(), $table);
+
+		$this->query("ALTER TABLE $tbl DROP FOREIGN KEY $fkName");
+
+		if ($dropIndex)
+			$this->dropIndex($column);
+	}
+
+	protected function dropForeignConstraints(Column $column)
+	{
+
+		$table = $column->getTable();
+		foreach ($table->getDatabase()->getTables() as $tbl)
+			foreach ($tbl->getColumns(true) as $col) {
+
+				$ref = $col->getReference();
+				if ($ref && $ref->equals($column))
+					$this->dropConstraint($col, true);
+			}
+	}
+
+
+	public function getColumnNames(Table $table)
+	{
+
+		$stmt = $this->query('SHOW COLUMNS IN '.$this->quoteName($table->getDatabase(), $table));
+
+		while ($name = $stmt->fetchColumn(0))
 			yield $name;
 	}
 
-	public function hasColumn( Column $column ) {
+	public function hasColumn(Column $column)
+	{
 
-		$name = $this->quoteName( $column->getDatabase(), $column->getTable() );
-		$stmt = $this->query( "SHOW COLUMNS IN $name WHERE `Field`=?", [ $column->getName() ] );
-	
-		return $stmt->fetchColumn( 0 ) ? true : false;
+		$name = $this->quoteName($column->getDatabase(), $column->getTable());
+		$stmt = $this->query("SHOW COLUMNS IN $name WHERE `Field`=?", [$column->getName()]);
+
+		return $stmt->fetchColumn(0) ? true : false;
 	}
 
-	public function loadColumn( Column $column ) {
+	public function loadColumn(Column $column)
+	{
 
-		if( !$column->exists() )
-			throw new Exception( "Failed to load column $column: Column does not exist. Use exists() and create() to solve this." );
+		if (!$column->exists())
+			throw new Exception("Failed to load column $column: Column does not exist. Use exists() and create() to solve this.");
 
-        //TODO: Maybe it would be better to move this isSynced()-stuff to Database, Table, Column and Row
-		if( $column->isSynced() )
+		//TODO: Maybe it would be better to move this isSynced()-stuff to Database, Table, Column and Row
+		if ($column->isSynced())
 			return $this;
 
-		$name = $this->quoteName( $column->getDatabase(), $column->getTable() );
-		$stmt = $this->query( "SHOW COLUMNS IN $name WHERE `Field`=?", [ $column->getName() ] );
+		$name = $this->quoteName($column->getDatabase(), $column->getTable());
+		$stmt = $this->query("SHOW COLUMNS IN $name WHERE `Field`=?", [$column->getName()]);
 
 		$info = $stmt->fetchObject();
 
-        $matches = [];
-        if( !preg_match( '/^(?<type>[a-zA-Z]+)(?:\((?<extra>[^\)]+)\))?$/i', $info->Type, $matches ) )
-        	throw new Exception( "Received unexpected type {$info->Type} from database, failed to parse it." );
+		$matches = [];
+		if (!preg_match('/^(?<type>[a-zA-Z]+)(?:\((?<extra>[^\)]+)\))?$/i', $info->Type, $matches))
+			throw new Exception("Received unexpected type {$info->Type} from database, failed to parse it.");
 
-        $type = $this->mapColumnType( strtolower( $matches[ 'type' ] ), true );
-        $extra = isset( $matches[ 'extra' ] ) ? $matches[ 'extra' ] : null;
+		$type = $this->mapColumnType(strtolower($matches['type']), true);
+		$extra = isset($matches['extra']) ? $matches['extra'] : null;
 
-        if( $extra ) {
+		if ($extra) {
 
-            if( is_numeric( $extra ) ) {
+			if (is_numeric($extra)) {
 
-            	$maxLength = intval( $extra );
+				$maxLength = intval($extra);
 
-            	if( $type === 'bool' && $maxLength > 1 )
-            		$type = 'byte';
+				if ($type === 'bool' && $maxLength > 1)
+					$type = 'byte';
 
-            	$column->setMaxLength( $maxLength );
-            } else {
+				$column->setMaxLength($maxLength);
+			} else {
 
-            	$column->setAllowedValues( array_map( function( $val ) {
+				$column->setAllowedValues(array_map(function ($val) {
 
-            		return trim( $val, '"\'' );
-            	}, explode( ',', $extra ) ) );
-            }
-        }
+					return trim($val, '"\'');
+				}, explode(',', $extra)));
+			}
+		}
 
 
-        $column->setType( $type );
+		$column->setType($type);
 
-        switch( strtolower( $info->Null ) ) {
-            case 'no': $column->makeRequired(); break;
-            default:
-            case 'yes': $column->makeOptional(); break;
-        }
+		switch (strtolower($info->Null)) {
+			case 'no':
+				$column->makeRequired();
+				break;
+			default:
+			case 'yes':
+				$column->makeOptional();
+				break;
+		}
 
-        switch( strtolower( $info->Key ) ) {
-            case 'pri': $column->makePrimary(); break;
-            case 'uni': $column->makeUnique(); break;
-            case 'mul':
+		switch (strtolower($info->Key)) {
+			case 'pri':
+				$column->makePrimary();
+				break;
+			case 'uni':
+				$column->makeUnique();
+				break;
+			case 'mul':
 
-                $table = $column->getTable();
-                $fkName = "{$table}_{$column}_FK";
-                $stmt = $this->query(
-                    'SELECT `REFERENCED_TABLE_SCHEMA` AS `db`, '
-                  . '`REFERENCED_TABLE_NAME` AS `tbl`, '
-                  . '`REFERENCED_COLUMN_NAME` AS `col` '
-                  . 'FROM `information_schema`.`KEY_COLUMN_USAGE` '
-                  . 'WHERE `CONSTRAINT_SCHEMA`=? AND `CONSTRAINT_NAME`=?',
-                    [ $column->getDatabase()->getName(), $fkName ]
-                );
+				$table = $column->getTable();
+				$fkName = "{$table}_{$column}_FK";
+				$stmt = $this->query(
+					'SELECT `REFERENCED_TABLE_SCHEMA` AS `db`, '
+					.'`REFERENCED_TABLE_NAME` AS `tbl`, '
+					.'`REFERENCED_COLUMN_NAME` AS `col` '
+					.'FROM `information_schema`.`KEY_COLUMN_USAGE` '
+					.'WHERE `CONSTRAINT_SCHEMA`=? AND `CONSTRAINT_NAME`=?',
+					[$column->getDatabase()->getName(), $fkName]
+				);
 
-                $refInfo = $stmt->fetchObject();
+				$refInfo = $stmt->fetchObject();
 
-                if( $info ) {
+				if ($info) {
 
-                    $refCol = $column->getSource()
-                                     ->getDatabase( $refInfo->db )
-                                     ->getTable( $refInfo->tbl )
-                                     ->getColumn( $refInfo->col );
-                    $column->reference( $refCol );
-                } else
-                    $column->makeIndex();
+					$refCol = $column->getSource()
+						->getDatabase($refInfo->db)
+						->getTable($refInfo->tbl)
+						->getColumn($refInfo->col);
+					$column->reference($refCol);
+				} else
+					$column->makeIndex();
 
-                break;
-        }
+				break;
+		}
 
-        if( !empty( $info->Default ) )
-        	$column->setDefaultValue( $info->Default );
+		if (!empty($info->Default))
+			$column->setDefaultValue($info->Default);
 
-        if( $info->Extra == 'auto_increment' )
-            $column->autoIncrease();
+		if ($info->Extra == 'auto_increment')
+			$column->autoIncrease();
 
-        return $this;
+		return $this;
 	}
 
-	public function saveColumn( Column $column ) {
+	public function saveColumn(Column $column)
+	{
 
-		if( !$column->exists() )
-			throw new Exception( "Failed to save column $column: Column doesnt exist. Use exists() to solve this." );
+		if (!$column->exists())
+			throw new Exception("Failed to save column $column: Column doesnt exist. Use exists() to solve this.");
 
-		if( $column->isSynced() )
+		if ($column->isSynced())
 			return $this;
 
-		$syncedCol = $column->getTable()->getColumn( $column->getName(), true );
+		$syncedCol = $column->getTable()->getColumn($column->getName(), true);
 
-        if( $column->equals( $syncedCol, false ) )
-            return $this;
+		if ($column->equals($syncedCol, false))
+			return $this;
 
-		$sql = $this->getColumnSql( $column );
-		$name = $this->quoteName( $column->getDatabase(), $column->getTable() );
+		$sql = $this->getColumnSql($column);
+		$name = $this->quoteName($column->getDatabase(), $column->getTable());
 
-        if( $syncedCol->isUnique() && !$column->isUnique() )
-            $this->dropUniqueIndex( $syncedCol );
+		if ($syncedCol->isUnique() && !$column->isUnique())
+			$this->dropUniqueIndex($syncedCol);
 
-		$this->query( "ALTER TABLE $name MODIFY $sql" );
+		$this->query("ALTER TABLE $name MODIFY $sql");
 
-        /* Drop/Add UNIQUE if needed */
-		if( !$syncedCol->isUnique() && $column->isUnique() )
-			$this->addUniqueIndex( $column );
+		/* Drop/Add UNIQUE if needed */
+		if (!$syncedCol->isUnique() && $column->isUnique())
+			$this->addUniqueIndex($column);
 
-        /* Drop PRIMARY if needed (It gets added through getColumnSql() and the PRIMARY KEY addon) */
-        if( $syncedCol->isPrimary() && !$column->isPrimary() )
-			$this->query( "ALTER TABLE $name DROP PRIMARY KEY" );
+		/* Drop PRIMARY if needed (It gets added through getColumnSql() and the PRIMARY KEY addon) */
+		if ($syncedCol->isPrimary() && !$column->isPrimary())
+			$this->query("ALTER TABLE $name DROP PRIMARY KEY");
 
-        /* Add INDEX if needed */
-        if( !$syncedCol->isIndex() && $column->isIndex() )
-            $this->addIndex( $column );
+		/* Add INDEX if needed */
+		if (!$syncedCol->isIndex() && $column->isIndex())
+			$this->addIndex($column);
 
-        /* Drop/Add CONSTRAINTS if needed */
-        $syncedRef = $syncedCol->getReference();
-        $colRef = $column->getReference();
-        $refChanged = ( $colRef && $syncedRef 
-                       && !$colRef->equals( $syncedRef ) );
-        if( ( $syncedRef && !$colRef ) 
-         || ( $colRef && !$syncedRef ) 
-         || $refChanged ) {
+		/* Drop/Add CONSTRAINTS if needed */
+		$syncedRef = $syncedCol->getReference();
+		$colRef = $column->getReference();
+		$refChanged = ($colRef && $syncedRef
+			&& !$colRef->equals($syncedRef));
+		if (($syncedRef && !$colRef)
+			|| ($colRef && !$syncedRef)
+			|| $refChanged
+		) {
 
-            if( ( $syncedRef && !$colRef ) || $refChanged )
-                $this->dropConstraint( $syncedCol );
+			if (($syncedRef && !$colRef) || $refChanged)
+				$this->dropConstraint($syncedCol);
 
-            if( ( $colRef && !$syncedRef ) || $refChanged )
-                $this->addConstraint( $column );
-        }
+			if (($colRef && !$syncedRef) || $refChanged)
+				$this->addConstraint($column);
+		}
 
-        /* Drop INDEX if needed */
-        if( $syncedCol->isIndex() && !$column->isIndex() )
-            $this->dropIndex( $column );
+		/* Drop INDEX if needed */
+		if ($syncedCol->isIndex() && !$column->isIndex())
+			$this->dropIndex($column);
 
 
 		return $this;
 	}
 
-	public function createColumn( Column $column ) {
+	public function createColumn(Column $column)
+	{
 
-		if( $column->exists() )
-			throw new Exception( "Failed to create column $column: Column already exists. Use exists() to solve this." );
+		if ($column->exists())
+			throw new Exception("Failed to create column $column: Column already exists. Use exists() to solve this.");
 
-		$sql = $this->getColumnSql( $column );
-		$name = $this->quoteName( $column->getDatabase(), $column->getTable() );
+		$sql = $this->getColumnSql($column);
+		$name = $this->quoteName($column->getDatabase(), $column->getTable());
 
-		$this->query( "ALTER TABLE $name ADD $sql" );
+		$this->query("ALTER TABLE $name ADD $sql");
 
-		if( $column->isUnique() )
-			$this->addUniqueIndex( $column );
+		if ($column->isUnique())
+			$this->addUniqueIndex($column);
 
-        /* Add INDEX if needed */
-        if( $column->isIndex() )
-            $this->addIndex( $column );
+		/* Add INDEX if needed */
+		if ($column->isIndex())
+			$this->addIndex($column);
 
-        $this->addConstraint( $column );
-
-		return $this;
-	}
-
-	public function removeColumn( Column $column ) {
-
-		if( !$column->exists() )
-			throw new Exception( "Failed to remove column $column: Column doesnt exist. Use exists() to solve this." );
-
-		$name = $this->quoteName( $column->getDatabase(), $column->getTable() );
-
-        if( !$column->isSynced() )
-            $column->load();
-
-        /* If this column has a reference, we need to drop it first */
-        $this->dropConstraint( $column );
-        $this->dropForeignConstraints( $column );
-
-		$this->query( "ALTER TABLE $name DROP ".$this->quoteName( $column ) );
+		$this->addConstraint($column);
 
 		return $this;
 	}
 
+	public function removeColumn(Column $column)
+	{
 
-    protected function parseClauses( array $clauses, $joinWith = 'AND' ) {
+		if (!$column->exists())
+			throw new Exception("Failed to remove column $column: Column doesnt exist. Use exists() to solve this.");
 
-        $checks = [];
-        $args = [];
-        foreach( $clauses as $field => $value ) {
+		$name = $this->quoteName($column->getDatabase(), $column->getTable());
 
-            $suffix = '';
-            $len = strlen( $field );
-            $char = null;
-            while( !ctype_alnum( $char = $field[ --$len ] ) )
-                if( $char !== '.' )
-                    $suffix = $char.$suffix;
+		if (!$column->isSynced())
+			$column->load();
 
-            $field = $this->inflectInputColumnName( substr( $field, 0, $len + 1 ) );
+		/* If this column has a reference, we need to drop it first */
+		$this->dropConstraint($column);
+		$this->dropForeignConstraints($column);
 
-            if( in_array( $field, [ 'or', 'and' ] ) ) {
+		$this->query("ALTER TABLE $name DROP ".$this->quoteName($column));
 
-                list( $sql, $subArgs ) = $this->parseClauses( $value, strtoupper( $field ) );
-                $checks[] = "($sql)";
-                $args = array_merge( $args, $subArgs );
+		return $this;
+	}
 
-                continue;
-            }
 
-            $negate = ( $suffix === '!' );
-            $op = '=';
+	protected function parseClauses(array $clauses, $joinWith = 'AND')
+	{
 
-            if( is_object( $value ) )
-                $value = (array)$value;
+		$checks = [];
+		$args = [];
+		foreach ($clauses as $field => $value) {
 
-            if( is_array( $value ) ) {
+			$suffix = '';
+			$len = strlen($field);
+			$char = null;
+			while (!ctype_alnum($char = $field[--$len]))
+				if ($char !== '.')
+					$suffix = $char.$suffix;
 
-                $checks[] = "`$field` ".( $negate ? 'NOT ' : '' ).'IN('.implode( ',', array_fill( 0, count( $value ), '?' ) ).')';              
-                foreach( $value as $v )
-                    $args[] = $v;
+			$field = $this->inflectInputColumnName(substr($field, 0, $len + 1));
 
-                continue;
-            }
+			if (in_array($field, ['or', 'and'])) {
 
-            switch( $suffix ) {
-                case '!': $op = '!='; break;
-                case '~':
-                case '*':
-                case '^':
-                case '$':
-                    $op = ' LIKE ';
+				list($sql, $subArgs) = $this->parseClauses($value, strtoupper($field));
+				$checks[] = "($sql)";
+				$args = array_merge($args, $subArgs);
 
-                    $left = ( $suffix !== '^' ? '%' : '' );
-                    $right = ( $suffix !== '$' ? '%' : '' );
+				continue;
+			}
 
-                    $value = "$left$value$right";
-                    break;
-                case '>':
-                case '>=':
-                case '<=':
-                case '<':
+			$negate = ($suffix === '!');
+			$op = '=';
 
-                    $op = $suffix;
-                    break;
-            }
+			if (is_object($value))
+				$value = (array)$value;
 
-            $checks[] = "`$field`$op?";
-            $args[] = $value;
-        }
+			if (is_array($value)) {
 
-        return [ implode( " $joinWith ", $checks ), $args ];
-    }
+				$checks[] = "`$field` ".($negate ? 'NOT ' : '').'IN('.implode(',', array_fill(0, count($value), '?')).')';
+				foreach ($value as $v)
+					$args[] = $v;
 
-    protected function parseSelectFields( array $fields ) {
+				continue;
+			}
 
-        $result = [];
-        $index = null;
-        foreach( $fields as $name => $alias ) {
+			switch ($suffix) {
+				case '!':
+					$op = '!=';
+					break;
+				case '~':
+				case '*':
+				case '^':
+				case '$':
+					$op = ' LIKE ';
 
-            $col = $name;
-            if( is_int( $name ) ) {
+					$left = ($suffix !== '^' ? '%' : '');
+					$right = ($suffix !== '$' ? '%' : '');
 
-                $col = $alias;
-                $alias = null;
-            }
+					$value = "$left$value$right";
+					break;
+				case '>':
+				case '>=':
+				case '<=':
+				case '<':
 
-            if( $col[ 0 ] === '$' ) {
+					$op = $suffix;
+					break;
+			}
 
-                $col = substr( $col, 1 );
-                $index = $col;
-            }
+			$checks[] = "`$field`$op?";
+			$args[] = $value;
+		}
 
-            $col = $this->inflectInputColumnName( $col );
+		return [implode(" $joinWith ", $checks), $args];
+	}
 
-            if( $alias )
-                $alias = $this->inflectInputColumnName( $alias );
+	protected function parseSelectFields(array $fields)
+	{
 
-            $result[] = "`$col`".( $alias ? " AS `$alias`" : '' );
-        }
+		$result = [];
+		$index = null;
+		foreach ($fields as $name => $alias) {
 
-        return [ implode( ',', $result ), $index ];
-    }
+			$col = $name;
+			if (is_int($name)) {
 
-    protected function parse( Query $qry ) {
+				$col = $alias;
+				$alias = null;
+			}
 
-        $sql = '';
-        $args = [];
-        $clauses = $qry->getClauses();
-        if( count( $clauses ) ) {
+			if ($col[0] === '$') {
 
-            list( $clauseSql, $clauseArgs ) = $this->parseClauses( $clauses );
+				$col = substr($col, 1);
+				$index = $col;
+			}
 
-            $sql .= " WHERE $clauseSql";
-            $args = ArrayUtils::concat( $args, $clauseArgs );
-        }
+			$col = $this->inflectInputColumnName($col);
 
-        if( $qry->isRandomSorted() ) {
-            $sql .= " ORDER BY RAND()";
-        } else {
+			if ($alias)
+				$alias = $this->inflectInputColumnName($alias);
 
-            $sorts = $qry->getSortings();
-            if( count( $sorts ) ) {
+			$result[] = "`$col`".($alias ? " AS `$alias`" : '');
+		}
 
-                $sortings = [];
-                foreach( $sorts as $field => $direction ) {
+		return [implode(',', $result), $index];
+	}
 
-                    if( is_int( $field ) ) {
+	protected function parse(Query $qry)
+	{
 
-                        $field = $direction;
-                        $direction = 'asc';
-                    }
+		$sql = '';
+		$args = [];
+		$clauses = $qry->getClauses();
+		if (count($clauses)) {
 
-                    switch( strtolower( $direction ) ) {
-                        case 'asc':
-                        case 'ascending':
-                        case '+':
-                        case '>':
-                        case 'v':
-                        default:
-                            $direction = 'ASC';
-                            break;
-                        case 'desc':
-                        case 'descending':
-                        case '-':
-                        case '<':
-                        case '^':
-                            $direction = 'DESC';
-                            break;
-                    }
+			list($clauseSql, $clauseArgs) = $this->parseClauses($clauses);
 
-                    $sortings[] = '`'.$this->inflectInputColumnName( $field )."` $direction";
-                }
+			$sql .= " WHERE $clauseSql";
+			$args = array_merge($args, $clauseArgs);
+		}
 
-                $sql .= " ORDER BY ".implode( ',', $sortings );
-            }
-        }
+		if ($qry->isRandomSorted()) {
+			$sql .= " ORDER BY RAND()";
+		} else {
 
+			$sorts = $qry->getSortings();
+			if (count($sorts)) {
 
-        $limit = $qry->getLimit();
-        $limitStart = $qry->getLimitStart();
+				$sortings = [];
+				foreach ($sorts as $field => $direction) {
 
-        if( !is_null( $limit ) ) {
+					if (is_int($field)) {
 
-            $limit = intval( $limit );
-            $limitStart = intval( $limitStart ? $limitStart : 0 );
+						$field = $direction;
+						$direction = 'asc';
+					}
 
-            $sql .= " LIMIT $limitStart,$limit";
-        }
+					switch (strtolower($direction)) {
+						case 'asc':
+						case 'ascending':
+						case '+':
+						case '>':
+						case 'v':
+						default:
+							$direction = 'ASC';
+							break;
+						case 'desc':
+						case 'descending':
+						case '-':
+						case '<':
+						case '^':
+							$direction = 'DESC';
+							break;
+					}
 
-        return [ $sql, $args ];
-    }
+					$sortings[] = '`'.$this->inflectInputColumnName($field)."` $direction";
+				}
 
-    protected function parseData( array $data ) {
+				$sql .= " ORDER BY ".implode(',', $sortings);
+			}
+		}
 
-        $items = [];
-        $args = [];
 
-        foreach( $data as $key => $val ) {
+		$limit = $qry->getLimit();
+		$limitStart = $qry->getLimitStart();
 
-            $items[] = $this->quoteName( $this->inflectInputColumnName( $key ) ).'=?';
-            $args[] = $val;
-        }
+		if (!is_null($limit)) {
 
-        $sql = ' SET '.implode( ',', $items );
+			$limit = intval($limit);
+			$limitStart = intval($limitStart ? $limitStart : 0);
 
-        return [ $sql, $args ];
-    }
+			$sql .= " LIMIT $limitStart,$limit";
+		}
 
-    protected function inflectRow( array $row ) {
+		return [$sql, $args];
+	}
 
-        foreach( $row as $name => $value ) {
+	protected function parseData(array $data)
+	{
 
-            $inflectedName = $this->inflectOutputColumnName( $name );
-            yield $inflectedName => $value;
-        }
-    }
+		$items = [];
+		$args = [];
 
-    protected function processRow( Table $table, array $data, $as = null ) {
+		foreach ($data as $key => $val) {
 
-        $inflectedRow = iterator_to_array( $this->inflectRow( $data ) );
+			$items[] = $this->quoteName($this->inflectInputColumnName($key)).'=?';
+			$args[] = $val;
+		}
 
-        if( $as === false )
-            return $inflectedRow;
+		$sql = ' SET '.implode(',', $items);
 
-        if( $as === null )
-            $as = Table::DEFAULT_ROW_CLASS_NAME;
+		return [$sql, $args];
+	}
 
-        return new $as( $table, $inflectedRow );
-    }
+	protected function inflectRow(array $row)
+	{
 
-	public function countRows( Query $query, $field = null, $distinct = false ) {
+		foreach ($row as $name => $value) {
 
-        list( $sql, $args ) = $this->parse( $query );
-        $table = $query->getTable();
-        $name = $this->quoteName( $table->getDatabase(), $table );
+			$inflectedName = $this->inflectOutputColumnName($name);
+			yield $inflectedName => $value;
+		}
+	}
 
-        $countedField = '*';
+	protected function processRow(Table $table, array $data, $as = null)
+	{
 
-        if( $field )
-            $countedField = "`$field`";
+		$inflectedRow = iterator_to_array($this->inflectRow($data));
 
-        if( $distinct )
-            $countedField = "DISTINCT $countedField";
+		if ($as === false)
+			return $inflectedRow;
 
-        $qry = "SELECT COUNT($countedField) FROM $name$sql";
+		if ($as === null)
+			$as = Table::DEFAULT_ROW_CLASS_NAME;
 
-        $stmt = $this->query( $qry, $args );
+		return new $as($table, $inflectedRow);
+	}
 
-        return intval( $stmt->fetchColumn( 0 ) );
-    }
+	public function countRows(Query $query, $field = null, $distinct = false)
+	{
 
-	public function loadRows( Query $query, array $fields = null, $as = null ) {
+		list($sql, $args) = $this->parse($query);
+		$table = $query->getTable();
+		$name = $this->quoteName($table->getDatabase(), $table);
 
-        list( $sql, $args ) = $this->parse( $query );
-        $table = $query->getTable();
-        $name = $this->quoteName( $table->getDatabase(), $table );
+		$countedField = '*';
 
-        list( $fields, $index ) = $fields ? $this->parseSelectFields( $fields ) : [ '*', null ];
-        $qry = "SELECT $fields FROM $name$sql";
+		if ($field)
+			$countedField = "`$field`";
 
-        $stmt = $this->query( $qry, $args );
-        $stmt->setFetchMode( \PDO::FETCH_ASSOC );
+		if ($distinct)
+			$countedField = "DISTINCT $countedField";
 
-        while( $row = $stmt->fetch() )
-            if( $index ) {
+		$qry = "SELECT COUNT($countedField) FROM $name$sql";
 
-                $indexValue = $row[ $index ];
-                yield $indexValue => $this->processRow( $table, $row, $as );
-            } else
-                yield $this->processRow( $table, $row, $as );
-    }
+		$stmt = $this->query($qry, $args);
 
-	public function saveRows( Query $query, array $data ) {
+		return intval($stmt->fetchColumn(0));
+	}
 
-        list( $sql, $args ) = $this->parse( $query );
-        $table = $query->getTable();
-        $name = $this->quoteName( $table->getDatabase(), $table );
+	public function loadRows(Query $query, array $fields = null, $as = null)
+	{
 
-        list( $updateSql, $updateArgs ) = $this->parseData( $data );
+		list($sql, $args) = $this->parse($query);
+		$table = $query->getTable();
+		$name = $this->quoteName($table->getDatabase(), $table);
 
-        $qry = "UPDATE $name $updateSql$sql";
+		list($fields, $index) = $fields ? $this->parseSelectFields($fields) : ['*', null];
+		$qry = "SELECT $fields FROM $name$sql";
 
-        $this->query( $qry, array_merge( $updateArgs, $args ) );
-        
-        return $this;
-    }
+		$stmt = $this->query($qry, $args);
+		$stmt->setFetchMode(\PDO::FETCH_ASSOC);
 
-	public function createRow( Table $table, array $data ) {
+		while ($row = $stmt->fetch())
+			if ($index) {
 
-        $name = $this->quoteName( $table->getDatabase(), $table );
+				$indexValue = $row[$index];
+				yield $indexValue => $this->processRow($table, $row, $as);
+			} else
+				yield $this->processRow($table, $row, $as);
+	}
 
-        list( $sql, $args ) = $this->parseData( $data );
+	public function saveRows(Query $query, array $data)
+	{
 
-        $qry = "INSERT INTO $name$sql";
+		list($sql, $args) = $this->parse($query);
+		$table = $query->getTable();
+		$name = $this->quoteName($table->getDatabase(), $table);
 
-        $this->query( $qry, $args );
-        
-        return $this;
-    }
+		list($updateSql, $updateArgs) = $this->parseData($data);
 
-	public function removeRows( Query $query ) {
+		$qry = "UPDATE $name $updateSql$sql";
 
-        list( $sql, $args ) = $this->parse( $query );
-        $table = $query->getTable();
-        $name = $this->quoteName( $table->getDatabase(), $table );
+		$this->query($qry, array_merge($updateArgs, $args));
 
-        $qry = "DELETE FROM $name$sql";
+		return $this;
+	}
 
-        $this->query( $qry, $args );
-        
-        return $this;
-    }
+	public function createRow(Table $table, array $data)
+	{
 
-    public function getLastId() {
+		$name = $this->quoteName($table->getDatabase(), $table);
 
-        $stmt = $this->query( 'SELECT LAST_INSERT_ID()' );
+		list($sql, $args) = $this->parseData($data);
 
-        return $stmt->fetchColumn( 0 );
-    }
+		$qry = "INSERT INTO $name$sql";
+
+		$this->query($qry, $args);
+
+		return $this;
+	}
+
+	public function removeRows(Query $query)
+	{
+
+		list($sql, $args) = $this->parse($query);
+		$table = $query->getTable();
+		$name = $this->quoteName($table->getDatabase(), $table);
+
+		$qry = "DELETE FROM $name$sql";
+
+		$this->query($qry, $args);
+
+		return $this;
+	}
+
+	public function getLastId()
+	{
+
+		$stmt = $this->query('SELECT LAST_INSERT_ID()');
+
+		return $stmt->fetchColumn(0);
+	}
 }
-
-

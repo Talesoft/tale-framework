@@ -4,231 +4,253 @@ namespace Tale\Data;
 
 use Tale\StringUtil;
 
-class Table extends NamedEntityBase {
+class Table extends NamedEntityBase
+{
 
     const DEFAULT_ROW_CLASS_NAME = 'Tale\\Data\\Row';
 
-	private $_database;
+    private $_database;
     private $_rowClassName;
 
-	public function __construct( Database $database, $name, $load = false ) {
-		parent::__construct( $name );
+    public function __construct(Database $database, $name, $load = false)
+    {
+        parent::__construct($name);
 
-		$this->_database = $database;
+        $this->_database = $database;
         $this->_rowClassName = self::DEFAULT_ROW_CLASS_NAME;
 
-		if( $load )
-			$this->load();
-	}
+        if ($load)
+            $this->load();
+    }
 
-	public function getDatabase() {
+    public function getDatabase()
+    {
 
-		return $this->_database;
-	}
+        return $this->_database;
+    }
 
-	public function getSource() {
+    public function getSource()
+    {
 
-		return $this->_database->getSource();
-	}
+        return $this->_database->getSource();
+    }
 
-    public function getRowClassName() {
+    public function getRowClassName()
+    {
 
-        $modelClassName = $this->getDatabase()->getModelClassName( $this->getName() );
+        $modelClassName = $this->getSource()->getModelClassName($this->getName());
 
-        if( $modelClassName )
+        if ($modelClassName)
             return $modelClassName;
 
         return $this->_rowClassName;
     }
 
-    public function setRowClassName( $className ) {
+    public function setRowClassName($className)
+    {
 
         $this->_rowClassName = $className;
 
         return $this;
     }
 
-    public function getFields() {
+    public function exists()
+    {
 
-        $ref = new \ReflectionClass( get_class( $this ) );
-
+        return $this->getSource()->hasTable($this);
     }
 
-	public function exists() {
+    public function load()
+    {
 
-		return $this->getSource()->hasTable( $this );
-	}
+        $this->getSource()->loadTable($this);
 
-    public function load() {
-
-    	$this->getSource()->loadTable( $this );
-
-    	return $this->sync();
+        return $this->sync();
     }
 
-    public function save() {
+    public function save()
+    {
 
-    	$this->getSource()->saveTable( $this );
+        $this->getSource()->saveTable($this);
 
-    	return $this->sync();
-	}
-
-    public function create( array $columns = null ) {
-
-    	$this->getSource()->createTable( $this, $columns );
-
-    	return $this->sync();
+        return $this->sync();
     }
 
-    public function remove() {
+    public function create(array $columns = null)
+    {
 
-    	$this->getSource()->removeTable( $this );
+        $this->getSource()->createTable($this, $columns);
 
-    	return $this->unsync();
+        return $this->sync();
     }
 
-    public function getColumns( $load = false ) {
+    public function remove()
+    {
 
-    	foreach( $this->getSource()->getColumnNames( $this ) as $name )
-    		yield $name => $this->getColumn( $name, $load );
+        $this->getSource()->removeTable($this);
+
+        return $this->unsync();
     }
 
-    public function getColumnArray( $load = false ) {
+    public function getColumns($load = false)
+    {
 
-    	return iterator_to_array( $this->getColumns( $load ) );
+        foreach ($this->getSource()->getColumnNames($this) as $name)
+            yield $name => $this->getColumn($name, $load);
     }
 
-    public function getColumn( $name, $load = false ) {
+    public function getColumnArray($load = false)
+    {
+
+        return iterator_to_array($this->getColumns($load));
+    }
+
+    public function getColumn($name, $load = false)
+    {
 
         $className = $this->getSource()->getConfig()->columnClassName;
 
-        if( is_string( $load ) )
-            return new $className( $this, $name, false, $load );
+        if (is_string($load))
+            return new $className($this, $name, false, $load);
         else
-            return new $className( $this, $name, $load );
+            return new $className($this, $name, $load);
     }
 
-    public function getPrimaryColumn() {
+    public function getPrimaryColumn()
+    {
 
-        foreach( $this->getColumns( true ) as $col )
-            if( $col->isPrimary() )
+        foreach ($this->getColumns(true) as $col)
+            if ($col->isPrimary())
                 return $col;
 
         return null;
     }
 
-    public function getPrimaryKeyName( $inflect = false ) {
+    public function getPrimaryKeyName($inflect = false)
+    {
 
         $col = $this->getPrimaryColumn();
         $name = $col->getName();
 
         return $col
-             ? ( $inflect
-               ? $this->inflectOutputColumnName( $name )
-               : $name
-               )
-             : null;
+            ? ($inflect
+                ? $this->inflectOutputColumnName($name)
+                : $name
+            )
+            : null;
     }
 
-    public function getReferenceColumns() {
+    public function getReferenceColumns()
+    {
 
-        foreach( $this->getColumns( true ) as $col )
-            if( $col->getReference() ) {
+        foreach ($this->getColumns(true) as $col)
+            if ($col->getReference()) {
 
                 $name = $col->getName();
                 yield $name => $col;
             }
     }
 
-    public function getReferencingColumns() {
+    public function getReferencingColumns()
+    {
 
-        foreach( $this->getDatabase()->getTables( true ) as $table )
-            foreach( $table->getColumns( true ) as $col ) {
+        foreach ($this->getDatabase()->getTables(true) as $table)
+            foreach ($table->getColumns(true) as $col) {
 
                 $ref = $col->getReference();
 
                 $name = $col->getName();
-                if( $ref && ( $ref->getTable()->getName() === $this->getName() ) )
+                if ($ref && ($ref->getTable()->getName() === $this->getName()))
                     yield $name => $col;
             }
     }
 
-    public function equals( Table $otherTable ) {
+    public function equals(Table $otherTable)
+    {
 
         return $this->getName() === $otherTable->getName();
     }
 
-    public function getReferenceKeyNames( Table $otherTable, $columnName = null ) {
+    public function getReferenceKeyNames(Table $otherTable, $columnName = null)
+    {
 
-        $inflectedColumnName = $this->inflectInputColumnName( $columnName );
+        $inflectedColumnName = $this->inflectInputColumnName($columnName);
 
         $refCols = $this->getReferenceColumns();
-        foreach( $refCols as $refColName => $refCol ) {
+        foreach ($refCols as $refColName => $refCol) {
 
             $ref = $refCol->getReference();
-            if( $ref->belongsTo( $otherTable ) && ( !$columnName || $inflectedColumnName === $refColName ) ) {
+            if ($ref->belongsTo($otherTable) && (!$columnName || $inflectedColumnName === $refColName)) {
 
-                $thisKey = $this->inflectOutputColumnName( $refColName );
-                $otherKey = $this->inflectOutputColumnName( $ref->getName() );
+                $thisKey = $this->inflectOutputColumnName($refColName);
+                $otherKey = $this->inflectOutputColumnName($ref->getName());
 
-                return [ $thisKey, $otherKey ];
+                return [$thisKey, $otherKey];
             }
         }
 
-        throw new \Exception( "Failed to get reference column names: No reference from $this to $otherTable found" );
+        throw new \Exception("Failed to get reference column names: No reference from $this to $otherTable found");
     }
 
-    public function getReferencingKeyNames( Table $otherTable, $otherColumnName = null ) {
+    public function getReferencingKeyNames(Table $otherTable, $otherColumnName = null)
+    {
 
-        $otherInflectedColumnName = $this->inflectInputColumnName( $otherColumnName );
+        $otherInflectedColumnName = $this->inflectInputColumnName($otherColumnName);
 
         $refCols = $otherTable->getReferenceColumns();
-        foreach( $refCols as $refColName => $refCol ) {
+        foreach ($refCols as $refColName => $refCol) {
 
             $ref = $refCol->getReference();
-            if( $ref->belongsTo( $this ) && ( !$otherColumnName || $otherInflectedColumnName === $refColName ) ) {
+            if ($ref->belongsTo($this) && (!$otherColumnName || $otherInflectedColumnName === $refColName)) {
 
-                $thisKey = $this->inflectOutputColumnName( $ref->getName() );
-                $otherKey = $this->inflectOutputColumnName( $refColName );
+                $thisKey = $this->inflectOutputColumnName($ref->getName());
+                $otherKey = $this->inflectOutputColumnName($refColName);
 
-                return [ $thisKey, $otherKey ];
+                return [$thisKey, $otherKey];
             }
         }
 
-        throw new \Exception( "Failed to get referencing column names: No reference from $otherTable to $this found" );
+        throw new \Exception("Failed to get referencing column names: No reference from $otherTable to $this found");
     }
 
-    public function createQuery( array $clauses = null, array $sortings = null, $limit = null, $limitStart = null ) {
+    public function createQuery(array $clauses = null, array $sortings = null, $limit = null, $limitStart = null)
+    {
 
-        return new Query( $this, $clauses, $sortings, $limit, $limitStart );
+        return new Query($this, $clauses, $sortings, $limit, $limitStart);
     }
 
-    public function insert( array $data ) {
+    public function insert(array $data)
+    {
 
         $src = $this->getSource();
-        $src->createRow( $this, $data );
+        $src->createRow($this, $data);
 
         return $src->getLastId();
     }
 
-    protected function inflectInputColumnName( $name ) {
+    protected function inflectInputColumnName($name)
+    {
 
-        return $this->getSource()->inflectInputColumnName( $name );
+        return $this->getSource()->inflectInputColumnName($name);
     }
 
-    protected function inflectOutputColumnName( $name ) {
+    protected function inflectOutputColumnName($name)
+    {
 
-        return $this->getSource()->inflectOutputColumnName( $name );
+        return $this->getSource()->inflectOutputColumnName($name);
     }
 
-	public function __get( $name ) {
+    public function __get($name)
+    {
 
-		return $this->getColumn( $this->getSource()->inflectColumnName( $name ) );
-	}
+        return $this->getColumn($this->getSource()->inflectColumnName($name));
+    }
 
-    public function __call( $method, array $args = null ) {
+    public function __call($method, array $args = null)
+    {
 
         $qry = $this->createQuery();
-        return call_user_func_array( [ $qry, $method ], $args );
+
+        return call_user_func_array([$qry, $method], $args);
     }
 }
