@@ -26,6 +26,11 @@ class App
     }
     use Event\OptionalTrait;
 
+
+    const TYPE_CLI = 'cli';
+    const TYPE_WEB = 'web';
+    const TYPE_SERVER = 'server';
+
     /**
      * The factory for app features
      * Creates new instances of different App\FeatureBase derived classes
@@ -35,10 +40,7 @@ class App
     private $_featureFactory;
 
     /**
-     * The features currently loaded into the application
-     * These can be passed to objects that want to work with the app features with their respective aliases
-     *
-     * @var App\FeatureBase[]
+     * @var \Tale\App\FeatureBase[]|null
      */
     private $_features;
 
@@ -50,27 +52,34 @@ class App
     public function __construct(array $options = null)
     {
 
+        //The default feature aliases
+        //These are the features you can load via the "features"-array
+        //in the config
+        //Add new features with
+        // $this->getFeatureFactory()->registerAlias($alias, $className)
         $this->_featureFactory = new Factory(
             'Tale\\App\\FeatureBase', [
-            'config'      => 'Tale\\App\\Feature\\Config',
             'cache'       => 'Tale\\App\\Feature\\Cache',
-            'controllers' => 'Tale\\App\\Feature\\Controller',
+            'controller'  => 'Tale\\App\\Feature\\Controller',
             'data'        => 'Tale\\App\\Feature\\Data',
-            'model'        => 'Tale\\App\\Feature\\Model',
-            'views'       => 'Tale\\App\\Feature\\View',
+            'model'       => 'Tale\\App\\Feature\\Model',
+            'view'        => 'Tale\\App\\Feature\\View',
             'router'      => 'Tale\\App\\Feature\\Router',
             'logger'      => 'Tale\\App\\Feature\\Logger'
         ]);
-        $this->_features = [];
 
+        //Set default options
+        //Notice that Config is of type App\Manifest
+        //App\Manifest also has a bunch of default properties
         $this->appendOptions([
+
             //The key "path" leading to the app path is fed first to the config. This way config strings can
             //interpolate the config path via {{path}} and use it for own paths
-            'path'         => './app',
-            'manifestName' => 'app.json',
+            'path'           => './app',
+            'manifestName'   => 'app.json',
 
             //We also need some pre-defined values for PHP Options to avoid unnecessary CONST parsing
-            'errorLevels' => [
+            'errorLevels'    => [
                 'all'      => E_ALL | E_STRICT,
                 'errors'   => E_NOTICE | E_WARNING | E_ERROR,
                 'warnings' => E_NOTICE | E_WARNING,
@@ -78,20 +87,28 @@ class App
                 'none'     => 0
             ],
 
-            'phpOptions' => [],
+            'type'           => self::getTypeFromPhpSapiName(),
+
+            'phpOptions'     => [],
 
             'featureAliases' => [],
-            'features' => []
+            'features'       => [],
+
+            'configure'      => [
+                'path'    => '{{path}}/config', //See what i did there? :)
+                'include' => []
+            ]
         ]);
 
+        $this->_features = null;
+
+        //Set the user options (passed via the $options constructor argument
         $this->appendOptions($options, true);
 
-        $manifestPath = $this->getOption('path').'/'.$this->getOption('manifestName');
-
-        if (!file_exists($manifestPath))
-            throw new RuntimeException("Failed to create app: App config {$this->_configPath} not found");
-
-        $this->appendOptionFile($manifestPath);
+        //Initialize the manifest (typically, app.json)
+        $this->_initManifest();
+        //Load additional config files via the "configure" option
+        $this->_initConfig();
     }
 
     /**
@@ -105,86 +122,149 @@ class App
         return $this->_featureFactory;
     }
 
-    /**
-     * Returns the current attached features of the app
-     *
-     * @return App\FeatureBase[] An array of App\FeatureBase-objects
-     */
-    public function getFeatures()
-    {
-
-        return $this->_features;
-    }
-
     public function getConfigClassName()
     {
 
         return 'Tale\\App\\Manifest';
     }
 
-    public function mergeOptions(array $options)
+    public function isCliApp()
     {
-        var_dump('ADD OPTIONS', $options);
 
-        //Append any PHP options found in that config file
-        if(isset($options['phpOptions'])) {
+        return $this->getOption('type') === self::TYPE_CLI;
+    }
 
-            foreach($options['phpOptions'] as $option => $value) {
+    public function isServerApp()
+    {
 
-                $option = StringUtil::tableize($option, '.');
-                ini_set($option, $value);
+        return $this->getOption('type') === self::TYPE_SERVER;
+    }
+
+    public function isWebApp()
+    {
+
+        return $this->getOption('type') === self::TYPE_WEB;
+    }
+
+    private function _initManifest()
+    {
+
+        $manifestPath = $this->getOption('path').'/'.$this->getOption('manifestName');
+
+        if (!file_exists($manifestPath))
+            throw new RuntimeException("Failed to create app: App config {$manifestPath} not found");
+
+        $this->appendOptionFile($manifestPath, true);
+    }
+
+    private function _initConfig()
+    {
+
+        //Additional configuration
+        $configPath = $this->resolveOption('configure.path');
+        $includes = $this->resolveOption('configure.include');
+
+        foreach($includes as $pattern) {
+
+            $path = StringUtil::joinPath($configPath, $pattern);
+
+            $configFiles = glob($path);
+
+            foreach($configFiles as $configFile) {
+
+                $this->appendOptionFile($configFile);
             }
         }
+    }
 
-        //Set any features aliases found
-        if(isset($options['featureAliases'])) {
+    private function _setPhpOptions()
+    {
+        foreach($this->getOption('phpOptions') as $option => $value) {
 
-            foreach($options['featureAliases'] as $alias => $className)
-                $this->_featureFactory->registerAlias($alias, $className);
+            $option = StringUtil::tableize($option, '.');
+            var_dump("OPT $option => $value");
+            ini_set($option, $value);
         }
+    }
 
-        //Initialize all features found
-        if(isset($options['features'])) {
+    private function _registerFeatureAliases()
+    {
+        foreach($this->getOption('featureAliases') as $alias => $className) {
 
-            foreach($options['features'] as $name => $options) {
+            var_dump("ALIAS $alias => $className");
+            $this->_featureFactory->registerAlias($alias, $className);
+        }
+    }
 
-                if(!isset($this->_features[$name])) {
+    public function run(App $previousApp = null)
+    {
+        $args = [
+            'app'         => $this,
+            'previousApp' => $previousApp
+        ];
 
-                    $this->_features[$name] = $this->_featureFactory->createInstance($name, [$this]);
+        if ($this->emit('run', new Event\Args($args))) {
 
-                    if($options)
-                        $this->_features[$name]->appendOptions($options);
+            $this->_setPhpOptions();
+            $this->_registerFeatureAliases();
 
-                    $this->_features[$name]->emit('init');
-                    
-                } else if($options)
-                    $this->_features[$name]->appendOptions($options);
+            $this->_features = [];
+            foreach ($this->getOption('features') as $name => $options) {
+
+                $feature = $this->_featureFactory->createInstance($name, [$this]);
+
+                if (is_string($options))
+                    $feature->appendOptionFile($options, true);
+                else if (is_array($options))
+                    $feature->appendOptions($options, true);
+                else
+                    throw new RuntimeException(
+                        "Failed to initialize feature $name: "
+                        ."Config needs to be a path to a file or an option array"
+                    );
+
+                $this->_features[] = $feature;
             }
+
+            //Load features
+            foreach ($this->_features as $feature)
+                $feature->emit('load');
+
+
+            foreach ($this->_features as $feature) {
+
+                if ($feature->emit('beforeRun') && $feature->emit('run')) {
+
+                    $feature->emit('afterRun');
+                }
+            }
+
+            //Unload features
+            foreach (array_reverse($this->_features) as $feature)
+                $feature->emit('unload');
+
+            $this->_features = null;
+
+            $this->emit('afterRun', new Event\Args($args));
         }
-
-        return $this->_mergeOptions($options);
-    }
-
-    public function isCommandLine() {
-
-        return PHP_SAPI !== 'cli';
-    }
-
-    public function isServer() {
-
-        return PHP_SAPI !== 'cli-server';
-    }
-
-    public function isWeb() {
-
-        return !$this->isCommandLine() && !$this->isServer();
-    }
-
-    public function run() {
-
-        foreach($this->_features as $feature)
-            $feature->run();
 
         return $this;
+    }
+
+    //Cloning this would be wise, would it?
+    private function __clone() {}
+
+    public static function getTypeFromPhpSapiName()
+    {
+
+        $type = \PHP_SAPI;
+        switch ($type) {
+            case 'cli':
+                return self::TYPE_CLI;
+            case 'cli-server':
+                return self::TYPE_SERVER;
+        }
+
+        return self::TYPE_WEB;
     }
 }

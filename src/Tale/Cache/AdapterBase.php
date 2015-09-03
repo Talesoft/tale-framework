@@ -4,24 +4,21 @@ namespace Tale\Cache;
 
 use Tale\Config;
 
-abstract class AdapterBase {
+abstract class AdapterBase
+{
+    use Config\OptionalTrait;
 
-    private $_config;
+    public function __construct(array $options = null)
+    {
 
-    public function __construct( array $options = null ) {
-
-        $this->_config = new Config( $options );
+        $this->appendOptions($options);
         $this->init();
     }
 
-    public function getConfig() {
-
-        return $this->_config;
-    }
-
     abstract protected function init();
-    abstract public function exists( $key );
-    abstract public function get( $key );
-    abstract public function set( $key, $value, $lifeTime );
-    abstract public function remove( $key );
+
+    abstract public function exists($key);
+    abstract public function get($key);
+    abstract public function set($key, $value, $lifeTime);
+    abstract public function remove($key);
 }

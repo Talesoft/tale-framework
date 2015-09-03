@@ -293,7 +293,6 @@ class Collection implements IteratorAggregate, Countable, ArrayAccess, Serializa
      */
     public static function fromFile($path)
     {
-
-        return ArrayUtil::fromFile($path);
+        return new static(ArrayUtil::fromFile($path));
     }
 }

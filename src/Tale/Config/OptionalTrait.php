@@ -5,6 +5,7 @@ namespace Tale\Config;
 use Tale\Collection;
 use Tale\Config;
 use Tale\Util\ArrayUtil;
+use Tale\Util\StringUtil;
 
 trait OptionalTrait
 {
@@ -35,7 +36,10 @@ trait OptionalTrait
     public function mergeOptions(array $options, $recursive = false, $reverse = false)
     {
 
-        $this->getConfig()->mergeArray($options, $recursive, $reverse)->interpolate();
+        $config = $this->getConfig();
+
+        $config->mergeArray($options, $recursive, $reverse);
+        $config->interpolate();
 
         return $this;
     }
@@ -80,7 +84,11 @@ trait OptionalTrait
 
     public function getOption($key)
     {
-
         return $this->getConfig()->getItem($key);
+    }
+
+    public function resolveOption($key, $default = null, $delimeter = null)
+    {
+        return StringUtil::resolve($key, $this->getConfig()->getItems(), $default, $delimeter);
     }
 }

@@ -13,7 +13,8 @@ use Tale\Cache\AdapterBase,
  *
  * @package Tale\Cache\Adapter
  */
-class File extends AdapterBase {
+class File extends AdapterBase
+{
 
     /**
      * The directory that will be used as a cache storage
@@ -24,6 +25,9 @@ class File extends AdapterBase {
 
     private $_formatFactory;
 
+    /**
+     * @var \Tale\Cache\Adapter\File\FormatBase
+     */
     private $_format;
 
     /**
@@ -43,28 +47,30 @@ class File extends AdapterBase {
     /**
      * Initializes the file cache adapter
      */
-    protected function init() {
+    protected function init()
+    {
 
-        $config = $this->getConfig();
+        $this->prependOptions([
+            'path' => './cache',
+            'formatAliases' => [],
+            'format' => 'json'
+        ]);
 
-        $this->_path = $config->path;
-        $this->_formatFactory = new Factory( __NAMESPACE__.'\\File\\FormatBase', [
-            'json' => __NAMESPACE__.'\\File\\Format\\Json',
+        $this->_path = $this->getOption('path');
+        $this->_formatFactory = new Factory(__NAMESPACE__.'\\File\\FormatBase', [
+            'json'      => __NAMESPACE__.'\\File\\Format\\Json',
             'serialize' => __NAMESPACE__.'\\File\\Format\\Serialize',
-            'export' => __NAMESPACE__.'\\File\\Format\\Export'
-        ] );
+            'export'    => __NAMESPACE__.'\\File\\Format\\Export'
+        ]);
 
-        if( isset( $config->formatAliases ) )
-            $this->_formatFactory->registerAliases( $config->formatAliases );
+        $this->_formatFactory->registerAliases($this->getOption('formatAliases'));
 
-        $this->_format = $this->_formatFactory->createInstance(
-            isset( $config->format ) ? $config->format : 'serialize'
-        );
-        $this->_lifeTimePath = implode( '', [ $this->_path, '/.life-times', $this->_format->getExtension() ] );
+        $this->_format = $this->_formatFactory->createInstance($this->getOption('format'));
+        $this->_lifeTimePath = implode('', [$this->_path, '/.life-times', $this->_format->getExtension()]);
         $this->_lifeTimes = [];
 
-        if( file_exists( $this->_lifeTimePath ) )
-            $this->_lifeTimes = $this->_format->load( $this->_lifeTimePath );
+        if (file_exists($this->_lifeTimePath))
+            $this->_lifeTimes = $this->_format->load($this->_lifeTimePath);
     }
 
 
@@ -73,7 +79,8 @@ class File extends AdapterBase {
      *
      * @return string
      */
-    public function getPath() {
+    public function getPath()
+    {
 
         return $this->_path;
     }
@@ -86,11 +93,12 @@ class File extends AdapterBase {
      *
      * @return string The path where the cache file resides
      */
-    public function getKeyPath( $key ) {
+    public function getKeyPath($key)
+    {
 
-        $key = str_replace( '.', '/', trim( $key, '.' ) );
+        $key = str_replace('.', '/', trim($key, '.'));
 
-        return implode( '', [ $this->_path, "/$key", $this->_format->getExtension() ] );
+        return implode('', [$this->_path, "/$key", $this->_format->getExtension()]);
     }
 
     /**
@@ -100,14 +108,15 @@ class File extends AdapterBase {
      *
      * @return bool
      */
-    public function exists( $key ) {
+    public function exists($key)
+    {
 
-        $path = $this->getKeyPath( $key );
+        $path = $this->getKeyPath($key);
 
-        if( !file_exists( $path ) || empty( $this->_lifeTimes[ $key ] ) )
+        if (!file_exists($path) || empty($this->_lifeTimes[$key]))
             return false;
 
-        if( time() - filemtime( $path ) > $this->_lifeTimes[ $key ] )
+        if (time() - filemtime($path) > $this->_lifeTimes[$key])
             return false;
 
         return true;
@@ -120,9 +129,10 @@ class File extends AdapterBase {
      *
      * @return mixed The cached content value
      */
-    public function get( $key ) {
+    public function get($key)
+    {
 
-        return $this->_format->load( $this->getKeyPath( $key ) );
+        return $this->_format->load($this->getKeyPath($key));
     }
 
     /**
@@ -134,21 +144,22 @@ class File extends AdapterBase {
      *
      * @return $this
      */
-    public function set( $key, $value, $lifeTime ) {
+    public function set($key, $value, $lifeTime)
+    {
 
-        $path = $this->getKeyPath( $key );
-        $dir = dirname( $path );
+        $path = $this->getKeyPath($key);
+        $dir = dirname($path);
 
-        if( !is_dir( $dir ) )
-            mkdir( $dir, 0777, true );
+        if (!is_dir($dir))
+            mkdir($dir, 0777, true);
 
-        $this->_lifeTimes[ $key ] = intval( $lifeTime );
+        $this->_lifeTimes[$key] = intval($lifeTime);
 
         //Save the life times
-        $this->_format->save( $this->_lifeTimePath,  $this->_lifeTimes );
+        $this->_format->save($this->_lifeTimePath, $this->_lifeTimes);
 
         //Save the cache content
-        $this->_format->save( $path, $value );
+        $this->_format->save($path, $value);
 
         return $this;
     }
@@ -158,9 +169,10 @@ class File extends AdapterBase {
      *
      * @return $this
      */
-    public function remove( $key ) {
+    public function remove($key)
+    {
 
-        unlink( $this->getKeyPath( $key ) );
+        unlink($this->getKeyPath($key));
 
         return $this;
     }

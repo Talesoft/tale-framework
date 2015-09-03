@@ -2,14 +2,23 @@
 
 namespace Tale;
 
-class Dispatcher {
+use Tale\Util\StringUtil;
+
+class Dispatcher
+{
 
     private $_factory;
     private $_nameSpace;
     private $_classNamePattern;
     private $_methodNamePattern;
 
-    public function __construct( Factory $factory, $nameSpace = null, $classNamePattern = null, $methodNamePattern = null ) {
+    public function __construct(
+        Factory $factory,
+        $nameSpace = null,
+        $classNamePattern = null,
+        $methodNamePattern = null
+    )
+    {
 
         $this->_factory = $factory;
         $this->_nameSpace = $nameSpace;
@@ -20,7 +29,8 @@ class Dispatcher {
     /**
      * @return Factory
      */
-    public function getFactory() {
+    public function getFactory()
+    {
 
         return $this->_factory;
     }
@@ -28,7 +38,8 @@ class Dispatcher {
     /**
      * @return null
      */
-    public function getNameSpace() {
+    public function getNameSpace()
+    {
 
         return $this->_nameSpace;
     }
@@ -36,7 +47,8 @@ class Dispatcher {
     /**
      * @return null|string
      */
-    public function getClassNamePattern() {
+    public function getClassNamePattern()
+    {
 
         return $this->_classNamePattern;
     }
@@ -44,36 +56,43 @@ class Dispatcher {
     /**
      * @return string
      */
-    public function getMethodNamePattern() {
+    public function getMethodNamePattern()
+    {
 
         return $this->_methodNamePattern;
     }
 
-    public function resolveClassName( $className ) {
+    public function resolveClassName($className)
+    {
 
-        $ns = $this->_nameSpace ? rtrim( $this->_nameSpace, '\\' ).'\\' : '';
+        $ns = $this->_nameSpace ? rtrim($this->_nameSpace, '\\').'\\' : '';
 
-        return $ns.sprintf( $this->_classNamePattern, implode( '\\', array_map( function( $name ) {
-
-            return StringUtil::camelize( $name );
-        }, explode( '.', $this->_factory->resolveClassName( $className ) ) ) ) );
+        return $ns.sprintf($this->_classNamePattern, implode(
+            '\\',
+            array_map(
+                'Tale\\Util\\StringUtil::camelize',
+                explode('.', $this->_factory->resolveClassName($className))
+            )
+        ));
     }
 
-    public function resolveMethodName( $methodName ) {
+    public function resolveMethodName($methodName)
+    {
 
         return sprintf(
             $this->_methodNamePattern,
-            strpos( $this->_methodNamePattern, '%s' ) === 0
-                ? StringUtil::variablize( $methodName )
-                : StringUtil::camelize( $methodName )
+            strpos($this->_methodNamePattern, '%s') === 0
+                ? StringUtil::variablize($methodName)
+                : StringUtil::camelize($methodName)
         );
     }
 
-    public function createInstance( $className, array $args = null ) {
+    public function createInstance($className, array $args = null)
+    {
 
         return new Dispatcher\Instance(
             $this,
-            $this->_factory->createInstance( $this->resolveClassName( $className ), $args )
+            $this->_factory->createInstance($this->resolveClassName($className), $args)
         );
     }
 }

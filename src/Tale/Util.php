@@ -8,6 +8,7 @@ namespace Tale;
  *
  * @version 1.0
  * @stability Stable
+ * @state Fixed
  *
  * @package Tale
  */

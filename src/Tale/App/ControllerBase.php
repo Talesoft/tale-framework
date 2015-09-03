@@ -3,96 +3,118 @@
 namespace Tale\App;
 
 use Tale\App;
+use Tale\Event;
 
-class ControllerBase {
+class ControllerBase
+{
+    use Event\OptionalTrait;
 
     private $_args;
     private $_helpers;
 
-    public function __construct( array $args = null, array $helpers = null ) {
+    public function __construct()
+    {
 
-        $this->_args = $args ? $args : [];
+        $this->_args = [];
         $this->_helpers = [];
-
-        if( $helpers ) {
-
-            foreach( $helpers as $name => $callback )
-                $this->registerHelper( $name, $callback );
-        }
     }
 
-    public function getArgs() {
+    public function getArgs()
+    {
 
         return $this->_args;
     }
 
-    public function setArgs( array $args ) {
+    public function setArgs(array $args)
+    {
 
-        foreach( $args as $key => $value )
-            $this->setArg( $key, $value );
-
-        return $this;
-    }
-
-    public function hasArg( $key ) {
-
-        return isset( $this->_args[ $key ] );
-    }
-
-    public function getArg( $key ) {
-
-        return $this->_args[ $key ];
-    }
-
-    public function setArg( $key, $value ) {
-
-        $this->_args[ $key ] = $value;
+        foreach ($args as $key => $value)
+            $this->setArg($key, $value);
 
         return $this;
     }
 
-    public function removeArg( $key ) {
+    public function hasArg($key)
+    {
 
-        unset( $this->_args[ $key ] );
+        return isset($this->_args[$key]);
+    }
+
+    public function getArg($key)
+    {
+
+        return $this->_args[$key];
+    }
+
+    public function setArg($key, $value)
+    {
+
+        $this->_args[$key] = $value;
 
         return $this;
     }
 
-    public function registerHelper( $name, callable $callback ) {
+    public function removeArg($key)
+    {
 
-        if( $callback instanceof \Closure )
-            $callback = $callback->bindTo( $this, $this );
-
-        $this->_helpers[ $name ] = $callback;
+        unset($this->_args[$key]);
 
         return $this;
     }
 
-    public function __isset( $key ) {
+    public function registerHelper($name, $callback)
+    {
 
-        return $this->hasArg( $key );
+        if (!is_callable($callback))
+            throw new \InvalidArgumentException(
+                "Argument 2 passed to ControllerBase->registerHelper "
+                ."needs to be valid callback"
+            );
+
+        $this->_helpers[$name] = $callback;
+
+        return $this;
     }
 
-    public function __unset( $key ) {
+    public function registerHelpers(array $helpers)
+    {
 
-        $this->removeArg( $key );
+        foreach($helpers as $name => $callback)
+            $this->registerHelper($name, $callback);
+
+        return $this;
     }
 
-    public function __get( $key ) {
+    public function __isset($key)
+    {
 
-        return $this->getArg( $key );
+        return $this->hasArg($key);
     }
 
-    public function __set( $key, $value ) {
+    public function __unset($key)
+    {
 
-        $this->setArg( $key, $value );
+        $this->removeArg($key);
     }
 
-    public function __call( $method, array $args = null ) {
+    public function __get($key)
+    {
 
-        if( !isset( $this->_helpers[ $method ] ) )
-            throw new \BadMethodCallException( "Invalid helper $method called" );
+        return $this->getArg($key);
+    }
 
-        return call_user_func_array( $this->_helpers[ $method ], $args ? $args : [] );
+    public function __set($key, $value)
+    {
+
+        $this->setArg($key, $value);
+    }
+
+    public function __call($method, array $args = null)
+    {
+
+        if (!isset($this->_helpers[$method]))
+            throw new \BadMethodCallException("Invalid helper $method called");
+
+        return call_user_func_array($this->_helpers[$method], $args ? $args : []);
     }
 }

@@ -2,13 +2,15 @@
 
 namespace Tale\Dispatcher;
 
-class CallIterator implements \IteratorAggregate {
+class CallIterator implements \IteratorAggregate
+{
 
     private $_instance;
     private $_methods;
     private $_args;
 
-    public function __construct( $instance, array $methods, array $args = null ) {
+    public function __construct($instance, array $methods, array $args = null)
+    {
 
         $this->_instance = $instance;
         $this->_methods = $methods;
@@ -18,7 +20,8 @@ class CallIterator implements \IteratorAggregate {
     /**
      * @return mixed
      */
-    public function getInstance() {
+    public function getInstance()
+    {
 
         return $this->_instance;
     }
@@ -26,7 +29,8 @@ class CallIterator implements \IteratorAggregate {
     /**
      * @return array
      */
-    public function getMethods() {
+    public function getMethods()
+    {
 
         return $this->_methods;
     }
@@ -34,28 +38,32 @@ class CallIterator implements \IteratorAggregate {
     /**
      * @return array
      */
-    public function getArgs() {
+    public function getArgs()
+    {
 
         return $this->_args;
     }
 
-    public function getIterator() {
+    public function getIterator()
+    {
 
-        foreach( $this->_methods as $method )
-            yield $method => call_user_func_array( [ $this->_instance, $method ], $this->_args );
+        foreach ($this->_methods as $method)
+            yield $method => call_user_func_array([$this->_instance, $method], $this->_args);
     }
 
-    public function getFirstResult() {
+    public function getFirstResult()
+    {
 
-        foreach( $this as $result )
-            if( $result )
+        foreach ($this as $result)
+            if ($result)
                 return $result;
 
         return null;
     }
 
-    public function getAllResults() {
+    public function getAllResults()
+    {
 
-        return iterator_to_array( $this );
+        return iterator_to_array($this);
     }
 }

@@ -9,8 +9,9 @@ namespace Tale;
  *
  * Does automatic subclass-checks and alias-conversion
  *
- * @version 1.0
- * @featureState Stable
+ * @version 1.1
+ * @stability Stable
+ * @state Fixed
  *
  * @package Tale
  */

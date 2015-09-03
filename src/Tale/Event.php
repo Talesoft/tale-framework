@@ -5,6 +5,10 @@ namespace Tale;
 /**
  * Event class
  *
+ * @version 1.0
+ * @stability Development
+ * @state Pending
+ *
  * @package Tale
  */
 class Event
@@ -60,8 +64,13 @@ class Event
      *
      * @return $this
      */
-    public function addHandler(callable $handler)
+    public function addHandler($handler)
     {
+
+        //NOTICE: The "callable" typehint actually doesnt accept arrays
+        //and strings, even if the doc says so
+        if(!is_callable($handler))
+            throw new \InvalidArgumentException("Argument 1 of Event->addHandler needs to be a valid callback");
 
         $this->_handlers[] = $handler;
 
@@ -77,8 +86,10 @@ class Event
      *
      * @return $this
      */
-    public function removeHandler(callable $handler)
+    public function removeHandler($handler)
     {
+        if(!is_callable($handler))
+            throw new \InvalidArgumentException("Argument 1 of Event->addHandler needs to be a valid callback");
 
         $i = array_search($handler, $this->_handlers, true);
 
@@ -91,7 +102,8 @@ class Event
     /**
      * Triggers the event
      *
-     * The return value is the isDefaultPrevented() result of the event args
+     * The return value is the the negation of
+     * isDefaultPrevented() result of the event args
      * If null is passed, new event args are created automatically
      *
      * @param \Tale\Event\Args|null $args An argument object to pass
@@ -103,11 +115,13 @@ class Event
 
         $args = $args ? $args : new Event\Args();
 
-        foreach ($this->_handlers as $handler)
+        foreach ($this->_handlers as $handler) {
+
             if (call_user_func_array($handler, func_get_args()) === false)
                 break;
+        }
 
-        return $args->isDefaultPrevented();
+        return !$args->isDefaultPrevented();
     }
 
     /**
@@ -121,7 +135,6 @@ class Event
      */
     public function __invoke(Event\Args $args = null)
     {
-
         return $this->trigger($args);
     }
 }
