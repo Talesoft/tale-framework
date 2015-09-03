@@ -70,7 +70,7 @@ class Controller extends FeatureBase
 
             $this->registerHelper('dispatch', [$this, 'dispatch']);
 
-            var_dump('CONTROLLERS LOADED', $this);
+            var_dump('CONTROLLERS LOADED');
         });
 
         $this->bind('unload', function () {

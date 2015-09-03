@@ -58,6 +58,14 @@ class Source
         ]);
     }
 
+    public function __destruct()
+    {
+
+        foreach ($this->_modelNameSpaces as $nameSpace => $loader)
+            if ($loader && $loader->isRegistered())
+                $loader->unregister();
+    }
+
     /**
      * @return Factory
      */
@@ -96,9 +104,11 @@ class Source
     {
 
         $loader = null;
+
         if ($path) {
 
             $loader = new ClassLoader($nameSpace, $path);
+            $loader->register();
         }
 
         $this->_modelNameSpaces[$nameSpace] = $loader;
@@ -149,6 +159,6 @@ class Source
     public function __call($method, array $args = null)
     {
 
-        return call_user_func_array([$this->_adapter, $method], $args);
+        return call_user_func_array([$this->getAdapter(), $method], $args);
     }
 }

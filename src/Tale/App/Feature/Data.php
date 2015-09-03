@@ -5,11 +5,16 @@ namespace Tale\App\Feature;
 use Tale\App\FeatureBase;
 use Tale\Data\Source;
 
-class Data extends FeatureBase {
+class Data extends FeatureBase
+{
 
+    /**
+     * @var \Tale\Data\Source[]
+     */
     private $_sources;
 
-    protected function init() {
+    protected function init()
+    {
 
         if (!class_exists('Tale\\Data\\Source'))
             throw new \RuntimeException(
@@ -20,64 +25,34 @@ class Data extends FeatureBase {
 
         $app = $this->getApp();
 
-        $cache =
-        $this->prependOptions([
-            'path'              => $app->getOption('path').'/controllers',
-            'nameSpace'         => null,
-            'loadPattern'       => null,
-            'classNamePattern'  => '%sController',
-            'methodNamePattern' => '%Action',
-            'args'              => [],
-            'helpers'           => [],
-            'createLoader'      => true,
-            'errorController'   => 'error'
-        ]);
 
-        $this->bind('load', function () {
+        $this->bind('load', function () use ($app) {
 
-            $this->_initLoader();
-            $this->_initFactory();
-            $this->_initDispatcher();
+            $this->_sources = [];
 
-            $this->_instances = [];
+            /**
+             * @var \Tale\App\Feature\Cache|null $cache
+             */
+            $cache = $app->getFirstFeatureOfType('Tale\\App\\Feature\\Cache');
 
-            $this->_args = $this->getOption('args');
-            $this->_helpers = $this->getOption('helpers');
+            foreach ($this->getConfig() as $name => $options) {
 
-            $this->registerHelper('dispatch', [$this, 'dispatch']);
+                $this->_sources[$name] = new Source($options);
 
-            var_dump('CONTROLLERS LOADED', $this);
+                if ($cache)
+                    $this->_sources[$name]->setCacheManager($cache->getManager());
+            }
+
+            var_dump('DATA SOURCES LOADED', $this);
         });
 
         $this->bind('unload', function () {
 
-            if ($this->_loader)
-                $this->_loader->unregister();
+            foreach ($this->_sources as $source)
+                if ($source->isOpen())
+                    $source->close();
 
-            unset($this->_loader);
-            unset($this->_factory);
-            unset($this->_dispatcher);
-
-            unset($this->_instances);
-
-            var_dump('CONTROLLERS UNLOADED');
+            var_dump('DATA SOURCES UNLOADED');
         });
-
-        var_dump( "DATA", $config );
-
-        $this->_source = new Source( $config->getItems() );
-
-        if( isset( $app->cache ) ) {
-
-            $cache = $app->cache->createSubCache( 'data' );
-
-            var_dump( $cache );
-            $this->_source->setCache( $cache );
-        }
-    }
-
-    public function getCallProxyTarget() {
-
-        return $this->_source;
     }
 }

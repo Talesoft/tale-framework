@@ -109,6 +109,8 @@ class App
         $this->_initManifest();
         //Load additional config files via the "configure" option
         $this->_initConfig();
+
+        var_dump('APPCFG', $this->getConfig()->getItems());
     }
 
     /**
