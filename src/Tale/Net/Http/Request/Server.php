@@ -4,7 +4,7 @@ namespace Tale\Net\Http\Request;
 
 use Tale\Net\Http\Request,
 	Tale\Net\Http\Body,
-	Tale\StringUtil,
+	Tale\Util\StringUtil,
 	Tale\Net\Url,
 	Tale\Net\Ip\EndPoint,
 	Tale\Net\Ip\Address,
