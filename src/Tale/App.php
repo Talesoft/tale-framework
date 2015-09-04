@@ -308,7 +308,7 @@ class App
         return $this;
     }
 
-    //Cloning this would be wise, would it?
+    //Cloning this wouldn't be wise, would it?
     private function __clone() { }
 
     public static function getTypeFromPhpSapiName()
