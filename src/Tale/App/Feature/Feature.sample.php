@@ -13,21 +13,21 @@ class Feature extends FeatureBase {
 
         // $this is usable in the callbacks
 
-        $this->bind('load', function () {
+        $app->bind('beforeRun', function () {
 
             //Load logic here
 
             var_dump('FEATURE LOADED');
         });
 
-        $this->bind('run', function () {
+        $app->bind('run', function () {
 
             //Run logic here
 
             var_dump('FEATURE RAN');
         });
 
-        $this->bind('unload', function () {
+        $app->bind('afterRun', function () {
 
             //Unload logic here
 

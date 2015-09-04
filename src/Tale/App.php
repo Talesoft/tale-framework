@@ -3,6 +3,8 @@
 namespace Tale;
 
 use RuntimeException;
+use Tale\App\Feature\Feature;
+use Tale\App\FeatureBase;
 use Tale\Proxy;
 use Tale\Util\StringUtil;
 
@@ -38,11 +40,6 @@ class App
      * @var Factory
      */
     private $_featureFactory;
-
-    /**
-     * @var \Tale\App\FeatureBase[]|null
-     */
-    private $_features;
 
     /**
      * Creates a new App object
@@ -198,83 +195,113 @@ class App
         }
     }
 
-    public function getFirstFeatureOfType($className)
+    private function _sortFeatures(FeatureBase $a, FeatureBase $b)
     {
 
-        if ($this->_features === null)
-            throw new RuntimeException("Failed to check features: Features only exist while the app is ran");
+        $aClass = get_class($a);
+        $bClass = get_class($b);
 
-        foreach ($this->_features as $feature)
-            if (is_a($feature, $className, true))
-                return $feature;
+        if (in_array($bClass, $a->getDependencies()))
+            return 1;
 
-        return null;
-    }
+        if (in_array($aClass, $b->getDependencies()))
+            return -1;
 
-    public function getAllFeaturesOfType($className)
-    {
-        if ($this->_features === null)
-            throw new RuntimeException("Failed to check features: Features only exist while the app is ran");
-
-        $features = [];
-        foreach ($this->_features as $feature)
-            if (is_a($feature, $className, true))
-                $features[] = $feature;
-
-        return $features;
+        return 0;
     }
 
     public function run(App $previousApp = null)
     {
+
+        //Make sure all correct feature aliases are registered
+        $this->_registerFeatureAliases();
+
+        //We will sort the features by dependency on other features
+        //and initialize them in the correct order
+
+        //First we create an instance of all features.
+        /**
+         * @var \Tale\App\FeatureBase[] $features
+         */
+        $features = [];
+        foreach ($this->getOption('features') as $name => $options) {
+
+            //Aliases are resolved.
+            $className = $this->_featureFactory->resolveClassName($name);
+
+            //We don't want duplicate instances. Rather create a new feature
+            //It's better for unique identification
+            if (isset($features[$className]))
+                throw new RuntimeException(
+                    "Failed to add feature $name($className): Feature does already exist"
+                );
+
+            //This creates the actual instance via Tale\Factory
+            $feature = $this->_featureFactory->createInstance($className, [$this]);
+            var_dump('CRTFT', $name);
+
+            //We can pass a string as the options to use a config file
+            if (is_string($options))
+                $feature->appendOptionFile($options, true);
+            else if (is_array($options))
+                $feature->appendOptions($options, true);
+            else
+                throw new RuntimeException(
+                    "Failed to initialize feature $name($className): "
+                    ."Config needs to be a path to a file or an option array"
+                );
+
+            $features[$className] = $feature;
+        }
+
+        //All features are instanced and got all the options they will get
+        //at this point.
+        //Now we sort the features by dependencies.
+        //TODO: Circular dependencies probably fuck up.
+        uasort($features, [$this, '_sortFeatures']);
+
+        var_dump('FTS', array_map('get_class', $features));
+
+        //Now we can initialize the features
+        //Since our deps are ordered now, we can just iterate
+        foreach ($features as $feature) {
+
+            //First append our dependencies
+            foreach ($feature->getDependencies() as $name => $className) {
+
+                if (isset($features[$className]))
+                    $feature->setDependency($name, $features[$className]);
+            }
+
+            //Now initialize the feature
+            //This is the possibility to add events etc.
+            $feature->init();
+        }
+
+
+        //This is only sorting! We dont ensure, that the feature exists.
+        //The feature has to do that by itself (through an easy way, look at it)
+
+        //Put together our event args
         $args = [
             'app'         => $this,
             'previousApp' => $previousApp
         ];
 
-        if ($this->emit('run', new Event\Args($args))) {
+        //First, we prepare (and let features prepare)
+        if($this->emit('beforeRun', new Event\Args($args))) {
 
             $this->_setPhpOptions();
-            $this->_registerFeatureAliases();
 
-            $this->_features = [];
-            foreach ($this->getOption('features') as $name => $options) {
+            //Then we run
+            if ($this->emit('run', new Event\Args($args))) {
 
-                $feature = $this->_featureFactory->createInstance($name, [$this]);
+                //Clear our features
+                $this->_features = null;
 
-                if (is_string($options))
-                    $feature->appendOptionFile($options, true);
-                else if (is_array($options))
-                    $feature->appendOptions($options, true);
-                else
-                    throw new RuntimeException(
-                        "Failed to initialize feature $name: "
-                        ."Config needs to be a path to a file or an option array"
-                    );
-
-                $this->_features[] = $feature;
+                //Allow clean-up at the end
+                $this->emit('afterRun', new Event\Args($args));
             }
-
-            //Load features
-            foreach ($this->_features as $feature)
-                $feature->emit('load');
-
-
-            //Run features
-            foreach ($this->_features as $feature) {
-
-                if ($feature->emit('beforeRun') && $feature->emit('run')) {
-
-                    $feature->emit('afterRun');
-                }
-            }
-
-            //Unload features
-            foreach (array_reverse($this->_features) as $feature)
-                $feature->emit('unload');
-
-            $this->_features = null;
-
-            $this->emit('afterRun', new Event\Args($args));
         }
 
         return $this;

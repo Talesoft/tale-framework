@@ -40,7 +40,7 @@ class Controller extends FeatureBase
      */
     private $_helpers;
 
-    protected function init()
+    public function init()
     {
 
         $app = $this->getApp();
@@ -57,7 +57,7 @@ class Controller extends FeatureBase
             'errorController'   => 'error'
         ]);
 
-        $this->bind('load', function () {
+        $app->bind('beforeRun', function () {
 
             $this->_initLoader();
             $this->_initFactory();
@@ -73,7 +73,7 @@ class Controller extends FeatureBase
             var_dump('CONTROLLERS LOADED');
         });
 
-        $this->bind('unload', function () {
+        $app->bind('afterRun', function () {
 
             if ($this->_loader)
                 $this->_loader->unregister();

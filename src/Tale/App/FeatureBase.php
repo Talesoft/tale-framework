@@ -12,12 +12,13 @@ abstract class FeatureBase
     use Event\OptionalTrait;
 
     private $_app;
+    private $_dependencyInstances;
 
     public function __construct(App $app)
     {
 
         $this->_app = $app;
-        $this->init();
+        $this->_dependencyInstances = [];
     }
 
     public function getApp()
@@ -26,5 +27,50 @@ abstract class FeatureBase
         return $this->_app;
     }
 
-    abstract protected function init();
+    public function getDependencies()
+    {
+
+        return [];
+    }
+
+    public function hasDependency($name)
+    {
+
+        return isset($this->_dependencyInstances[$name]);
+    }
+
+    public function getDependency($name, $required = false)
+    {
+
+        $exists = $this->hasDependency($name);
+        if ($required && !$exists)
+            throw new \RuntimeException(
+                "Failed to get dependency for feature: "
+                .get_class($this)." requires the $name dependency"
+            );
+
+        return $exists ? $this->_dependencyInstances[$name] : null;
+    }
+
+    public function setDependency($name, FeatureBase $instance)
+    {
+
+        $this->_dependencyInstances[$name] = $instance;
+
+        return $this;
+    }
+
+    public function __isset($name)
+    {
+
+        return $this->hasDependency($name);
+    }
+
+    public function __get($name)
+    {
+
+        return $this->getDependency($name);
+    }
+
+    abstract public function init();
 }

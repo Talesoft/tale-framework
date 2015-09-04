@@ -56,6 +56,14 @@ class Source
             'mongodb'  => 'Tale\\Data\\Adapter\\MongoDb'
             //etc.
         ]);
+
+        $this->_adapterFactory->registerAliases($this->getOption('adapterAliases'));
+
+        $this->_adapter = null;
+        $this->_modelNameSpaces = [];
+
+        foreach ($this->getOption('modelNameSpaces') as $nameSpace => $path)
+            $this->registerModelNameSpace($nameSpace, $path);
     }
 
     public function __destruct()
@@ -82,19 +90,11 @@ class Source
     {
         //We get the adapter in a lazy way
         //If we don't use the DB, we don't connect
-
-        if(!isset($this->_adapter)) {
-
-            $this->_adapterFactory->registerAliases($this->getOption('adapterAliases'));
+        if(!$this->_adapter) {
 
             $this->_adapter = $this->_adapterFactory->createInstance($this->getOption('adapter'), [
                 $this->getOption('options')
             ]);
-
-            foreach ($this->getOption('modelNameSpaces') as $nameSpace => $path)
-                $this->registerModelNameSpace($nameSpace, $path);
-
-            $this->_adapter->open();
         }
 
         return $this->_adapter;
@@ -104,7 +104,6 @@ class Source
     {
 
         $loader = null;
-
         if ($path) {
 
             $loader = new ClassLoader($nameSpace, $path);

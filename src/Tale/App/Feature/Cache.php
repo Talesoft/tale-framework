@@ -10,8 +10,9 @@ class Cache extends FeatureBase
 
     private $_manager;
 
-    protected function init()
+    public function init()
     {
+        $app = $this->getApp();
 
         if (!class_exists('Tale\\Cache\\Manager'))
             throw new \RuntimeException(
@@ -26,7 +27,7 @@ class Cache extends FeatureBase
             ]
         ]);
 
-        $this->bind('load', function () {
+        $app->bind('beforeRun', function () {
 
             $config = $this->getConfig();
             $this->_manager = new CacheManager($config->getItems());
@@ -34,7 +35,7 @@ class Cache extends FeatureBase
             var_dump('CACHE LOADED');
         });
 
-        $this->bind('unload', function () {
+        $app->bind('afterRun', function () {
 
             unset($this->_manager);
 

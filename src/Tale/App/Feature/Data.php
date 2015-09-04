@@ -13,7 +13,7 @@ class Data extends FeatureBase
      */
     private $_sources;
 
-    protected function init()
+    public function init()
     {
 
         if (!class_exists('Tale\\Data\\Source'))
@@ -26,14 +26,16 @@ class Data extends FeatureBase
         $app = $this->getApp();
 
 
-        $this->bind('load', function () use ($app) {
+        $app->bind('beforeRun', function () use ($app) {
 
             $this->_sources = [];
 
             /**
              * @var \Tale\App\Feature\Cache|null $cache
              */
-            $cache = $app->getFirstFeatureOfType('Tale\\App\\Feature\\Cache');
+            $cache = $this->cache;
+
+            var_dump('DBCACHE', $cache ? get_class($cache) : $cache);
 
             foreach ($this->getConfig() as $name => $options) {
 
@@ -46,7 +48,7 @@ class Data extends FeatureBase
             var_dump('DATA SOURCES LOADED', $this);
         });
 
-        $this->bind('unload', function () {
+        $app->bind('afterRun', function () {
 
             foreach ($this->_sources as $source)
                 if ($source->isOpen())
@@ -54,5 +56,13 @@ class Data extends FeatureBase
 
             var_dump('DATA SOURCES UNLOADED');
         });
+    }
+
+    public function getDependencies()
+    {
+
+        return [
+            'cache' => 'Tale\\App\\Feature\\Cache'
+        ];
     }
 }
