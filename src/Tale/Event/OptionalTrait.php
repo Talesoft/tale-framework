@@ -103,15 +103,16 @@ trait OptionalTrait
      *
      * @param string $name The name of the event
      * @param \Tale\Event\Args|null $args The arguments to pass to the event
+     * @param bool $reverse
      *
      * @return bool The value of !$args->isDefaultPrevented()
      */
-    public function emit($name, Args $args = null)
+    public function emit($name, Args $args = null, $reverse = false)
     {
 
         $args = $args ? $args : new Args();
         $event = $this->getEvent($name);
 
-        return $event($args);
+        return $event($args, $reverse);
     }
 }

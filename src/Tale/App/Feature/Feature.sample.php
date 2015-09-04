@@ -5,9 +5,11 @@ namespace Tale\App\Feature;
 use Tale\App\FeatureBase;
 use Tale\Data\Source;
 
-class Feature extends FeatureBase {
+class Feature extends FeatureBase
+{
 
-    protected function init() {
+    public function init()
+    {
 
         $app = $this->getApp();
 

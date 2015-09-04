@@ -3,7 +3,6 @@
 namespace Tale;
 
 use RuntimeException;
-use Tale\App\Feature\Feature;
 use Tale\App\FeatureBase;
 use Tale\Proxy;
 use Tale\Util\StringUtil;
@@ -56,6 +55,7 @@ class App
         // $this->getFeatureFactory()->registerAlias($alias, $className)
         $this->_featureFactory = new Factory(
             'Tale\\App\\FeatureBase', [
+            'library'    => 'Tale\\App\\Feature\\Library',
             'cache'      => 'Tale\\App\\Feature\\Cache',
             'controller' => 'Tale\\App\\Feature\\Controller',
             'data'       => 'Tale\\App\\Feature\\Data',
@@ -201,10 +201,10 @@ class App
         $aClass = get_class($a);
         $bClass = get_class($b);
 
-        if (in_array($bClass, $a->getDependencies()))
+        if ($b->isPrioritised() || in_array($bClass, $a->getDependencies()))
             return 1;
 
-        if (in_array($aClass, $b->getDependencies()))
+        if ($a->isPrioritised() || in_array($aClass, $b->getDependencies()))
             return -1;
 
         return 0;
@@ -299,8 +299,9 @@ class App
                 //Clear our features
                 $this->_features = null;
 
-                //Allow clean-up at the end
-                $this->emit('afterRun', new Event\Args($args));
+                //Allow clean-up at the end (Notice that the "true"
+                //makes it reverse
+                $this->emit('afterRun', new Event\Args($args), true);
             }
         }
 

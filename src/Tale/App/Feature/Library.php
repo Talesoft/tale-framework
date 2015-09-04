@@ -2,25 +2,47 @@
 
 namespace Tale\App\Feature;
 
-use Tale\App\FeatureBase,
-    Tale\ClassLoader;
+use Tale\App\FeatureBase;
+use Tale\ClassLoader;
 
-class Library extends FeatureBase {
+class Library extends FeatureBase
+{
 
-    private $_classLoader;
+    private $_loader;
 
-    protected function init() {
+    public function init()
+    {
 
-        //Libraries are initialized before the features are running since we might need them in other initialization logic
-        //or for custom features
+        $app = $this->getApp();
 
-        $config = $this->getConfig();
+        $this->prependOptions([
+            'path'              => $app->getOption('path').'/library',
+            'nameSpace'         => null,
+            'pattern'           => null
+        ]);
 
-        $path = isset( $config->path ) ? $config->path : null;
-        $nameSpace = isset( $config->nameSpace ) ? $config->nameSpace : null;
-        $pattern = isset( $config->pattern ) ? $config->pattern : null;
+        $app->bind('beforeRun', function () {
 
-        $this->_classLoader = new ClassLoader( $path, $nameSpace, $pattern );
-        $this->_classLoader->register();
+            $this->_loader = new ClassLoader(
+                $this->getOption('path'),
+                $this->getOption('nameSpace'),
+                $this->getOption('pattern')
+            );
+            $this->_loader->register();
+
+            var_dump('LIBRARY LOADED');
+        });
+
+        $app->bind('afterRun', function () {
+
+            $this->_loader->unregister();
+
+            var_dump('LIBRARY UNLOADED');
+        });
+    }
+
+    public function isPrioritised()
+    {
+        return true;
     }
 }

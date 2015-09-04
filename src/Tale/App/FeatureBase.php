@@ -60,6 +60,11 @@ abstract class FeatureBase
         return $this;
     }
 
+    public function isPrioritised() {
+
+        return false;
+    }
+
     public function __isset($name)
     {
 

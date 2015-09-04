@@ -107,18 +107,29 @@ class Event
      * If null is passed, new event args are created automatically
      *
      * @param \Tale\Event\Args|null $args An argument object to pass
+     * @param bool $reverse
      *
      * @return bool
      */
-    public function trigger(Event\Args $args = null)
+    public function trigger(Event\Args $args = null, $reverse = false)
     {
 
         $args = $args ? $args : new Event\Args();
 
-        foreach ($this->_handlers as $handler) {
+        if ($reverse) {
 
-            if (call_user_func_array($handler, func_get_args()) === false)
-                break;
+            for ($i = count($this->_handlers); --$i >= 0;) {
+
+                if (call_user_func_array($this->_handlers[$i], func_get_args()) === false)
+                    break;
+            }
+        } else {
+
+            foreach ($this->_handlers as $handler) {
+
+                if (call_user_func_array($handler, func_get_args()) === false)
+                    break;
+            }
         }
 
         return !$args->isDefaultPrevented();
@@ -130,11 +141,12 @@ class Event
      * @see Event->trigger()
      *
      * @param \Tale\Event\Args|null $args
+     * @param bool $reverse
      *
      * @return bool
      */
-    public function __invoke(Event\Args $args = null)
+    public function __invoke(Event\Args $args = null, $reverse = false)
     {
-        return $this->trigger($args);
+        return $this->trigger($args, $reverse);
     }
 }
