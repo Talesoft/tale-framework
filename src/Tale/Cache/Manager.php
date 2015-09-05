@@ -54,11 +54,18 @@ class Manager
         return $this->_adapter;
     }
 
-    public function createSubCache($nameSpace, array $options = null)
+    /**
+     * @param string     $nameSpace
+     * @param array|null $options
+     *
+     * @return \Tale\Cache\Manager
+     */
+    public function createSubManager($nameSpace, array $options = null)
     {
 
-        $subNs = !empty($this->_config->nameSpace)
-            ? $this->_config->nameSpace.'.'
+        $ns = $this->getOption('nameSpace');
+        $subNs = !empty($ns)
+            ? "$ns."
             : '';
 
         $options = $this->getConfig()->getItems();

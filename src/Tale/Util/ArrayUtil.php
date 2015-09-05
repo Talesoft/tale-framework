@@ -74,6 +74,54 @@ class ArrayUtil extends Util
         return self::interpolateMutable($array, $source, $defaultValue, $delimeter);
     }
 
+    public static function mergeSort(&$array, $comparator = null)
+    {
+
+        //I got this from here:
+        //http://www.php.net/manual/en/function.usort.php#38827
+        //Thank you, sreid at sea-to-sky dot net
+
+        $comparator = $comparator ? $comparator : 'strcmp';
+
+        //Arrays of size < 2 require no action.
+        if (count($array) < 2)
+            return;
+
+        //Split the array in half
+        $half = round(count($array) / 2);
+        $first = array_slice($array, 0, $half);
+        $second = array_slice($array, $half);
+
+        //Recurse to sort the two halves
+        self::mergeSort($first, $comparator);
+        self::mergeSort($second, $comparator);
+
+        //If all of $first is <= all of $second, just append them.
+        if (call_user_func($comparator, end($first), $second[0]) < 1) {
+
+            $array = array_merge($first, $second);
+            return;
+        }
+
+        //Merge the two sorted arrays into a single sorted array
+        $array = [];
+        $i = $j = 0;
+        while ($i < count($first) && $j < count($second)) {
+            if (call_user_func($comparator, $first[$i], $second[$j]) < 1) {
+                $array[] = $first[$i++];
+            } else {
+                $array[] = $second[$j++];
+            }
+        }
+
+        //Merge the remainder
+        while ($i < count($first)) $array[] = $first[$i++];
+        while ($j < count($second)) $array[] = $second[$j++];
+
+        return;
+    }
+
+
     /**
      * Loads an array from a given file name
      *

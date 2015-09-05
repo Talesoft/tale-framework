@@ -30,10 +30,16 @@ class Router
 	public function route($string)
 	{
 
-		foreach ($this->_routes as $route => $handler)
-			if ($result = $this->match($route, $string))
-				if (($result = call_user_func($handler, $result)) !== false)
-					return $result;
+		foreach ($this->_routes as $route => $handler) {
+
+            var_dump("R $string => $route", $this->match($route, $string));
+            if ($result = $this->match($route, $string)) {
+                if (($result = call_user_func($handler, $result)) !== false) {
+
+                    return $result;
+                }
+            }
+        }
 
 		return null;
 	}

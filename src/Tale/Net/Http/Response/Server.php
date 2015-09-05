@@ -20,47 +20,56 @@ if (@strtotime($_SERVER['HTTP_IF_MODIFIED_SINCE']) == $last_modified_time ||
     exit; 
 } 
 */
-class Server extends Response {
+class Server extends Response
+{
 
-	public function __construct( $statusCode = null, $reasonPhrase = null, array $headers = null, Body $body = null ) {
-		parent::__construct( $statusCode, $reasonPhrase, $headers, $body );
+	public function __construct($statusCode = null, $reasonPhrase = null, array $headers = null, Body $body = null)
+	{
+		parent::__construct($statusCode, $reasonPhrase, $headers, $body);
 	}
 
-	public function applyStatusCode() {
+	public function applyStatusCode()
+	{
 
-		header( $this->getHeadLine() );
+		header($this->getHeadLine());
 
 		return $this;
 	}
 
-	public function applyHeaders() {
+	public function applyHeaders()
+	{
 
 		$headers = $this->getHeaderLines();
-		foreach( $headers as $line )
-			header( $line );
+		foreach ($headers as $line)
+			header($line);
 
 		return $this;
 	}
 
-	public function applyBody() {
+	public function applyBody()
+	{
 
 		$body = $this->getBody();
 
-		if( $body->hasContent() ) {
+		if ($body->hasContent()) {
 
-            if( !$this->hasHeader( 'content-type' ) )
-                $parts[] = 'Content-Type: '.$body->getContentType().'; encoding='.$body->getContentEncoding();
-            
-            if( !$this->hasHeader( 'content-length' ) )
-                header( 'Content-Length: '.$body->getContentLength() );
+			if (!$this->hasHeader('content-type'))
+				$parts[] = 'Content-Type: '.$body->getContentType().'; encoding='.$body->getContentEncoding();
 
-            echo $body->getContent();
-        }
+			if (!$this->hasHeader('content-length'))
+				header('Content-Length: '.$body->getContentLength());
+
+			echo $body->getContent();
+		}
 
 		return $this;
 	}
 
-	public function apply() {
+	public function apply()
+	{
+
+		if (function_exists('headers_sent') && headers_sent())
+			return $this;
 
 		$this->applyStatusCode();
 		$this->applyHeaders();

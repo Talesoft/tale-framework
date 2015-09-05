@@ -45,8 +45,8 @@ class Source
 
         $this->_adapterFactory = new Factory('Tale\\Data\\AdapterBase', [
             'mysql'    => 'Tale\\Data\\Adapter\\MySql',
+            'sqlite' => 'Tale\\Data\\Adapter\\Sqlite',
             //@TODO: The following (hehe!)
-            'sql-lite' => 'Tale\\Data\\Adapter\\SqlLite',
             'mssql'    => 'Tale\\Data\\Adapter\\MsSql',
             'pgsql'    => 'Tale\\Data\\Adapter\\PgSql',
             'xml'      => 'Tale\\Data\\Adapter\\Xml',
@@ -62,6 +62,7 @@ class Source
         $this->_adapter = null;
         $this->_modelNameSpaces = [];
 
+        //TODO: Maybe the model-feature should be de-coupled from the Source
         foreach ($this->getOption('modelNameSpaces') as $nameSpace => $path)
             $this->registerModelNameSpace($nameSpace, $path);
     }

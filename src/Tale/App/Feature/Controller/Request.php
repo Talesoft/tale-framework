@@ -16,7 +16,7 @@ class Request extends Message
         parent::__construct($format);
 
         //Sanitize names for consistent use
-        $this->_controller = implode('.', array_map('Tale\\StringUtil::canonicalize', explode('.', $controller)));
+        $this->_controller = implode('.', array_map('Tale\\Util\\StringUtil::canonicalize', explode('.', $controller)));
         $this->_action = StringUtil::canonicalize($action);
         $this->_args = $args ? $args : [];
     }

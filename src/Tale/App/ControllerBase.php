@@ -115,6 +115,7 @@ class ControllerBase
         if (!isset($this->_helpers[$method]))
             throw new \BadMethodCallException("Invalid helper $method called");
 
+        array_unshift($args, $this);
         return call_user_func_array($this->_helpers[$method], $args ? $args : []);
     }
 }

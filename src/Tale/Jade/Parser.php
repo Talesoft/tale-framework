@@ -4,30 +4,32 @@ namespace Tale\Jade;
 
 use Tale\Jade\Exceptions\JadeFileNotFound;
 
-class Parser {
+class Parser
+{
 
     public $basepath;
     public static $extension = '.jade';
-    public $textOnly = array('script','style');
+    public $textOnly = ['script', 'style'];
 
     protected $input;
     protected $lexer;
     protected $filename;
     protected $extending;
-    protected $blocks = array();
-    protected static $mixins = array();
-    protected $contexts = array();
-    protected $includeDirs = array();
+    protected $blocks = [];
+    protected static $mixins = [];
+    protected $contexts = [];
+    protected $includeDirs = [];
 
-    public function __construct($str,$args = array()) {
-        $filename=null;
+    public function __construct($str, $args = [])
+    {
+        $filename = null;
         if (isset($args['filename']))
             $filename = $args['filename'];
 
         if ($filename == null && file_exists($str)) {
             $this->input = file_get_contents($str);
             $this->filename = $str;
-        }else{
+        } else {
             $this->input = $str;
             $this->filename = $filename;
         }
@@ -36,41 +38,48 @@ class Parser {
             $this->includeDirs[] = realpath(dirname($this->filename));
         }
 
-        if(isset($this->input[0]) && $this->input[0] == "\xef" && $this->input[1] == "\xbb" && $this->input[2] == "\xbf")
+        if (isset($this->input[0]) && $this->input[0] == "\xef" && $this->input[1] == "\xbb" && $this->input[2] == "\xbf")
             $this->input = substr($this->input, 3);
 
         $this->lexer = new Lexer($this->input);
         array_push($this->contexts, $this);
     }
 
-    public function context($parser=null) {
-        if ($parser===null) {
+    public function context($parser = null)
+    {
+        if ($parser === null) {
             return array_pop($this->contexts);
         }
         array_push($this->contexts, $parser);
     }
 
-    public function advance() {
+    public function advance()
+    {
         return $this->lexer->advance();
     }
 
-    public function skip($n) {
-        while($n--) $this->advance();
+    public function skip($n)
+    {
+        while ($n--) $this->advance();
     }
 
-    public function peek() {
+    public function peek()
+    {
         return $this->lookahead(1);
     }
 
-    public function line() {
+    public function line()
+    {
         return $this->lexer->lineno;
     }
 
-    public function lookahead($n=1) {
+    public function lookahead($n = 1)
+    {
         return $this->lexer->lookahead($n);
     }
 
-    public function parse() {
+    public function parse()
+    {
         $block = new Nodes\Block();
         $block->line = $this->line();
 
@@ -78,9 +87,7 @@ class Parser {
 
             if ($this->peek()->type === 'newline') {
                 $this->advance();
-            }
-            else
-            {
+            } else {
                 $block->push($this->parseExpression());
             }
         }
@@ -96,13 +103,15 @@ class Parser {
             foreach (self::$mixins as $name => $v) {
                 $ast->unshift(self::$mixins[$name]);
             }
+
             return $ast;
         }
 
         return $block;
     }
 
-    protected function expect($type) {
+    protected function expect($type)
+    {
         if ($this->peek()->type === $type) {
             return $this->lexer->advance();
         }
@@ -110,78 +119,94 @@ class Parser {
         throw new \Exception(sprintf('Expected %s, but got %s', $type, $this->peek()->type));
     }
 
-    protected function accept($type) {
+    protected function accept($type)
+    {
         if ($this->peek()->type === $type) {
             return $this->advance();
         }
     }
 
-    protected function parseExpression() {
-        $_types = array('tag','mixin','block','case','when','default','extends','include','doctype','filter','comment','text','each','code','call','interpolation');
+    protected function parseExpression()
+    {
+        $_types = ['tag', 'mixin', 'block', 'case', 'when', 'default', 'extends', 'include', 'doctype', 'filter', 'comment', 'text', 'each', 'code', 'call', 'interpolation'];
 
         if (in_array($this->peek()->type, $_types)) {
-            $_method = 'parse' . ucfirst($this->peek()->type);
+            $_method = 'parse'.ucfirst($this->peek()->type);
+
             return $this->$_method();
         }
 
-        switch ( $this->peek()->type ) {
-        case 'yield':
-            $this->advance();
-            $block = new Nodes\Block();
-            $block->yield = true;
-            return $block;
+        switch ($this->peek()->type) {
+            case 'yield':
+                $this->advance();
+                $block = new Nodes\Block();
+                $block->yield = true;
 
-        case 'id':
-        case 'class':
-            $token = $this->advance();
-            $this->lexer->defer($this->lexer->token('tag', 'div'));
-            $this->lexer->defer($token);
-            return $this->parseExpression();
+                return $block;
 
-        default:
-            throw new \Exception('Unexcpected token "' . $this->peek()->type . '"');
+            case 'id':
+            case 'class':
+                $token = $this->advance();
+                $this->lexer->defer($this->lexer->token('tag', 'div'));
+                $this->lexer->defer($token);
+
+                return $this->parseExpression();
+
+            default:
+                throw new \Exception('Unexcpected token "'.$this->peek()->type.'"');
         }
     }
 
-    protected function parseText($trim = false) {
+    protected function parseText($trim = false)
+    {
         $token = $this->expect('text');
         $node = new Nodes\Text($token->value);
         $node->line = $this->line();
+
         return $node;
     }
 
-    protected function parseBlockExpansion() {
+    protected function parseBlockExpansion()
+    {
         if (':' == $this->peek()->type) {
             $this->advance();
+
             return new Nodes\Block($this->parseExpression());
         }
 
         return $this->block();
     }
 
-    protected function parseCase() {
+    protected function parseCase()
+    {
         $value = $this->expect('case')->value;
         $node = new Nodes\CaseNode($value);
         $node->line = $this->line();
         $node->block = $this->block();
+
         return $node;
     }
 
-    protected function parseWhen() {
+    protected function parseWhen()
+    {
         $value = $this->expect('when')->value;
+
         return new Nodes\When($value, $this->parseBlockExpansion());
     }
 
-    protected function parseDefault() {
+    protected function parseDefault()
+    {
         $this->expect('default');
+
         return new Nodes\When('default', $this->parseBlockExpansion());
     }
 
-    protected function parseCode() {
-        $token  = $this->expect('code');
+    protected function parseCode()
+    {
+        $token = $this->expect('code');
         $buffer = isset($token->buffer) ? $token->buffer : false;
         $escape = isset($token->escape) ? $token->escape : true;
-        $node   = new Nodes\Code($token->value, $buffer, $escape);
+        $node = new Nodes\Code($token->value, $buffer, $escape);
         $node->line = $this->line();
 
         $i = 1;
@@ -190,19 +215,20 @@ class Parser {
         }
 
         if ($this->lookahead($i)->type === 'indent') {
-            $this->skip($i-1);
+            $this->skip($i - 1);
             $node->block = $this->block();
         }
 
         return $node;
     }
 
-    protected function parseComment() {
-        $token  = $this->expect('comment');
+    protected function parseComment()
+    {
+        $token = $this->expect('comment');
 
         if ($this->peek()->type === 'indent') {
             $node = new Nodes\BlockComment($token->value, $this->block(), $token->buffer);
-        }else{
+        } else {
             $node = new Nodes\Comment($token->value, $token->buffer);
         }
         $node->line = $this->line();
@@ -210,15 +236,18 @@ class Parser {
         return $node;
     }
 
-    protected function parseDoctype() {
+    protected function parseDoctype()
+    {
         $token = $this->expect('doctype');
-        $node =  new Nodes\Doctype($token->value);
+        $node = new Nodes\Doctype($token->value);
         $node->line = $this->line();
+
         return $node;
     }
 
-    protected function parseFilter() {
-        $token      = $this->expect('filter');
+    protected function parseFilter()
+    {
+        $token = $this->expect('filter');
         $attributes = $this->accept('attributes');
 
         $this->lexer->pipeless = true;
@@ -227,10 +256,12 @@ class Parser {
 
         $node = new Nodes\Filter($token->value, $block, $attributes);
         $node->line = $this->line();
+
         return $node;
     }
 
-    protected function parseASTFilter() {
+    protected function parseASTFilter()
+    {
         $token = $this->expect('tag');
         $attributes = $this->accept('attributes');
         $this->expect(':');
@@ -238,28 +269,32 @@ class Parser {
 
         $node = new Nodes\Filter($token->value, $block, $attributes);
         $node->line = $this->line();
+
         return $node;
     }
 
-    protected function parseEach() {
+    protected function parseEach()
+    {
         $token = $this->expect('each');
         $node = new Nodes\Each($token->code, $token->value, $token->key);
         $node->line = $this->line();
         $node->block = $this->block();
         if ($this->peek()->type === 'code' && $this->peek()->value === 'else') {
-                $this->advance();
-                $node->alternative = $this->block();
+            $this->advance();
+            $node->alternative = $this->block();
         }
+
         return $node;
     }
 
-    protected function parseExtends() {
+    protected function parseExtends()
+    {
         $file = $this->expect('extends')->value;
         $path = null;
 
         foreach ($this->includeDirs as $incDir) {
-            $path =  rtrim($incDir, "\\/")  . DIRECTORY_SEPARATOR . $file . self::$extension;
-            if (file_exists($path))
+            $path = realpath(rtrim($incDir, "\\/").DIRECTORY_SEPARATOR.$file.self::$extension);
+            if ($path)
                 break;
             else
                 $path = null;
@@ -267,10 +302,10 @@ class Parser {
 
         if (is_null($path))
             throw new JadeFileNotFound(sprintf('Could not locate extend template %s in paths %s',
-                $file . self::$extension, implode(',' , $this->includeDirs)));
+                $file.self::$extension, implode(',', $this->includeDirs)));
 
         $string = file_get_contents($path);
-        $parser = new Parser($string, array('filepath' => $path, 'includes' => array_merge($this->includeDirs, array(dirname($path)))));
+        $parser = new Parser($string, ['filepath' => $path, 'includes' => array_merge($this->includeDirs, [dirname($path)])]);
         // need to be a reference, or be seted after the parse loop
         $parser->blocks = &$this->blocks;
         $parser->contexts = $this->contexts;
@@ -279,7 +314,8 @@ class Parser {
         return new Nodes\Literal('');
     }
 
-    protected function parseBlock() {
+    protected function parseBlock()
+    {
         $block = $this->expect('block');
         $mode = $block->mode;
         $name = trim($block->value);
@@ -289,28 +325,28 @@ class Parser {
         if (isset($this->blocks[$name])) {
             $prev = $this->blocks[$name];
 
-            if(!isset($prev->mode)){
+            if (!isset($prev->mode)) {
                 $prev->mode = 'replace';
             }
 
             switch ($prev->mode) {
-            case 'append':
-                $block->nodes = array_merge($block->nodes, $prev->nodes);
-                $prev = $block;
-                break;
+                case 'append':
+                    $block->nodes = array_merge($block->nodes, $prev->nodes);
+                    $prev = $block;
+                    break;
 
-            case 'prepend':
-                $block->nodes = array_merge($prev->nodes, $block->nodes);
-                $prev = $block;
-                break;
+                case 'prepend':
+                    $block->nodes = array_merge($prev->nodes, $block->nodes);
+                    $prev = $block;
+                    break;
 
-            case 'replace':
-            default:
-                break;
+                case 'replace':
+                default:
+                    break;
             }
 
             $this->blocks[$name] = $prev;
-        }else{
+        } else {
             $block->mode = $mode;
             $this->blocks[$name] = $block;
         }
@@ -318,17 +354,18 @@ class Parser {
         return $this->blocks[$name];
     }
 
-    protected function parseInclude() {
+    protected function parseInclude()
+    {
         $token = $this->expect('include');
         $file = trim($token->value);
 
-        if(  pathinfo($file, PATHINFO_EXTENSION) != 'jade' && pathinfo($file, PATHINFO_EXTENSION) != 'html'){
-            $file = $file . '.jade';
+        if (pathinfo($file, PATHINFO_EXTENSION) != 'jade' && pathinfo($file, PATHINFO_EXTENSION) != 'html') {
+            $file = $file.'.jade';
         }
         $path = null;
 
         foreach ($this->includeDirs as $incDir) {
-            $path =  rtrim($incDir, "\\/")  . DIRECTORY_SEPARATOR . $file;
+            $path = rtrim($incDir, "\\/").DIRECTORY_SEPARATOR.$file;
 
             if (file_exists($path))
                 break;
@@ -338,15 +375,15 @@ class Parser {
 
         if (is_null($path))
             throw new JadeFileNotFound(sprintf('Could not locate include template %s in paths %s',
-                $file, implode(',' , $this->includeDirs)));
+                $file, implode(',', $this->includeDirs)));
 
         $str = file_get_contents($path);
 
-        if ('.jade' != substr($file,-5)) {
+        if ('.jade' != substr($file, -5)) {
             return new Nodes\Literal($str);
         }
 
-        $parser = new Parser($str, array('filename'=>$path,'includes' => $this->includeDirs));
+        $parser = new Parser($str, ['filename' => $path, 'includes' => $this->includeDirs]);
         $parser->blocks = $this->blocks;
 
         $this->context($parser);
@@ -365,13 +402,14 @@ class Parser {
         return $ast;
     }
 
-    protected function parseCall() {
+    protected function parseCall()
+    {
         $token = $this->expect('call');
         $name = $token->value;
 
         if (isset($token->arguments)) {
             $arguments = $token->arguments;
-        }else{
+        } else {
             $arguments = null;
         }
 
@@ -386,7 +424,8 @@ class Parser {
         return $mixin;
     }
 
-    protected function parseMixin() {
+    protected function parseMixin()
+    {
         $token = $this->expect('mixin');
         $name = $token->value;
         $arguments = $token->arguments;
@@ -395,14 +434,16 @@ class Parser {
         if ('indent' == $this->peek()->type) {
             $mixin = new Nodes\Mixin($name, $arguments, $this->block(), false);
             self::$mixins[$name] = $mixin;
+
             return $mixin;
             // call
-        }else{
+        } else {
             return new Nodes\Mixin($name, $arguments, null, true);
         }
     }
 
-    protected function parseTextBlock() {
+    protected function parseTextBlock()
+    {
         $block = new Nodes\Block();
         $block->line = $this->line();
         $spaces = $this->expect('indent')->value;
@@ -411,25 +452,25 @@ class Parser {
             $this->_spaces = $spaces;
         }
 
-        $indent = str_repeat(' ', $spaces - $this->_spaces+1);
+        $indent = str_repeat(' ', $spaces - $this->_spaces + 1);
 
         while ($this->peek()->type != 'outdent') {
 
             switch ($this->peek()->type) {
-            case 'newline':
-                $this->lexer->advance();
-                break;
+                case 'newline':
+                    $this->lexer->advance();
+                    break;
 
-            case 'indent':
-                foreach ($this->parseTextBlock()->nodes as $n) {
-                    $block->push($n);
-                }
-                break;
+                case 'indent':
+                    foreach ($this->parseTextBlock()->nodes as $n) {
+                        $block->push($n);
+                    }
+                    break;
 
-            default:
-                $text = new Nodes\Text($indent . $this->advance()->value);
-                $text->line = $this->line();
-                $block->push($text);
+                default:
+                    $text = new Nodes\Text($indent.$this->advance()->value);
+                    $text->line = $this->line();
+                    $block->push($text);
             }
         }
 
@@ -438,36 +479,42 @@ class Parser {
         }
 
         $this->expect('outdent');
+
         return $block;
     }
 
-    protected function block() {
+    protected function block()
+    {
         $block = new Nodes\Block();
         $block->line = $this->line();
         $this->expect('indent');
 
-        while ($this->peek()->type !== 'outdent' ) {
+        while ($this->peek()->type !== 'outdent') {
 
             if ($this->peek()->type === 'newline') {
                 $this->lexer->advance();
-            }else{
+            } else {
                 $block->push($this->parseExpression());
             }
         }
 
         $this->expect('outdent');
+
         return $block;
     }
 
-    protected function parseInterpolation() {
+    protected function parseInterpolation()
+    {
         $token = $this->advance();
         $tag = new Nodes\Tag($token->value);
         $tag->buffer = true;
+
         return $this->tag($tag);
     }
 
-    protected function parseTag() {
-        $i=2;
+    protected function parseTag()
+    {
+        $i = 2;
 
         if ('attributes' == $this->lookahead($i)->type) {
             $i++;
@@ -485,45 +532,46 @@ class Parser {
         $tag = new Nodes\Tag($token->value);
 
         // tag/
-        if (isset($token->selfClosing)){
+        if (isset($token->selfClosing)) {
             $tag->selfClosing = $token->selfClosing;
-        }else{
+        } else {
             $tag->selfClosing = false;
         }
 
         return $this->tag($tag);
     }
 
-    protected function tag($tag) {
+    protected function tag($tag)
+    {
         $tag->line = $this->line();
 
         while (true) {
 
             switch ($this->peek()->type) {
-            case 'id':
-            case 'class':
-                $token = $this->advance();
-                $tag->setAttribute($token->type, "'" . $token->value . "'");
-                continue;
+                case 'id':
+                case 'class':
+                    $token = $this->advance();
+                    $tag->setAttribute($token->type, "'".$token->value."'");
+                    continue;
 
-            case 'attributes':
-                $token = $this->advance();
-                $obj = $token->attributes;
-                $escaped = $token->escaped;
-                $name_list = array_keys($obj);
+                case 'attributes':
+                    $token = $this->advance();
+                    $obj = $token->attributes;
+                    $escaped = $token->escaped;
+                    $name_list = array_keys($obj);
 
-                if ($token->selfClosing) {
-                    $tag->selfClosing = true;
-                }
+                    if ($token->selfClosing) {
+                        $tag->selfClosing = true;
+                    }
 
-                foreach ($name_list as $name) {
-                    $value = $obj[$name];
-                    $tag->setAttribute($name, $value, $escaped[$name]);
-                }
-                continue;
+                    foreach ($name_list as $name) {
+                        $value = $obj[$name];
+                        $tag->setAttribute($name, $value, $escaped[$name]);
+                    }
+                    continue;
 
-            default:
-                break 2;
+                default:
+                    break 2;
             }
         }
 
@@ -535,19 +583,19 @@ class Parser {
         }
 
         switch ($this->peek()->type) {
-        case 'text':
-            $tag->block->push($this->parseText());
-            break;
+            case 'text':
+                $tag->block->push($this->parseText());
+                break;
 
-        case 'code':
-            $tag->code = $this->parseCode();
-            break;
+            case 'code':
+                $tag->code = $this->parseCode();
+                break;
 
-        case ':':
-            $this->advance();
-            $tag->block = new Nodes\Block();
-            $tag->block->push($this->parseExpression());
-            break;
+            case ':':
+                $this->advance();
+                $tag->block = new Nodes\Block();
+                $tag->block->push($this->parseExpression());
+                break;
         }
 
         while ('newline' == $this->peek()->type) {
@@ -562,7 +610,7 @@ class Parser {
             $type = $tag->getAttribute('type');
 
             if ($type !== null) {
-                $type = preg_replace('/^[\'\"]|[\'\"]$/','',$type);
+                $type = preg_replace('/^[\'\"]|[\'\"]$/', '', $type);
 
                 if (!$dot && 'text/javascript' != $type['value']) {
                     $tag->textOnly = false;
@@ -575,13 +623,13 @@ class Parser {
                 $this->lexer->pipeless = true;
                 $tag->block = $this->parseTextBlock();
                 $this->lexer->pipeless = false;
-            }else{
+            } else {
                 $block = $this->block();
                 if ($tag->block) {
                     foreach ($block->nodes as $n) {
                         $tag->block->push($n);
                     }
-                }else{
+                } else {
                     $tag->block = $block;
                 }
             }

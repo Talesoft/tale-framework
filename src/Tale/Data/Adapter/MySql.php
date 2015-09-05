@@ -37,7 +37,9 @@ class MySql extends AdapterBase
 
 	public function __construct(array $options = null)
 	{
-		parent::__construct([
+		parent::__construct($options);
+
+		$this->prependOptions([
 			'driver'      => 'mysql',
 			'data'        => [
 				'encoding' => 'utf8'
@@ -53,10 +55,7 @@ class MySql extends AdapterBase
 				'inputColumns'  => 'Tale\\StringUtil::tableize',
 				'outputColumns' => 'Tale\\StringUtil::variablize'
 			]
-		]);
-
-		if($options)
-			$this->appendOptions($options);
+		], true);
 
 		$this->_preparedQueries = [];
 	}

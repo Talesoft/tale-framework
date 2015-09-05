@@ -3,153 +3,227 @@
 namespace Tale\Theme;
 
 use Tale\Config;
+use Tale\Cache;
+use Tale\Util\StringUtil;
 
-class Manager {
+class Manager
+{
+    use Config\OptionalTrait;
+    use Cache\OptionalTrait;
 
-    private $_activeThemes;
-    private $_config;
+    const TYPE_FONT = 'fonts';
+    const TYPE_IMAGE = 'images';
+    const TYPE_STYLE = 'styles';
+    const TYPE_SCRIPT = 'scripts';
+    const TYPE_VIEW = 'views';
 
-    public function __construct( array $options = null ) {
+    private static $_id = 0;
 
-        $this->_config = new Config( array_replace_recursive( [
-             'path' => './themes',
-             'activeThemes' => [ 'default' ],
-             'resourceTypes' => [
-                 'fonts' => 'fonts',
-                 'images' => 'images',
-                 'scripts' => 'scripts',
-                 'styles' => 'styles',
-                 'views' => 'views'
-             ],
-             'minify' => true,
-             'lifeTime' => 0,
-             'preprocessors' => [
-                 'images' => [
-                     'png' => [
-                         'php' => 'Tale\\Theme\\Preprocessor\\Png\\Php'
-                     ]
-                 ],
-                 'styles' => [
-                     'css' => [
-                         'cssx' => 'Tale\\Theme\\Preprocessor\\Css\\CssX',
-                         'less' => 'Tale\\Theme\\Preprocessor\\Css\\Less',
-                         'sass' => 'Tale\\Theme\\Preprocessor\\Css\\Sass',
-                         'styl' => 'Tale\\Theme\\Preprocessor\\Css\\Stylus'
-                     ]
-                 ],
-                 'views' => [
-                     'phtml' => [
-                         'jade' => 'Tale\\Theme\\Preprocessor\\Phtml\\Jade',
-                         'xtpl' => 'Tale\\Theme\\Preprocessor\\Phtml\\Xtpl',
-                         'twig' => 'Tale\\Theme\\Preprocessor\\Phtml\\Twig',
-                         'blade' => 'Tale\\Theme\\Preprocessor\\Phtml\\Blade'
-                     ]
-                 ],
-                 'scripts' => [
-                     'js' => [
-                         'ts' => 'Tale\\Theme\\Preprocessor\\Js\\TypeScript',
-                         'coffee' => 'Tale\\Theme\\Preprocessor\\Js\\CoffeeScript'
-                     ]
-                 ]
-             ]
-         ], $options ? $options : [] ) );
+    private $_themes;
 
-        $this->_activeThemes = $this->_config->activeThemes;
+    public function __construct(array $options = null)
+    {
+
+        $this->appendOptions([
+            'path'          => './themes',
+            'themes'        => ['default'],
+            'types' => [
+                'fonts'   => 'fonts',
+                'images'  => 'images',
+                'scripts' => 'scripts',
+                'styles'  => 'styles',
+                'views'   => 'views'
+            ],
+            'minify'        => true,
+            'lifeTime'      => 0,
+            //TODO: Maybe we could need a Converter Factory here?
+            'converters' => [
+                self::TYPE_IMAGE  => [
+                    'png' => [
+                        'php' => 'Tale\\Theme\\Converter\\Png\\Php'
+                    ]
+                ],
+                self::TYPE_STYLE  => [
+                    'css' => [
+                        'cssx' => 'Tale\\Theme\\Converter\\Css\\CssX',
+                        'less' => 'Tale\\Theme\\Converter\\Css\\Less',
+                        'sass' => 'Tale\\Theme\\Converter\\Css\\Sass',
+                        'styl' => 'Tale\\Theme\\Converter\\Css\\Stylus'
+                    ]
+                ],
+                self::TYPE_SCRIPT => [
+                    'js' => [
+                        'ts'     => 'Tale\\Theme\\Converter\\Js\\TypeScript',
+                        'coffee' => 'Tale\\Theme\\Converter\\Js\\CoffeeScript'
+                    ]
+                ],
+                self::TYPE_VIEW   => [
+                    'phtml' => [
+                        'jade'  => 'Tale\\Theme\\Converter\\Phtml\\Jade',
+                        'xtpl'  => 'Tale\\Theme\\Converter\\Phtml\\Xtpl',
+                        'twig'  => 'Tale\\Theme\\Converter\\Phtml\\Twig',
+                        'blade' => 'Tale\\Theme\\Converter\\Phtml\\Blade'
+                    ]
+                ]
+            ]
+        ]);
+
+        if ($options)
+            $this->appendOptions($options, true);
+
+        $this->_wrapperName = 'tale-theme-'.(self::$_id++);
+        $this->_themes = $this->_config->themes;
+
+        stream_wrapper_register($this->_wrapperName, 'Tale\\Theme\\StreamWrapper');
     }
 
-    public function getConfig() {
+    public function __destruct()
+    {
 
-        return $this->_config;
+        stream_wrapper_unregister($this->_wrapperName);
     }
 
-    public function addTheme( $theme ) {
+    public function addTheme($theme)
+    {
 
-        $this->_activeThemes[] = $theme;
+        $this->_themes[] = $theme;
 
         return $this;
     }
 
-    private function _process( $type, $path ) {
+    public function getPossiblePaths($type, $path)
+    {
 
-        if( !isset( $this->_config->preprocessors[ $type ] ) )
-            return $path;
+        $types = $this->getOption('types');
+        $subPath = $types[$type];
+        $themePath = $this->getOption('path');
 
-        $ext = pathinfo( $path, \PATHINFO_EXTENSION );
-        $exts = $this->_config->preprocessors[ $type ];
+        foreach ($this->_themes as $theme) {
 
-        if( !isset( $exts[ $ext ] ) )
-            return $path;
-
-        $processors = $exts[ $ext ];
-
-        //TODO: Caching now works on a extension level, a file with the same name but different extension will be created
-        //TODO: Rework this into Tale\Cache (Will probably only work with File adapter, which sucks...)
-
-        foreach( $processors as $sourceExt => $className ) {
-
-            $sourcePath = dirname( $path ).'/'.basename( $path, ".$ext" ).'.'.$sourceExt;
-
-            if( file_exists( $sourcePath ) ) {
-
-                $processor = new $className( $this );
-                $processor->process( $sourcePath, $path );
-
-                return $sourcePath;
-            }
+            yield "$themePath/$theme/$subPath/$path";
         }
-
-        return $path;
     }
 
-    public function resolve( $type, $path, $process = true ) {
+    public function getExistingPaths($type, $path)
+    {
 
-        //TODO: Resolve files with Tale\Io\Fs\Resolver
+        foreach ($this->getPossiblePaths($type, $path) as $fullPath)
+            if (file_exists($fullPath))
+                yield $fullPath;
+    }
 
-        $config = $this->getConfig();
-        $subPath = $config->resourceTypes[ $type ];
+    public function resolve($type, $path)
+    {
 
-        foreach( $this->_activeThemes as $theme ) {
-
-            $filePath = "{$config->path}/$theme/$subPath/$path";
-
-            if( file_exists( $filePath ) && time() - filemtime( $filePath ) <= $this->_config->lifeTime )
-                return $filePath;
-
-            if( $process )
-                $this->_process( $type, $filePath );
-
-            if( file_exists( $filePath ) ) {
-
-                touch( $filePath );
-                return $filePath;
-            }
-        }
+        foreach ($this->getExistingPaths($type, $path) as $fullPath)
+            return $fullPath;
 
         return null;
     }
 
-    public function resolveFont( $path, $process = true ) {
+    public function getConvertedContent($type, $path)
+    {
 
-        return $this->resolve( 'fonts', $path, $process );
+        $converters = $this->getOption('converters');
+        if (isset($converters[$type])) {
+
+            $ext = pathinfo($path, \PATHINFO_EXTENSION);
+            $exts = $converters[$type];
+
+            if (isset($exts[$ext])) {
+
+                $convs = $exts[$ext];
+                foreach ($convs as $sourceExt => $className) {
+
+                    $inputPath = dirname($path).'/'.basename($path, ".$ext").'.'.$sourceExt;
+
+                    var_dump("CONV $inputPath");
+
+                    if ($fullInputPath = $this->resolve($type, $inputPath)) {
+
+                        $converter = new $className($this, [
+                            'paths' => array_map('dirname', iterator_to_array($this->getPossiblePaths($type,$inputPath)))
+                        ]);
+                        return $converter->convert($fullInputPath, $path);
+                    }
+                }
+            }
+        }
+
+        if ($fullPath = $this->resolve($type, $path))
+            return file_get_contents($fullPath);
+
+        return null;
     }
 
-    public function resolveImage( $path, $process = true ) {
+    public function resolveFont($path)
+    {
 
-        return $this->resolve( 'images', $path, $process );
+        return $this->resolve(self::TYPE_FONT, $path);
     }
 
-    public function resolveScript( $path, $process = true ) {
+    public function resolveImage($path)
+    {
 
-        return $this->resolve( 'scripts', $path, $process );
+        return $this->resolve(self::TYPE_IMAGE, $path);
     }
 
-    public function resolveStyle( $path, $process = true ) {
+    public function resolveScript($path)
+    {
 
-        return $this->resolve( 'styles', $path, $process );
+        return $this->resolve(self::TYPE_SCRIPT, $path);
     }
 
-    public function resolveView( $path, $process = true ) {
+    public function resolveStyle($path)
+    {
 
-        return $this->resolve( 'views', $path, $process );
+        return $this->resolve(self::TYPE_STYLE, $path);
+    }
+
+    public function resolveView($path)
+    {
+
+        return $this->resolve(self::TYPE_VIEW, $path);
+    }
+
+    public function renderView($path, array $args = null, $cacheHtml = false, $context = null)
+    {
+
+        $renderView = function() use($path, $args, $context) {
+
+            $phtml = $this->fetchCached(
+                'views.'.StringUtil::canonicalize($path),
+                function () use ($path) {
+
+                return $this->getConvertedContent(self::TYPE_VIEW, $path);
+            }, $this->getOption('lifeTime'));
+
+            if( !$phtml )
+                throw new \Exception(
+                    "Failed to convert theme: Neither $path nor"
+                    ." any convertible file could be found"
+                );
+
+            $dataUri = "$this->_wrapperName://data;$phtml";
+
+            $render = function ($__dataUri, $__args) {
+
+                ob_start();
+                extract($__args);
+                include $__dataUri;
+
+                return ob_get_clean();
+            };
+
+            if (is_object($context))
+                $render->bindTo($context, $context);
+
+            return $render($dataUri, $args ? $args : []);
+        };
+
+        if (!$cacheHtml)
+            return $renderView();
+
+        return $this->fetchCached('views.html.'.StringUtil::canonicalize($path), $renderView, $this->getOption('lifeTime'));
     }
 }

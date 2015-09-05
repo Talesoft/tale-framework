@@ -35,17 +35,26 @@ class Data extends FeatureBase
              */
             $cache = $this->cache;
 
-            var_dump('DBCACHE', $cache ? get_class($cache) : $cache);
+            /**
+             * @var \Tale\App\Feature\Controller|null $controller
+             */
+            $controller = $this->controller;
 
             foreach ($this->getConfig() as $name => $options) {
 
                 $this->_sources[$name] = new Source($options);
 
                 if ($cache)
-                    $this->_sources[$name]->setCacheManager($cache->getManager());
+                    $this->_sources[$name]->setCacheManager($cache->getManager()->createSubManager('data'));
             }
 
-            var_dump('DATA SOURCES LOADED', $this);
+            if ($controller)
+                $controller->registerHelper('getDataSource', function($controller, $name) {
+
+                    return $this->_sources[$name];
+                });
+
+            var_dump('DATA SOURCES LOADED');
         });
 
         $app->bind('afterRun', function () {
@@ -58,11 +67,24 @@ class Data extends FeatureBase
         });
     }
 
+    public function getSources()
+    {
+
+        return $this->_sources;
+    }
+
+    public function getSource($name)
+    {
+
+        return $this->_sources[$name];
+    }
+
     public function getDependencies()
     {
 
         return [
-            'cache' => 'Tale\\App\\Feature\\Cache'
+            'cache' => 'Tale\\App\\Feature\\Cache',
+            'controller' => 'Tale\\App\\Feature\\Controller'
         ];
     }
 }

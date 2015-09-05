@@ -8,6 +8,9 @@ use Tale\Cache\Manager as CacheManager;
 class Cache extends FeatureBase
 {
 
+    /**
+     * @var \Tale\Cache\Manager
+     */
     private $_manager;
 
     public function init()

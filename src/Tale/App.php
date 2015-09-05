@@ -5,6 +5,7 @@ namespace Tale;
 use RuntimeException;
 use Tale\App\FeatureBase;
 use Tale\Proxy;
+use Tale\Util\ArrayUtil;
 use Tale\Util\StringUtil;
 
 /**
@@ -195,20 +196,7 @@ class App
         }
     }
 
-    private function _sortFeatures(FeatureBase $a, FeatureBase $b)
-    {
 
-        $aClass = get_class($a);
-        $bClass = get_class($b);
-
-        if ($b->isPrioritised() || in_array($bClass, $a->getDependencies()))
-            return 1;
-
-        if ($a->isPrioritised() || in_array($aClass, $b->getDependencies()))
-            return -1;
-
-        return 0;
-    }
 
     public function run(App $previousApp = null)
     {
@@ -251,16 +239,19 @@ class App
                     ."Config needs to be a path to a file or an option array"
                 );
 
-            $features[$className] = $feature;
+            $features[] = $feature;
         }
 
         //All features are instanced and got all the options they will get
         //at this point.
         //Now we sort the features by dependencies.
         //TODO: Circular dependencies probably fuck up.
-        uasort($features, [$this, '_sortFeatures']);
+        ArrayUtil::mergeSort($features, [__CLASS__, 'compareFeatures']);
 
-        var_dump('FTS', array_map('get_class', $features));
+        $classes = array_map('get_class', $features);
+        $features = array_combine($classes, $features);
+
+        var_dump('FTS', $classes);
 
         //Now we can initialize the features
         //Since our deps are ordered now, we can just iterate
@@ -306,6 +297,27 @@ class App
         }
 
         return $this;
+    }
+
+    public static function compareFeatures(FeatureBase $a, FeatureBase $b)
+    {
+
+        $aDeps = $a->getDependencies();
+        $bDeps = $b->getDependencies();
+
+        if(!count($aDeps) && !count($bDeps))
+            return 0;
+
+        $aClass = get_class($a);
+        $bClass = get_class($b);
+
+        if ($b->isPrioritised() || in_array($bClass, $aDeps))
+            return 1;
+
+        if ($a->isPrioritised() || in_array($aClass, $bDeps))
+            return -1;
+
+        return 0;
     }
 
     //Cloning this wouldn't be wise, would it?

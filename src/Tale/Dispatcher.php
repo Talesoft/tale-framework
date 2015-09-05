@@ -90,6 +90,7 @@ class Dispatcher
     public function createInstance($className, array $args = null)
     {
 
+        var_dump('RESOLV', $this->resolveClassName($className));
         return new Dispatcher\Instance(
             $this,
             $this->_factory->createInstance($this->resolveClassName($className), $args)

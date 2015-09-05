@@ -2,6 +2,7 @@
 
 namespace Tale\App\Feature;
 
+use Tale\App\Feature\Controller\Request;
 use Tale\App\FeatureBase;
 use Tale\Dispatcher;
 use Tale\ClassLoader;
@@ -36,7 +37,7 @@ class Controller extends FeatureBase
     private $_args;
 
     /**
-     * @var callable[]
+     * @var array
      */
     private $_helpers;
 
@@ -50,7 +51,7 @@ class Controller extends FeatureBase
             'nameSpace'         => null,
             'loadPattern'       => null,
             'classNamePattern'  => '%sController',
-            'methodNamePattern' => '%Action',
+            'methodNamePattern' => '%sAction',
             'args'              => [],
             'helpers'           => [],
             'createLoader'      => true,
@@ -68,7 +69,10 @@ class Controller extends FeatureBase
             $this->_args = $this->getOption('args');
             $this->_helpers = $this->getOption('helpers');
 
-            $this->registerHelper('dispatch', [$this, 'dispatch']);
+            $this->registerHelper('dispatch', function ($controller, Request $request) {
+
+                return $this->dispatch($request);
+            });
 
             var_dump('CONTROLLERS LOADED');
         });
@@ -99,6 +103,8 @@ class Controller extends FeatureBase
                 $this->getOption('nameSpace'),
                 $this->getOption('loadPattern')
             );
+            $this->_loader->register();
+            var_dump($this->_loader);
         }
     }
 
@@ -127,22 +133,23 @@ class Controller extends FeatureBase
         return $this;
     }
 
-    public function registerHelper($key, $handler)
+    public function registerHelper($name, $callback)
     {
 
-        if (!is_callable($handler))
+        if (!is_callable($callback))
             throw new \InvalidArgumentException("Argument 2 of Controller->registerHelper needs to be valid callback");
 
-        $this->_helpers[$key] = $handler;
+        $this->_helpers[$name] = $callback;
 
         return $this;
     }
 
-    public function getControllerInstance($controller)
+    private function _getControllerInstance($controller)
     {
 
         if (!in_array($controller, $this->_instances)) {
 
+            var_dump('GCI', $controller);
             $this->_instances[$controller] = $this->_dispatcher->createInstance($controller);
 
             //Now we append our args and helpers on our controller
@@ -152,7 +159,8 @@ class Controller extends FeatureBase
             $internalInstance = $this->_instances[$controller]->getInternalInstance();
 
             $internalInstance->setArgs($this->_args);
-            $internalInstance->registerHelpers($this->_helpers);
+            foreach ($this->_helpers as $name => $callback)
+                $internalInstance->registerHelper($name, $callback);
         }
 
         return $this->_instances[$controller];
@@ -192,10 +200,12 @@ class Controller extends FeatureBase
         $format = $request->getFormat();
         $args = $request->getArgs();
 
+        var_dump('CDP', $request);
+
         $response = null;
         try {
 
-            $instance = $this->getControllerInstance($controller);
+            $instance = $this->_getControllerInstance($controller);
 
             /**
              * @var \Tale\App\ControllerBase $controllerInstance
@@ -203,8 +213,9 @@ class Controller extends FeatureBase
             $controllerInstance = $instance->getInternalInstance();
 
             //We need our request on the controller to work with it
-            $controllerInstance->setArg('dispatchRequest', $request);
 
+            $controllerInstance->setArg('dispatchRequest', $request);
+            var_dump($controllerInstance);
 
             if ($controllerInstance->emit('beforeInit')) {
 

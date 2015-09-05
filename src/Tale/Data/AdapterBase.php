@@ -12,7 +12,10 @@ abstract class AdapterBase
     public function __construct(array $options = null)
     {
 
-        $this->appendOptions([
+        if ($options)
+            $this->appendOptions($options, true);
+
+        $this->prependOptions([
             'inflections' => [
                 'databases'     => null,
                 'tables'        => null,
@@ -20,10 +23,7 @@ abstract class AdapterBase
                 'inputColumns'  => null,
                 'outputColumns' => null
             ]
-        ]);
-
-        if ($options)
-            $this->appendOptions($options, true);
+        ], true);
     }
 
     public function __destruct()
