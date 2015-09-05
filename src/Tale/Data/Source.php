@@ -20,8 +20,6 @@ class Source
      */
     private $_adapter;
 
-    private $_modelNameSpaces;
-
     //TODO: Implement caching EVERYWHERE!
 
     public function __construct(array $options = null)
@@ -34,7 +32,6 @@ class Source
             'modelTableClassName' => 'Tale\\Data\\Table',
             'columnClassName'     => 'Tale\\Data\\Column',
             'lifeTime'            => 3600,
-            'modelNameSpaces'     => [],
             'adapterAliases'      => [],
             'adapter'             => 'mysql',
             'options'             => []
@@ -60,19 +57,13 @@ class Source
         $this->_adapterFactory->registerAliases($this->getOption('adapterAliases'));
 
         $this->_adapter = null;
-        $this->_modelNameSpaces = [];
-
-        //TODO: Maybe the model-feature should be de-coupled from the Source
-        foreach ($this->getOption('modelNameSpaces') as $nameSpace => $path)
-            $this->registerModelNameSpace($nameSpace, $path);
     }
 
     public function __destruct()
     {
 
-        foreach ($this->_modelNameSpaces as $nameSpace => $loader)
-            if ($loader && $loader->isRegistered())
-                $loader->unregister();
+        if ($this->_adapter)
+            $this->_adapter->__destruct();
     }
 
     /**
@@ -101,34 +92,6 @@ class Source
         return $this->_adapter;
     }
 
-    public function registerModelNameSpace($nameSpace, $path = null)
-    {
-
-        $loader = null;
-        if ($path) {
-
-            $loader = new ClassLoader($nameSpace, $path);
-            $loader->register();
-        }
-
-        $this->_modelNameSpaces[$nameSpace] = $loader;
-
-        return $this;
-    }
-
-    public function getModelClassName($tableName)
-    {
-
-        foreach ($this->_modelNameSpaces as $nameSpace => $path) {
-
-            $className = ltrim($nameSpace, '\\').'\\'.StringUtil::camelize(StringUtil::singularize($tableName));
-
-            if (class_exists($className))
-                return $className;
-        }
-
-        return null;
-    }
 
     public function getDatabases($load = false)
     {

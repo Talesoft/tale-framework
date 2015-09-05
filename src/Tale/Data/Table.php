@@ -38,11 +38,6 @@ class Table extends NamedEntityBase
     public function getRowClassName()
     {
 
-        $modelClassName = $this->getSource()->getModelClassName($this->getName());
-
-        if ($modelClassName)
-            return $modelClassName;
-
         return $this->_rowClassName;
     }
 

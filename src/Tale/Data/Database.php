@@ -4,11 +4,23 @@ namespace Tale\Data;
 
 use Tale\StringUtil;
 
+/**
+ * Class Database
+ * @package Tale\Data
+ */
 class Database extends NamedEntityBase
 {
 
+	/**
+	 * @var \Tale\Data\Source
+     */
 	private $_source;
 
+	/**
+	 * @param \Tale\Data\Source $source
+	 * @param                   $name
+	 * @param bool|false        $load
+     */
 	public function __construct(Source $source, $name, $load = false)
 	{
 		parent::__construct($name);
@@ -19,18 +31,27 @@ class Database extends NamedEntityBase
 			$this->load();
 	}
 
+	/**
+	 * @return \Tale\Data\Source
+     */
 	public function getSource()
 	{
 
 		return $this->_source;
 	}
 
+	/**
+	 * @return mixed
+     */
 	public function exists()
 	{
 
 		return $this->getSource()->hasDatabase($this);
 	}
 
+	/**
+	 * @return $this
+     */
 	public function load()
 	{
 
@@ -39,6 +60,9 @@ class Database extends NamedEntityBase
 		return $this->sync();
 	}
 
+	/**
+	 * @return $this
+     */
 	public function save()
 	{
 
@@ -47,7 +71,12 @@ class Database extends NamedEntityBase
 		return $this->sync();
 	}
 
-	public function create(array $data = null)
+	/**
+	 * @param array|null $data
+	 *
+	 * @return $this
+     */
+    public function create(array $data = null)
 	{
 
 		$this->getSource()->createDatabase($this);
@@ -55,6 +84,9 @@ class Database extends NamedEntityBase
 		return $this->sync();
 	}
 
+	/**
+	 * @return $this
+     */
 	public function remove()
 	{
 
@@ -63,32 +95,50 @@ class Database extends NamedEntityBase
 		return $this->unsync();
 	}
 
-	public function getTables($load = false)
+	/**
+	 * @param bool|false $load
+	 *
+	 * @return \Generator
+     */
+    public function getTables($load = false)
 	{
 
 		foreach ($this->getSource()->getTableNames($this) as $name)
 			yield $name => $this->getTable($name, $load);
 	}
 
-	public function getTableArray($load = false)
+	/**
+	 * @param bool|false $load
+	 *
+	 * @return array
+     */
+    public function getTableArray($load = false)
 	{
 
 		return iterator_to_array($this->getTables($load));
 	}
 
-	public function getTable($name, $load = false)
+	/**
+	 * @param            $name
+	 * @param bool|false $load
+	 *
+	 * @return \Tale\Data\Table
+     */
+    public function getTable($name, $load = false)
 	{
 
 		$config = $this->getSource()->getConfig();
 		$className = $config->tableClassName;
 
-		if ($modelClassName = $this->getModelClassName($name))
-			$className = $modelClassName;
-
 		return new $className($this, $name, $load);
 	}
 
-	public function __get($name)
+	/**
+	 * @param $name
+	 *
+	 * @return \Tale\Data\Table
+     */
+    public function __get($name)
 	{
 
 		return $this->getTable($this->getSource()->inflectTableName($name));
