@@ -88,8 +88,6 @@ class MySql extends AdapterBase
 
 		$args = $args ? $args : [];
 
-		var_dump("QRY: $query", $args);
-
 		$stmt = $this->prepare($query);
 		$stmt->execute($args);
 

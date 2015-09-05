@@ -107,8 +107,6 @@ class App
         $this->_initManifest();
         //Load additional config files via the "configure" option
         $this->_initConfig();
-
-        var_dump('APPCFG', $this->getConfig()->getItems());
     }
 
     /**
@@ -182,7 +180,6 @@ class App
         foreach ($this->getOption('phpOptions') as $option => $value) {
 
             $option = StringUtil::tableize($option, '.');
-            var_dump("OPT $option => $value");
             ini_set($option, $value);
         }
     }
@@ -191,7 +188,6 @@ class App
     {
         foreach ($this->getOption('featureAliases') as $alias => $className) {
 
-            var_dump("ALIAS $alias => $className");
             $this->_featureFactory->registerAlias($alias, $className);
         }
     }
@@ -226,7 +222,6 @@ class App
 
             //This creates the actual instance via Tale\Factory
             $feature = $this->_featureFactory->createInstance($className, [$this]);
-            var_dump('CRTFT', $name);
 
             //We can pass a string as the options to use a config file
             if (is_string($options))
@@ -250,8 +245,6 @@ class App
 
         $classes = array_map('get_class', $features);
         $features = array_combine($classes, $features);
-
-        var_dump('FTS', $classes);
 
         //Now we can initialize the features
         //Since our deps are ordered now, we can just iterate

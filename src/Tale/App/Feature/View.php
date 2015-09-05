@@ -88,15 +88,11 @@ class View extends FeatureBase
                 });
 
             }
-
-            var_dump('THEMES LOADED');
         });
 
         $app->bind('afterRun', function () {
 
             unset($this->_themeManager);
-
-            var_dump('THEMES UNLOADED');
         });
     }
 

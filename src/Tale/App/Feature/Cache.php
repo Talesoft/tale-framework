@@ -34,15 +34,11 @@ class Cache extends FeatureBase
 
             $config = $this->getConfig();
             $this->_manager = new CacheManager($config->getItems());
-
-            var_dump('CACHE LOADED');
         });
 
         $app->bind('afterRun', function () {
 
             unset($this->_manager);
-
-            var_dump('CACHE UNLOADED');
         });
     }
 

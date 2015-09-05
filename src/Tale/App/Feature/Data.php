@@ -53,8 +53,6 @@ class Data extends FeatureBase
 
                     return $this->_sources[$name];
                 });
-
-            var_dump('DATA SOURCES LOADED');
         });
 
         $app->bind('afterRun', function () {
@@ -62,8 +60,6 @@ class Data extends FeatureBase
             foreach ($this->_sources as $source)
                 if ($source->isOpen())
                     $source->close();
-
-            var_dump('DATA SOURCES UNLOADED');
         });
     }
 

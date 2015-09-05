@@ -29,15 +29,11 @@ class Library extends FeatureBase
                 $this->getOption('pattern')
             );
             $this->_loader->register();
-
-            var_dump('LIBRARY LOADED');
         });
 
         $app->bind('afterRun', function () {
 
             $this->_loader->unregister();
-
-            var_dump('LIBRARY UNLOADED');
         });
     }
 

@@ -137,8 +137,6 @@ class Manager
 
                     $inputPath = dirname($path).'/'.basename($path, ".$ext").'.'.$sourceExt;
 
-                    var_dump("CONV $inputPath");
-
                     if ($fullInputPath = $this->resolve($type, $inputPath)) {
 
                         $converter = new $className($this, [

@@ -73,8 +73,6 @@ class Controller extends FeatureBase
 
                 return $this->dispatch($request);
             });
-
-            var_dump('CONTROLLERS LOADED');
         });
 
         $app->bind('afterRun', function () {
@@ -87,8 +85,6 @@ class Controller extends FeatureBase
             unset($this->_dispatcher);
 
             unset($this->_instances);
-
-            var_dump('CONTROLLERS UNLOADED');
         });
     }
 
@@ -104,7 +100,6 @@ class Controller extends FeatureBase
                 $this->getOption('loadPattern')
             );
             $this->_loader->register();
-            var_dump($this->_loader);
         }
     }
 
@@ -149,7 +144,6 @@ class Controller extends FeatureBase
 
         if (!in_array($controller, $this->_instances)) {
 
-            var_dump('GCI', $controller);
             $this->_instances[$controller] = $this->_dispatcher->createInstance($controller);
 
             //Now we append our args and helpers on our controller
@@ -200,8 +194,6 @@ class Controller extends FeatureBase
         $format = $request->getFormat();
         $args = $request->getArgs();
 
-        var_dump('CDP', $request);
-
         $response = null;
         try {
 
@@ -215,7 +207,6 @@ class Controller extends FeatureBase
             //We need our request on the controller to work with it
 
             $controllerInstance->setArg('dispatchRequest', $request);
-            var_dump($controllerInstance);
 
             if ($controllerInstance->emit('beforeInit')) {
 

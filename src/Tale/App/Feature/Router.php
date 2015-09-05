@@ -58,8 +58,6 @@ class Router extends FeatureBase
             }
 
             $this->_router = new AppRouter($routes);
-
-            var_dump('ROUTER LOADED');
         });
 
         $app->bind('run', function () use($app) {
@@ -71,21 +69,14 @@ class Router extends FeatureBase
                 else {
 
                     $response = $this->routeHttpServerRequest();
-
-                    var_dump('RESP', $response);
-
                     $response->apply();
                 }
             }
-
-            var_dump('ROUTER RAN');
         });
 
         $app->bind('afterRun', function () {
 
             unset($this->_router);
-
-            var_dump('ROUTER UNLOADED');
         });
     }
 
@@ -135,9 +126,7 @@ class Router extends FeatureBase
             $this->controller->setArg('webResponse', $response);
         }
 
-        var_dump("ROUTE $path");
         $result = $this->_router->route($path);
-        var_dump("RR", $result);
 
         if ($result) {
 
