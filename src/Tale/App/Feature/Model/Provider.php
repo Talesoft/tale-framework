@@ -47,8 +47,7 @@ class Provider
         if (!isset($this->_gateways[$tableName])) {
 
             $table = $this->_database->{$tableName};
-            $modelClassName = $this->hasModelClass($tableName) ? $this->getModelClassName($tableName) : 'Tale\\Data\\Row';
-            $gateway = new Gateway($table, $this->getModelClassName($modelClassName));
+            $gateway = new Gateway($this, $table);
 
             $this->_gateways[$tableName] = $gateway;
         }

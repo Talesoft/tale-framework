@@ -73,6 +73,19 @@ class Controller extends FeatureBase
 
                 return $this->dispatch($request);
             });
+
+            $this->registerHelper('dispatchError', function ($controller, $action, $format = null, array $args = null) {
+
+                if (isset($controller->dispatchRequest) && !$format)
+                    $format = $controller->dispatchRequest->getFormat();
+
+                if (!$format)
+                    throw new \Exception(
+                        "Failed to dispatch error: No format given"
+                    );
+
+                return $this->dispatchError($action, $format, $args);
+            });
         });
 
         $app->bind('afterRun', function () {

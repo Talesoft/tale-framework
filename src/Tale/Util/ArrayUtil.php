@@ -52,7 +52,16 @@ class ArrayUtil extends Util
         if (!$source)
             $source = &$array;
 
+        $newKeys = [];
         foreach ($array as $key => &$val) {
+
+            if (is_string($key)) {
+
+                $newKey = StringUtil::interpolate($key, $source, $defaultValue, $delimeter);
+
+                if ($key !== $newKey)
+                    $newKeys[$key] = $newKey;
+            }
 
             if (is_array($val))
                 self::interpolateMutable($val, $source, $defaultValue, $delimeter);
@@ -60,6 +69,12 @@ class ArrayUtil extends Util
 
                 $array[$key] = StringUtil::interpolate($val, $source, $defaultValue, $delimeter);
             }
+        }
+
+        foreach ($newKeys as $key => $newKey) {
+
+            $array[$newKey] = $array[$key];
+            unset($array[$key]);
         }
 
         return $array;

@@ -39,6 +39,16 @@ class Server extends Response
 	public function applyHeaders()
 	{
 
+		$body = $this->getBody();
+		if ($body->hasContent()) {
+
+			if (!$this->hasHeader('content-type'))
+				header('Content-Type: '.$body->getContentType().'; encoding='.$body->getContentEncoding());
+
+			if (!$this->hasHeader('content-length'))
+				header('Content-Length: '.$body->getContentLength());
+		}
+
 		$headers = $this->getHeaderLines();
 		foreach ($headers as $line)
 			header($line);
@@ -50,14 +60,7 @@ class Server extends Response
 	{
 
 		$body = $this->getBody();
-
 		if ($body->hasContent()) {
-
-			if (!$this->hasHeader('content-type'))
-				$parts[] = 'Content-Type: '.$body->getContentType().'; encoding='.$body->getContentEncoding();
-
-			if (!$this->hasHeader('content-length'))
-				header('Content-Length: '.$body->getContentLength());
 
 			echo $body->getContent();
 		}
@@ -69,7 +72,11 @@ class Server extends Response
 	{
 
 		if (function_exists('headers_sent') && headers_sent())
-			return $this;
+			throw new \RuntimeException(
+				"Failed to apply response: The headers have already "
+				."been sent out. You made some kind of output "
+				."before apply() has been called on the HTTP response"
+			);
 
 		$this->applyStatusCode();
 		$this->applyHeaders();

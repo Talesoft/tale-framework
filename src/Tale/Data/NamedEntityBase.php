@@ -9,6 +9,7 @@ abstract class NamedEntityBase extends EntityBase
 
     public function __construct($name)
     {
+
         parent::__construct();
 
         $this->_name = $name;

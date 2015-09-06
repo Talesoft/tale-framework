@@ -2,25 +2,23 @@
 
 namespace Tale\Data;
 
+use Tale\Data\Entity\Collection;
 use Tale\StringUtil;
 
 class Table extends NamedEntityBase
 {
 
-    const DEFAULT_ROW_CLASS_NAME = 'Tale\\Data\\Row';
-
     private $_database;
     private $_rowClassName;
+    private $_columns;
 
-    public function __construct(Database $database, $name, $load = false)
+    public function __construct(Database $database, $name, $rowClassName = null)
     {
         parent::__construct($name);
 
         $this->_database = $database;
-        $this->_rowClassName = self::DEFAULT_ROW_CLASS_NAME;
-
-        if ($load)
-            $this->load();
+        $this->_rowClassName = $rowClassName ? $rowClassName : 'Tale\\Data\\Row';
+        $this->_columns = [];
     }
 
     public function getDatabase()
@@ -60,7 +58,7 @@ class Table extends NamedEntityBase
 
         $this->getSource()->loadTable($this);
 
-        return $this->sync();
+        return parent::load();
     }
 
     public function save()
@@ -68,15 +66,21 @@ class Table extends NamedEntityBase
 
         $this->getSource()->saveTable($this);
 
-        return $this->sync();
+        return parent::save();
     }
 
-    public function create(array $columns = null)
+    public function create()
     {
 
-        $this->getSource()->createTable($this, $columns);
+        if (empty($this->_columns))
+            throw new \Exception(
+                "Failed to create table: "
+                ."No columns given"
+            );
 
-        return $this->sync();
+        $this->getSource()->createTable($this, $this->_columns);
+
+        return parent::create();
     }
 
     public function remove()
@@ -84,37 +88,57 @@ class Table extends NamedEntityBase
 
         $this->getSource()->removeTable($this);
 
-        return $this->unsync();
+        return parent::remove();
     }
 
-    public function getColumns($load = false)
+    public function getColumns()
     {
 
-        foreach ($this->getSource()->getColumnNames($this) as $name)
-            yield $name => $this->getColumn($name, $load);
+        $source = $this->getSource();
+        $database = $this->getDatabase();
+        $columnNames = $source->fetchCached(
+            "databases.$database.tables.$this.column-names",
+            function () use($source) {
+
+                return iterator_to_array($source->getColumnNames($this));
+        }, $source->getOption('lifeTime'));
+
+        foreach ($columnNames as $name)
+            if (!isset($this->_columns[$name]))
+                $this->_columns[$name] = new Column($this, $name);
+
+        return new Entity\Collection($this->_columns);
     }
 
-    public function getColumnArray($load = false)
+    public function setColumn($name, $typeString = null)
     {
 
-        return iterator_to_array($this->getColumns($load));
+        $this->_columns[$name] = new Column($this, $name, $typeString);
+
+        return $this;
     }
 
-    public function getColumn($name, $load = false)
+    public function getColumn($name, $typeString = null)
     {
 
-        $className = $this->getSource()->getConfig()->columnClassName;
+        if( !isset($this->_columns[$name]))
+            $this->_columns[$name] = new Column($this, $name, $typeString);
 
-        if (is_string($load))
-            return new $className($this, $name, false, $load);
-        else
-            return new $className($this, $name, $load);
+        return $this->_columns[$name];
+    }
+
+    public function removeColumn($name)
+    {
+
+        unset($this->_columns[$name]);
+
+        return $this;
     }
 
     public function getPrimaryColumn()
     {
 
-        foreach ($this->getColumns(true) as $col)
+        foreach ($this->getColumns()->loadAll() as $col)
             if ($col->isPrimary())
                 return $col;
 
@@ -138,7 +162,7 @@ class Table extends NamedEntityBase
     public function getReferenceColumns()
     {
 
-        foreach ($this->getColumns(true) as $col)
+        foreach ($this->getColumns()->loadAll() as $col)
             if ($col->getReference()) {
 
                 $name = $col->getName();
@@ -149,8 +173,8 @@ class Table extends NamedEntityBase
     public function getReferencingColumns()
     {
 
-        foreach ($this->getDatabase()->getTables(true) as $table)
-            foreach ($table->getColumns(true) as $col) {
+        foreach ($this->getDatabase()->getTables() as $table)
+            foreach ($table->getColumns()->loadAll() as $col) {
 
                 $ref = $col->getReference();
 

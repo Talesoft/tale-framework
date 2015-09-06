@@ -37,12 +37,16 @@ abstract class AdapterBase extends DataAdapterBase
             PDO::ATTR_STATEMENT_CLASS => [__NAMESPACE__.'\\Statement', [$this]],
             PDO::ATTR_CASE            => PDO::CASE_NATURAL
         ]);
+
+        return $this;
     }
 
     public function close()
     {
 
         $this->_handle = null;
+
+        return $this;
     }
 
     public function isOpen()
@@ -53,6 +57,9 @@ abstract class AdapterBase extends DataAdapterBase
 
     public function getHandle()
     {
+
+        if (!$this->isOpen())
+            $this->open();
 
         return $this->_handle;
     }

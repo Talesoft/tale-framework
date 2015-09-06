@@ -16,19 +16,18 @@ class Database extends NamedEntityBase
      */
 	private $_source;
 
+	private $_tables;
+
 	/**
 	 * @param \Tale\Data\Source $source
 	 * @param                   $name
-	 * @param bool|false        $load
      */
-	public function __construct(Source $source, $name, $load = false)
+	public function __construct(Source $source, $name)
 	{
 		parent::__construct($name);
 
 		$this->_source = $source;
-
-		if ($load)
-			$this->load();
+		$this->_tables = [];
 	}
 
 	/**
@@ -57,7 +56,7 @@ class Database extends NamedEntityBase
 
 		$this->getSource()->loadDatabase($this);
 
-		return $this->sync();
+		return parent::load();
 	}
 
 	/**
@@ -68,7 +67,7 @@ class Database extends NamedEntityBase
 
 		$this->getSource()->saveDatabase($this);
 
-		return $this->sync();
+		return parent::save();
 	}
 
 	/**
@@ -81,7 +80,7 @@ class Database extends NamedEntityBase
 
 		$this->getSource()->createDatabase($this);
 
-		return $this->sync();
+		return parent::create();
 	}
 
 	/**
@@ -92,45 +91,42 @@ class Database extends NamedEntityBase
 
 		$this->getSource()->removeDatabase($this);
 
-		return $this->unsync();
+		return parent::remove();
 	}
 
 	/**
-	 * @param bool|false $load
-	 *
 	 * @return \Generator
      */
-    public function getTables($load = false)
+    public function getTables()
 	{
 
-		foreach ($this->getSource()->getTableNames($this) as $name)
-			yield $name => $this->getTable($name, $load);
-	}
+        $source = $this->getSource();
+        $tableNames = $source->fetchCached(
+            "databases.$this.table-names",
+            function() use($source) {
 
-	/**
-	 * @param bool|false $load
-	 *
-	 * @return array
-     */
-    public function getTableArray($load = false)
-	{
+            return iterator_to_array($source->getTableNames($this));
+        }, $source->getOption('lifeTime'));
 
-		return iterator_to_array($this->getTables($load));
+		foreach ($tableNames as $name)
+            if (!isset($this->_tables[$name]))
+                $this->_tables[$name] = new Table($this, $name);
+
+        return new Entity\Collection($this->_tables);
 	}
 
 	/**
 	 * @param            $name
-	 * @param bool|false $load
-	 *
+     *
 	 * @return \Tale\Data\Table
      */
-    public function getTable($name, $load = false)
+    public function getTable($name)
 	{
 
-		$config = $this->getSource()->getConfig();
-		$className = $config->tableClassName;
+		if (!isset($this->_tables[$name]))
+            $this->_tables[$name] = new Table($this, $name);
 
-		return new $className($this, $name, $load);
+        return $this->_tables[$name];
 	}
 
 	/**

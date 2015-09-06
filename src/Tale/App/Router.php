@@ -46,35 +46,31 @@ class Router
 	protected function getRegExFromRoute($route)
 	{
 
-		return '/^'.preg_replace_callback('#(.)?:([a-z\_]\w*)(\?)?#i', function ($m) {
+		return '/^'.str_replace('/', '\\/', preg_replace_callback('#(.)?:([a-z\_]\w*)(\?)?#i', function ($m) {
 
 			$key = $m[2];
 			$initiator = '';
 			$optional = '';
-			$dot = '.';
 
 			if (!empty($m[1])) {
 
-				$initiator = '(?<'.$key.'Initiator>'.preg_quote($m[1], '/').')';
-
-				if ($m[1] === $dot)
-					$dot = '';
+				$initiator = '(?<'.$key.'Initiator>'.preg_quote($m[1]).')';
 			}
 
 			if (!empty($m[3]))
 				$optional = '?';
 
+			return '(?:'.$initiator.'(?<'.$key.'>[a-z0-9\_\-]*?))'.$optional;
 
-			return '(?:'.$initiator.'(?<'.$key.'>[a-z0-9\_\-'.$dot.']*?))'.$optional;
-
-		}, $route).'$/i';
+		}, $route)).'$/i';
 	}
 
 	protected function match($route, $string)
 	{
 
 		$matches = [];
-		$isMatch = preg_match($this->getRegExFromRoute($route), $string, $matches);
+		$regEx = $this->getRegExFromRoute($route);
+		$isMatch = preg_match($regEx, $string, $matches);
 
 		if (!$isMatch)
 			return false;

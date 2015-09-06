@@ -37,24 +37,31 @@ class MySql extends AdapterBase
 
 	public function __construct(array $options = null)
 	{
+
+		$this->appendOptions([
+			'driver'      => 'mysql',
+			'user' => 'root',
+			'password' => '',
+			'data' => [
+				'host' => 'localhost'
+			],
+			'inflections' => [
+				'databases'     => 'Tale\\Util\\StringUtil::tableize',
+				'tables'        => 'Tale\\Util\\StringUtil::tableize',
+				'columns'       => 'Tale\\Util\\StringUtil::tableize',
+				'inputColumns'  => 'Tale\\Util\\StringUtil::tableize',
+				'outputColumns' => 'Tale\\Util\\StringUtil::variablize'
+			]
+		], true);
+
 		parent::__construct($options);
 
 		$this->prependOptions([
-			'driver'      => 'mysql',
 			'data'        => [
 				'encoding' => 'utf8'
 			],
-			'user'        => 'root',
-			'password'    => '',
 			'collation'   => 'utf8_general_ci',
-			'engine'      => 'InnoDB',
-			'inflections' => [
-				'databases'     => 'Tale\\StringUtil::tableize',
-				'tables'        => 'Tale\\StringUtil::tableize',
-				'columns'       => 'Tale\\StringUtil::tableize',
-				'inputColumns'  => 'Tale\\StringUtil::tableize',
-				'outputColumns' => 'Tale\\StringUtil::variablize'
-			]
+			'engine'      => 'InnoDB'
 		], true);
 
 		$this->_preparedQueries = [];
@@ -203,26 +210,17 @@ class MySql extends AdapterBase
 	public function loadDatabase(Database $database)
 	{
 
-		if (!$database->exists())
-			throw new Exception("Failed to load database $database: Database does not exist. Use exists() and create() to solve this.");
-
 		return $this;
 	}
 
 	public function saveDatabase(Database $database)
 	{
 
-		if (!$database->exists())
-			throw new Exception("Failed to save database $database: Database does not exist. Use exists() and create() to solve this.");
-
 		return $this;
 	}
 
 	public function createDatabase(Database $database)
 	{
-
-		if ($database->exists())
-			throw new Exception("Failed to create database $database: Database already exists. Use exists() to solve this.");
 
 		$this->query('CREATE DATABASE '.$this->quoteName($database));
 
@@ -231,9 +229,6 @@ class MySql extends AdapterBase
 
 	public function removeDatabase(Database $database)
 	{
-
-		if (!$database->exists())
-			throw new Exception("Failed to remove database $database: Database doesnt exist. Use exists() to solve this.");
 
 		$this->query('DROP DATABASE '.$this->quoteName($database));
 
@@ -264,17 +259,11 @@ class MySql extends AdapterBase
 	public function loadTable(Table $table)
 	{
 
-		if (!$table->exists())
-			throw new Exception("Failed to load table $table: Table does not exist. Use exists() and create() to solve this.");
-
 		return $this;
 	}
 
 	public function saveTable(Table $table)
 	{
-
-		if (!$table->exists())
-			throw new Exception("Failed to save table $table: Table does not exist. Use exists() and create() to solve this.");
 
 		return $this;
 	}
@@ -282,8 +271,8 @@ class MySql extends AdapterBase
 	public function createTable(Table $table, array $columns)
 	{
 
-		if ($table->exists())
-			throw new Exception("Failed to create table $table: Table does already exist. Use exists() to solve this.");
+		if (!count($columns))
+			throw new Exception("Failed to create table $table: No columns given");
 
 		$cols = [];
 		$extras = [];
@@ -325,13 +314,10 @@ class MySql extends AdapterBase
 	public function removeTable(Table $table)
 	{
 
-		if (!$table->exists())
-			throw new Exception("Failed to remove table $table: Table does not exist. Use exists() to solve this.");
-
 		/* It's important that we drop all CONSTRAINTs first, so we iterate the columns and save them without a reference (triggers saveColumn()) */
 		/* We also need to drop all CONSTRAINTs, that reference THIS table. This will take a lot of performance right now */
 		//TODO: OPTIMIZE PERFORMANCE!!!
-		foreach ($table->getColumns(true) as $col) {
+		foreach ($table->getColumns()->loadAll() as $col) {
 			$this->dropConstraint($col);
 			$this->dropForeignConstraints($col);
 		}
@@ -448,7 +434,7 @@ class MySql extends AdapterBase
 
 		$table = $column->getTable();
 		foreach ($table->getDatabase()->getTables() as $tbl)
-			foreach ($tbl->getColumns(true) as $col) {
+			foreach ($tbl->getColumns()->loadAll() as $col) {
 
 				$ref = $col->getReference();
 				if ($ref && $ref->equals($column))
@@ -478,10 +464,6 @@ class MySql extends AdapterBase
 	public function loadColumn(Column $column)
 	{
 
-		if (!$column->exists())
-			throw new Exception("Failed to load column $column: Column does not exist. Use exists() and create() to solve this.");
-
-		//TODO: Maybe it would be better to move this isSynced()-stuff to Database, Table, Column and Row
 		if ($column->isSynced())
 			return $this;
 
@@ -576,13 +558,10 @@ class MySql extends AdapterBase
 	public function saveColumn(Column $column)
 	{
 
-		if (!$column->exists())
-			throw new Exception("Failed to save column $column: Column doesnt exist. Use exists() to solve this.");
-
 		if ($column->isSynced())
 			return $this;
 
-		$syncedCol = $column->getTable()->getColumn($column->getName(), true);
+		$syncedCol = $column->getTable()->getColumn($column->getName())->load();
 
 		if ($column->equals($syncedCol, false))
 			return $this;
@@ -635,8 +614,8 @@ class MySql extends AdapterBase
 	public function createColumn(Column $column)
 	{
 
-		if ($column->exists())
-			throw new Exception("Failed to create column $column: Column already exists. Use exists() to solve this.");
+		if ($column->isSynced(true))
+			return $this;
 
 		$sql = $this->getColumnSql($column);
 		$name = $this->quoteName($column->getDatabase(), $column->getTable());
@@ -657,9 +636,6 @@ class MySql extends AdapterBase
 
 	public function removeColumn(Column $column)
 	{
-
-		if (!$column->exists())
-			throw new Exception("Failed to remove column $column: Column doesnt exist. Use exists() to solve this.");
 
 		$name = $this->quoteName($column->getDatabase(), $column->getTable());
 
@@ -865,7 +841,7 @@ class MySql extends AdapterBase
 		return [$sql, $args];
 	}
 
-	protected function inflectRow(array $row)
+	protected function parseRow(array $row)
 	{
 
 		foreach ($row as $name => $value) {
@@ -878,13 +854,13 @@ class MySql extends AdapterBase
 	protected function processRow(Table $table, array $data, $as = null)
 	{
 
-		$inflectedRow = iterator_to_array($this->inflectRow($data));
+		$inflectedRow = iterator_to_array($this->parseRow($data));
 
 		if ($as === false)
 			return $inflectedRow;
 
 		if ($as === null)
-			$as = Table::DEFAULT_ROW_CLASS_NAME;
+			$as = 'Tale\\Data\\Row';
 
 		return new $as($table, $inflectedRow);
 	}

@@ -30,7 +30,7 @@ trait OptionalTrait
         return $this;
     }
 
-    protected function fetchCached($key, callable $action, $lifeTime = null)
+    public function fetchCached($key, callable $action, $lifeTime = null)
     {
 
         if (!isset($this->_cacheManager) || !$this->_cacheManager)

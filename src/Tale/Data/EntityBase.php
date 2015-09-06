@@ -2,37 +2,24 @@
 
 namespace Tale\Data;
 
+use Tale\Data\Entity\State;
+use Tale\Event;
+
 abstract class EntityBase
 {
+    use Event\OptionalTrait;
 
-    private $_synced;
+    private $_state;
 
     public function __construct()
     {
 
-        $this->_synced = false;
+        $this->init();
+        $this->_state = State::INITIALIZED;
     }
 
-    public function isSynced()
+    protected function init()
     {
-
-        return $this->_synced;
-    }
-
-    protected function sync()
-    {
-
-        $this->_synced = true;
-
-        return $this;
-    }
-
-    protected function unsync()
-    {
-
-        $this->_synced = false;
-
-        return $this;
     }
 
     public function loadIfExists()
@@ -53,11 +40,11 @@ abstract class EntityBase
         return $this;
     }
 
-    public function createIfNotExists(array $data = null)
+    public function createIfNotExists()
     {
 
         if (!$this->exists())
-            $this->create($data);
+            $this->create();
 
         return $this;
     }
@@ -73,11 +60,61 @@ abstract class EntityBase
 
     abstract public function exists();
 
-    abstract public function load();
+    public function load()
+    {
 
-    abstract public function save();
+        $this->_state = State::LOADED;
 
-    abstract public function create(array $data = null);
+        return $this;
+    }
 
-    abstract public function remove();
+    public function save()
+    {
+
+        $this->_state = State::SAVED;
+
+        return $this;
+    }
+
+    public function create()
+    {
+
+        $this->_state = State::CREATED;
+
+        return $this;
+    }
+
+    public function remove()
+    {
+
+        $this->_state = State::REMOVED;
+
+        return $this;
+    }
+
+    public function registerChange()
+    {
+
+        $this->_state = State::CHANGED;
+
+        return $this;
+    }
+
+    public function isSynced($allowRecreation = false)
+    {
+
+        if ($this->_state === State::CHANGED)
+            return false;
+
+        $syncedStates = [
+            State::CREATED,
+            State::SAVED,
+            State::LOADED
+        ];
+
+        if ($allowRecreation)
+            $syncedStates[] = State::REMOVED;
+
+        return in_array($this->_state, $syncedStates);
+    }
 }

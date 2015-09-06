@@ -115,8 +115,19 @@ class Writer {
     protected function writeAttributes( array $attributes ) {
 
         $str = '';
-        foreach( $attributes as $key => $val )
+        foreach( $attributes as $key => $val ) {
+
+            if ($val === null || $val === false)
+                continue;
+
+            if ($val === true) {
+
+                $str .= " $key";
+                continue;
+            }
+
             $str .= " $key=\"$val\"";
+        }
 
         return $str;
     }

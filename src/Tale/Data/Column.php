@@ -30,15 +30,12 @@ class Column extends NamedEntityBase
     private $_defaultValue;
     private $_reference;
 
-    public function __construct(Table $table, $name, $load = false, $typeString = null)
+    public function __construct(Table $table, $name, $typeString = null)
     {
         parent::__construct($name);
 
         $this->_table = $table;
         $this->clear();
-
-        if ($load)
-            $this->load();
 
         if ($typeString)
             $this->parse($typeString);
@@ -97,7 +94,7 @@ class Column extends NamedEntityBase
 
         $this->_type = $type;
 
-        return $this->unsync();
+        return $this->registerChange();
     }
 
     public function getMaxLength()
@@ -114,7 +111,7 @@ class Column extends NamedEntityBase
 
         $this->_maxLength = is_null($maxLength) ? null : intval($maxLength);
 
-        return $this->unsync();
+        return $this->registerChange();
     }
 
     public function getAllowedValues()
@@ -128,7 +125,7 @@ class Column extends NamedEntityBase
 
         $this->_allowedValues = $allowedValues;
 
-        return $this->unsync();
+        return $this->registerChange();
     }
 
     public function isAutoIncreased()
@@ -142,7 +139,7 @@ class Column extends NamedEntityBase
 
         $this->_autoIncreased = true;
 
-        return $this->unsync();
+        return $this->registerChange();
     }
 
     public function dontAutoIncrease()
@@ -150,7 +147,7 @@ class Column extends NamedEntityBase
 
         $this->_autoIncreased = false;
 
-        return $this->unsync();
+        return $this->registerChange();
     }
 
     public function isOptional()
@@ -164,7 +161,7 @@ class Column extends NamedEntityBase
 
         $this->_optional = true;
 
-        return $this->unsync();
+        return $this->registerChange();
     }
 
     public function makeRequired()
@@ -172,7 +169,7 @@ class Column extends NamedEntityBase
 
         $this->_optional = false;
 
-        return $this->unsync();
+        return $this->registerChange();
     }
 
     public function getKeyType()
@@ -186,7 +183,7 @@ class Column extends NamedEntityBase
 
         $this->_keyType = $keyType;
 
-        return $this->unsync();
+        return $this->registerChange();
     }
 
     public function isPrimary()
@@ -200,7 +197,7 @@ class Column extends NamedEntityBase
 
         $this->_keyType = self::KEY_PRIMARY;
 
-        return $this->unsync();
+        return $this->registerChange();
     }
 
     public function isUnique()
@@ -214,7 +211,7 @@ class Column extends NamedEntityBase
 
         $this->_keyType = self::KEY_UNIQUE;
 
-        return $this->unsync();
+        return $this->registerChange();
     }
 
     public function isIndex()
@@ -228,7 +225,7 @@ class Column extends NamedEntityBase
 
         $this->_keyType = self::KEY_INDEX;
 
-        return $this->unsync();
+        return $this->registerChange();
     }
 
     public function getDefaultValue()
@@ -242,13 +239,13 @@ class Column extends NamedEntityBase
 
         $this->_defaultValue = $defaultValue;
 
-        return $this->unsync();
+        return $this->registerChange();
     }
 
     public function equals(Column $otherColumn, $namesOnly = true)
     {
 
-        if (($this->_table->getName() !== $otherColumn->getTable()->getName())
+        if (!$this->_table->equals($otherColumn->getTable())
             || ($this->getName() !== $otherColumn->getName())
         )
             return false;
@@ -343,6 +340,7 @@ class Column extends NamedEntityBase
                     break;
 
                 /* Custom Types! */
+                //TODO: Control this with an option in Tale\Data\Source
                 case 'id':
 
                     $this->parse('int(11) required primary autoIncrease');
@@ -419,7 +417,7 @@ class Column extends NamedEntityBase
         $this->clear();
         $this->getSource()->loadColumn($this);
 
-        return $this->sync();
+        return parent::load();
     }
 
     public function save()
@@ -427,15 +425,15 @@ class Column extends NamedEntityBase
 
         $this->getSource()->saveColumn($this);
 
-        return $this->sync();
+        return parent::save();
     }
 
-    public function create(array $data = null)
+    public function create()
     {
 
         $this->getSource()->createColumn($this);
 
-        return $this->sync();
+        return parent::create();
     }
 
     public function remove()
@@ -443,7 +441,7 @@ class Column extends NamedEntityBase
 
         $this->getSource()->removeColumn($this);
 
-        return $this->unsync();
+        return parent::remove();
     }
 
     public static function getTypes()

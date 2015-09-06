@@ -23,7 +23,7 @@ abstract class AdapterBase
                 'inputColumns'  => null,
                 'outputColumns' => null
             ]
-        ], true);
+        ]);
     }
 
     public function __destruct()

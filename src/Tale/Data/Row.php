@@ -12,7 +12,6 @@ class Row extends EntityBase
     private $_data;
 
     private $_table;
-    private $_synced;
     private $_indexColumn;
 
     public function __construct(Table $table, array $data = null)
@@ -21,7 +20,6 @@ class Row extends EntityBase
 
         $this->_data = $data ? $data : [];
         $this->_table = $table;
-        $this->_synced = false;
         $this->_indexColumn = null;
     }
 
@@ -51,7 +49,7 @@ class Row extends EntityBase
         if (!$pk || !isset($this->_data[$pk]))
             throw new Exception("Failed to check row existence: Primary column $pk has no value");
 
-        return $this->_table->selectOne([$pk => $this[$pk]]) ? true : false;
+        return $this->_table->count([$pk => $this[$pk]]) > 0;
     }
 
     public function load()
@@ -66,7 +64,7 @@ class Row extends EntityBase
             $pk => $this->_data[$pk]
         ])->selectOne(null, false);
 
-        return $this->sync();
+        return parent::load();
     }
 
     public function save()
@@ -86,7 +84,7 @@ class Row extends EntityBase
             $pk => $this->_data[$pk]
         ])->update($data);
 
-        return $this->sync();
+        return parent::save();
     }
 
     public function remove()
@@ -101,10 +99,10 @@ class Row extends EntityBase
             $pk => $this->_data[$pk]
         ])->remove();
 
-        return $this->unsync();
+        return parent::remove();
     }
 
-    public function create(array $data = null)
+    public function create()
     {
 
         $pk = $this->getTable()->getPrimaryKeyName(true);
@@ -113,7 +111,7 @@ class Row extends EntityBase
         $id = $this->_table->insert($this->_data);
         $this->_data[$pk] = $id;
 
-        return $this->sync();
+        return parent::create();
     }
 
     public function getOneQuery(Table $table, $columnName = null)

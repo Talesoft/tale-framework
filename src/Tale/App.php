@@ -63,6 +63,7 @@ class App
             'model'      => 'Tale\\App\\Feature\\Model',
             'view'       => 'Tale\\App\\Feature\\View',
             'router'     => 'Tale\\App\\Feature\\Router',
+            'form'       => 'Tale\\App\\Feature\\Form',
             'logger'     => 'Tale\\App\\Feature\\Logger'
         ]);
 

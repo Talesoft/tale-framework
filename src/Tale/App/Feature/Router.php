@@ -10,6 +10,7 @@ use Tale\Net\Mime\Type;
 use Tale\App\Router as AppRouter;
 use Tale\Net\Http\Request\Server as ServerRequest;
 use Tale\App\Feature\Controller\Request;
+use Tale\Util\StringUtil;
 
 class Router extends FeatureBase
 {
@@ -47,14 +48,67 @@ class Router extends FeatureBase
                 if (is_array($callback) && is_string($callback[0])) {
 
                     $target = $callback[0];
+                    if ($target[0] !== '@')
+                        break;
+
+                    $handler = $callback[1];
+                    $target = substr($target, 1);
                     switch ($target) {
-                        case '@router':
+                        case 'router':
 
                             $routes[$route][0] = $this;
                             break;
-                        //TODO: Come on, there can be featuritis here
+                        default:
+
+                            $routes[$route] = function (array $routeData) use($target, $handler) {
+
+                                $routeData = call_user_func([$target, $handler], $routeData);
+
+                                return $this->dispatchController($routeData);
+                            };
                     }
                 }
+            }
+
+            if (isset($this->controller)) {
+
+                $controller = $this->controller;
+                $controller->registerHelper('getUrl', function ($controller, $path, array $args = null, $preserveQuery = false) {
+
+                    if (isset($controller->dispatchRequest)) {
+
+                        $req = $controller->dispatchRequest;
+                        $path = StringUtil::interpolate($path, [
+                            'controller' => $req->getController(),
+                            'action' => $req->getAction(),
+                            'args' => $req->getArgs(),
+                            'format' => $req->getFormat()
+                        ]);
+                    }
+
+                    $url = $path;
+                    $baseUrl = $this->getOption('baseUrl');
+                    if ($baseUrl) {
+
+                        $url = rtrim($baseUrl, '/').'/'.ltrim($path, '/');
+                    }
+
+                    $query = [];
+                    if ($args)
+                        $query = $args;
+
+                    if ($preserveQuery && isset($controller->webRequest)) {
+
+                        $query = array_replace_recursive($controller->webRequest->getUrlArgs(), $query);
+                    }
+
+                    if (!empty($query)) {
+
+                        $url .= '?'.http_build_query($query);
+                    }
+
+                    return $url;
+                });
             }
 
             $this->_router = new AppRouter($routes);
@@ -164,9 +218,9 @@ class Router extends FeatureBase
         }
 
         $response->setStatusCode(StatusCode::NOT_FOUND);
-        $body = new Body();
+        $body = $response->getBody();
+        $body->setContentType(Type::HTML);
         $body->setContent("$path not found");
-        $response->setBody($body);
 
         return $response;
     }
