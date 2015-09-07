@@ -1,30 +1,31 @@
 <?php
 namespace Tale\Jade;
 
-class Compiler {
+class Compiler
+{
     protected $xml;
     protected $parentIndents;
-    
-    protected $buffer = array();
+
+    protected $buffer = [];
     protected $prettyprint = false;
     protected $terse = false;
     protected $withinCase = false;
     protected $indents = 0;
-    
-    protected $doctypes = array(
-        '5' => '<!DOCTYPE html>',
-        'html' => '<!DOCTYPE html>',
-        'default' => '<!DOCTYPE html>',
-        'xml' => '<?xml version="1.0" encoding="utf-8" ?>',
+
+    protected $doctypes = [
+        '5'            => '<!DOCTYPE html>',
+        'html'         => '<!DOCTYPE html>',
+        'default'      => '<!DOCTYPE html>',
+        'xml'          => '<?xml version="1.0" encoding="utf-8" ?>',
         'transitional' => '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">',
-        'strict' => '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">',
-        'frameset' => '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Frameset//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd">',
-        '1.1' => '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">',
-        'basic' => '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML Basic 1.1//EN" "http://www.w3.org/TR/xhtml-basic/xhtml-basic11.dtd">',
-        'mobile' => '<!DOCTYPE html PUBLIC "-//WAPFORUM//DTD XHTML Mobile 1.2//EN" "http://www.openmobilealliance.org/tech/DTD/xhtml-mobile12.dtd">'
-    );
-    
-    protected $selfClosing = array(
+        'strict'       => '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">',
+        'frameset'     => '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Frameset//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd">',
+        '1.1'          => '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">',
+        'basic'        => '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML Basic 1.1//EN" "http://www.w3.org/TR/xhtml-basic/xhtml-basic11.dtd">',
+        'mobile'       => '<!DOCTYPE html PUBLIC "-//WAPFORUM//DTD XHTML Mobile 1.2//EN" "http://www.openmobilealliance.org/tech/DTD/xhtml-mobile12.dtd">'
+    ];
+
+    protected $selfClosing = [
         'meta',
         'img',
         'link',
@@ -35,8 +36,8 @@ class Compiler {
         'col',
         'br',
         'hr'
-    );
-    protected $phpKeywords = array(
+    ];
+    protected $phpKeywords = [
         'true',
         'false',
         'null',
@@ -57,8 +58,8 @@ class Compiler {
         'endforeach',
         'as',
         'unless'
-    );
-    protected $phpOpenBlock = array(
+    ];
+    protected $phpOpenBlock = [
         'switch',
         'if',
         'elseif',
@@ -68,89 +69,102 @@ class Compiler {
         'for',
         'foreach',
         'unless'
-    );
-    protected $phpCloseBlock = array(
+    ];
+    protected $phpCloseBlock = [
         'endswitch',
         'endif',
         'endwhile',
         'endfor',
         'endforeach'
-    );
-    
-    public function __construct( $prettyprint = false ) {
+    ];
+
+    public function __construct($prettyprint = false)
+    {
+
         $this->prettyprint = $prettyprint;
     }
-    
-    public function compile( $node ) {
-        $this->visit( $node );
-        
-        return implode( '', $this->buffer );
+
+    public function compile($node)
+    {
+
+        $this->visit($node);
+
+        return implode('', $this->buffer);
     }
-    
-    public function visit( Nodes\Node $node ) {
-        
+
+    public function visit(Nodes\Node $node)
+    {
+
         // TODO: set debugging info
-        $this->visitNode( $node );
-        
+        $this->visitNode($node);
+
         return $this->buffer;
     }
-    
-    protected function apply( $method, $arguments ) {
-        switch( count( $arguments ) ) {
+
+    protected function apply($method, $arguments)
+    {
+
+        switch (count($arguments)) {
             case 0:
                 return $this->{$method}();
-            break;
+                break;
             case 1:
-                return $this->{$method}( $arguments[0] );
-            break;
+                return $this->{$method}($arguments[0]);
+                break;
             case 2:
-                return $this->{$method}( $arguments[0], $arguments[1] );
-            break;
+                return $this->{$method}($arguments[0], $arguments[1]);
+                break;
             case 3:
-                return $this->{$method}( $arguments[0], $arguments[1], $arguments[2] );
-            break;
+                return $this->{$method}($arguments[0], $arguments[1], $arguments[2]);
+                break;
             case 4:
-                return $this->{$method}( $arguments[0], $arguments[1], $arguments[2], $arguments[3] );
-            break;
+                return $this->{$method}($arguments[0], $arguments[1], $arguments[2], $arguments[3]);
+                break;
             case 5:
-                return $this->{$method}( $arguments[0], $arguments[1], $arguments[2], $arguments[3], $arguments[4] );
-            break;
+                return $this->{$method}($arguments[0], $arguments[1], $arguments[2], $arguments[3], $arguments[4]);
+                break;
             default:
-                return call_user_func_array( array(
+                return call_user_func_array([
                     $this,
                     $method
-                ) , $arguments );
-            break;
+                ], $arguments);
+                break;
         }
     }
-    
-    protected function buffer( $line, $indent = null ) {
-        if(( $indent !== null && $indent == true ) ||( $indent === null && $this->prettyprint ) ) {
-            array_push( $this->buffer, $this->indent() . $line . $this->newline() );
-        } 
-        else {
-            array_push( $this->buffer, $line );
+
+    protected function buffer($line, $indent = null)
+    {
+
+        if (($indent !== null && $indent == true) || ($indent === null && $this->prettyprint)) {
+            array_push($this->buffer, $this->indent().$line.$this->newline());
+        } else {
+            array_push($this->buffer, $line);
         }
     }
-    
-    protected function indent() {
-        if( $this->prettyprint ) {
-            return str_repeat( '  ', $this->indents );
+
+    protected function indent()
+    {
+
+        if ($this->prettyprint) {
+            return str_repeat('  ', $this->indents);
         }
-        
+
         return '';
     }
-    
-    protected function newline() {
-        if( $this->prettyprint ) {
+
+    protected function newline()
+    {
+
+        if ($this->prettyprint) {
             return "\n";
         }
-        
+
         return '';
     }
-    
-    protected function isConstant( $str, $attr = false ) {
-        
+
+    protected function isConstant($str, $attr = false)
+    {
+
         //  This pattern matches against string constants, some php keywords, number constants and a empty string
         //
         //  the pattern without php escaping:
@@ -178,12 +192,12 @@ class Compiler {
         //          0-9             - number constants
         //          \b\b            - matches a empty string: useful for a empty array
         $const_regex = '[ \t]*(([\'"])(?:\\\\.|[^\'"\\\\])*\g{-1}|true|false|null|undefined|[0-9]+|\b\b)[ \t]*';
-        $str = trim( $str );
-        $ok = preg_match( "/^{$const_regex}$/", $str );
-        
+        $str = trim($str);
+        $ok = preg_match("/^{$const_regex}$/", $str);
+
         // test agains a array of constants
-        if( !$attr && !$ok &&( 0 === strpos( $str, 'array(' ) || 0 === strpos( $str, '[' ) ) ) {
-            
+        if (!$attr && !$ok && (0 === strpos($str, 'array(') || 0 === strpos($str, '['))) {
+
             // This pattern matches against array constants: useful for "data-" attributes (see test attrs-data.jade)
             //
             // simpler regex                - explanation
@@ -191,830 +205,840 @@ class Compiler {
             // arrray\(\)                   - matches against the old array construct
             // []                           - matches against the new/shorter array construct
             // (const=>)?const(,recursion)  - matches against the value list, values can be a constant or a new array built of constants
-            if( preg_match( "/array[ \t]*\((?R)\)|\\[(?R)\\]|({$const_regex}=>)?{$const_regex}(,(?R))?/", $str, $matches ) ) {
-                
+            if (preg_match("/array[ \t]*\((?R)\)|\\[(?R)\\]|({$const_regex}=>)?{$const_regex}(,(?R))?/", $str, $matches)) {
+
                 // cant use ^ and $ because the patter is recursive
-                if( strlen( $matches[0] ) == strlen( $str ) ) {
+                if (strlen($matches[0]) == strlen($str)) {
                     $ok = true;
                 }
             }
         }
-        
+
         return $ok;
     }
-    
-    public function handleCode( $input, $ns = '' ) {
-        
+
+    public function handleCode($input, $ns = '')
+    {
+
         // needs to be public because of the closure $handle_recursion
-        
-        $result = array();
-        
-        if( !is_string( $input ) ) {
-            throw new \Exception( 'Expecting a string of javascript, got: ' . gettype( $input ) );
+
+        $result = [];
+
+        if (!is_string($input)) {
+            throw new \Exception('Expecting a string of javascript, got: '.gettype($input));
         }
-        
-        if( strlen( $input ) == 0 ) {
-            throw new \Exception( 'Expecting a string of javascript, empty string received.' );
+
+        if (strlen($input) == 0) {
+            throw new \Exception('Expecting a string of javascript, empty string received.');
         }
-        
-        if( $input[0] == '"' && $input[strlen( $input ) - 1] == '"' ) {
-            return array(
+
+        if ($input[0] == '"' && $input[strlen($input) - 1] == '"') {
+            return [
                 $input
-            );
+            ];
         }
-        
-        preg_match_all( '/(?<![<>=!])=(?!>)|[\[\]{}(),;.]|(?!:):|->/',
-         // punctuation
-        $input, $separators, PREG_SET_ORDER | PREG_OFFSET_CAPTURE );
-        $_separators = array();
-        foreach( $separators as $sep ) {
-            array_push( $_separators, $sep[0] );
+
+        preg_match_all('/(?<![<>=!])=(?!>)|[\[\]{}(),;.]|(?!:):|->/',
+            // punctuation
+            $input, $separators, PREG_SET_ORDER | PREG_OFFSET_CAPTURE);
+        $_separators = [];
+        foreach ($separators as $sep) {
+            array_push($_separators, $sep[0]);
         }
         $separators = $_separators;
-        
-        if( count( $separators ) == 0 ) {
-            if( strchr( '0123456789-+("\'$', $input[0] ) === false ) {
-                $input = '$' . $input;
+
+        if (count($separators) == 0) {
+            if (strchr('0123456789-+("\'$', $input[0]) === false) {
+                $input = '$'.$input;
             }
-            
-            return array(
+
+            return [
                 $input
-            );
+            ];
         }
-        
+
         // add a pseudo separator for the end of the input
-        array_push( $separators, array(
+        array_push($separators, [
             null,
-            strlen( $input )
-        ) );
-        
-        if( $separators[0][1] == 0 ) {
-            throw new \Exception( 'Expecting a variable name got: ' . $input );
+            strlen($input)
+        ]);
+
+        if ($separators[0][1] == 0) {
+            throw new \Exception('Expecting a variable name got: '.$input);
         }
-        
+
         // do not add $ if it is not like a variable
-        $varname = substr( $input, 0, $separators[0][1] );
-        if( $separators[0][0] != '(' && strchr( '0123456789-+("\'$', $varname[0] ) === false ) {
-            $varname = '$' . $varname;
+        $varname = substr($input, 0, $separators[0][1]);
+        if ($separators[0][0] != '(' && strchr('0123456789-+("\'$', $varname[0]) === false) {
+            $varname = '$'.$varname;
         }
-        
-        $get_middle_string = function( $start, $end )use( $input ) {
-            $offset = $start[1] + strlen( $start[0] );
-            
-            return substr( $input, $offset, isset( $end ) ? $end[1] - $offset : strlen( $input ) );
+
+        $get_middle_string = function ($start, $end) use ($input) {
+
+            $offset = $start[1] + strlen($start[0]);
+
+            return substr($input, $offset, isset($end) ? $end[1] - $offset : strlen($input));
         };
-        
+
         $host = $this;
-        $handle_recursion = function( $arg, $ns = '' )use( $input, &$result, $host, $get_middle_string ) {
-            list( $start, $end ) = $arg;
-            $str = trim( $get_middle_string( $start, $end ) );
-            if( !strlen( $str ) )
-            return '';
-            
-            $_code = $host->handleCode( $str, $ns );
-            
-            if( count( $_code ) > 1 ) {
-                $result = array_merge( $result, array_slice( $_code, 0, -1 ) );
-                
-                return array_pop( $_code );
+        $handle_recursion = function ($arg, $ns = '') use ($input, &$result, $host, $get_middle_string) {
+
+            list($start, $end) = $arg;
+            $str = trim($get_middle_string($start, $end));
+            if (!strlen($str))
+                return '';
+
+            $_code = $host->handleCode($str, $ns);
+
+            if (count($_code) > 1) {
+                $result = array_merge($result, array_slice($_code, 0, -1));
+
+                return array_pop($_code);
             }
-            
+
             return $_code[0];
         };
-        
-        $handle_code_inbetween = function () use(&$separators, $ns, $handle_recursion ) {
-            $arguments = array();
+
+        $handle_code_inbetween = function () use (&$separators, $ns, $handle_recursion) {
+
+            $arguments = [];
             $count = 1;
-            
-            $start = current( $separators );
-            $end_pair = array(
+
+            $start = current($separators);
+            $end_pair = [
                 '[' => ']',
                 '{' => '}',
                 '(' => ')',
                 ',' => false
-            );
+            ];
             $open = $start[0];
-            if( !isset( $open ) )
-            return $arguments;
-            $close = $end_pair[ $start[0]];
-            
+            if (!isset($open))
+                return $arguments;
+            $close = $end_pair[$start[0]];
+
             do {
-                
+
                 // reset start
-                $start = current( $separators );
-                
+                $start = current($separators);
+
                 do {
-                    $curr = next( $separators );
-                    
-                    if( $curr[0] == $open )$count++;
-                    if( $curr[0] == $close )$count--;
-                }
-                while( $curr[0] != null && $count > 0 && $curr[0] != ',' );
-                
-                $end = current( $separators );
-                
-                if( $end != false && $start[1] != $end[1] ) {
-                    $tmp_ns = $ns * 10 + count( $arguments );
-                    $arg = $handle_recursion( array(
+                    $curr = next($separators);
+
+                    if ($curr[0] == $open) $count++;
+                    if ($curr[0] == $close) $count--;
+                } while ($curr[0] != null && $count > 0 && $curr[0] != ',');
+
+                $end = current($separators);
+
+                if ($end != false && $start[1] != $end[1]) {
+                    $tmp_ns = $ns * 10 + count($arguments);
+                    $arg = $handle_recursion([
                         $start,
                         $end
-                    ) , $tmp_ns );
-                    
-                    array_push( $arguments, $arg );
+                    ], $tmp_ns);
+
+                    array_push($arguments, $arg);
                 }
+            } while ($curr != null && $count > 0);
+
+            if ($close && $count) {
+                throw new \Exception('Missing closing: '.$close);
             }
-            while( $curr != null && $count > 0 );
-            
-            if( $close && $count ) {
-                throw new \Exception( 'Missing closing: ' . $close );
-            }
-            
-            if( $end !== false )next( $separators );
-            
+
+            if ($end !== false) next($separators);
+
             return $arguments;
         };
-        
-        $get_next = function( $i )use( $separators ) {
-            if( isset( $separators[ $i + 1] ) ) {
-                return $separators[ $i + 1];
+
+        $get_next = function ($i) use ($separators) {
+
+            if (isset($separators[$i + 1])) {
+                return $separators[$i + 1];
             }
         };
-        
+
         // using next() ourselves so that we can advance the array pointer inside inner loops
-        while( key( $separators ) !== null ) {
-            
+        while (key($separators) !== null) {
+
             // $sep[0] - the separator string due to PREG_SPLIT_OFFSET_CAPTURE flag
             // $sep[1] - the offset due to PREG_SPLIT_OFFSET_CAPTURE
-            $sep = current( $separators );
-            
-            if( $sep[0] == null )break;
-             // end of string
-            
-            $name = $get_middle_string( $sep, $get_next( key( $separators ) ) );
-            
+            $sep = current($separators);
+
+            if ($sep[0] == null) break;
+            // end of string
+
+            $name = $get_middle_string($sep, $get_next(key($separators)));
+
             static $_ns_counter = 0;
             $ns = $_ns_counter++;
-            
+
             $v = "\$__{$ns}";
-            switch( $sep[0] ) {
-                    
-                    // translate the javascript's obj.attr into php's obj->attr or obj['attr']
-                    
+            switch ($sep[0]) {
+
+                // translate the javascript's obj.attr into php's obj->attr or obj['attr']
+
                 case '.':
-                    
+
                     // TODO: Move isset(->)?->:[]; to a function
                     $accessor = "{$v}=isset({$varname}->{$name}) ? {$varname}->{$name} : {$varname}['{$name}']";
-                    array_push( $result, $accessor );
+                    array_push($result, $accessor);
                     $varname = $v;
-                break;
-                    
-                    // funcall
-                    
+                    break;
+
+                // funcall
+
                 case '(':
                     $arguments = $handle_code_inbetween();
-                    $call = $varname . '(' . implode( ', ', $arguments ) . ')';
-                    $cs = current( $separators );
-                    
+                    $call = $varname.'('.implode(', ', $arguments).')';
+                    $cs = current($separators);
+
                     //                    if ($call[0] !== '$') $call = '$' . $call;
-                    while( $cs &&( $cs[0] == '->' || $cs[0] == '(' || $cs[0] == ')' ) ) {
-                        $call.= $cs[0] . $get_middle_string( current( $separators ), $get_next( key( $separators ) ) );
-                        $cs = next( $separators );
+                    while ($cs && ($cs[0] == '->' || $cs[0] == '(' || $cs[0] == ')')) {
+                        $call .= $cs[0].$get_middle_string(current($separators), $get_next(key($separators)));
+                        $cs = next($separators);
                     }
                     $varname = $v;
-                    array_push( $result, "{$v}={$call}" );
-                break;
-                    
-                    // mixin arguments
-                    
+                    array_push($result, "{$v}={$call}");
+                    break;
+
+                // mixin arguments
+
                 case ',':
                     $arguments = $handle_code_inbetween();
-                    if( $arguments )$varname = $varname . ', ' . implode( ', ', $arguments );
-                    
+                    if ($arguments) $varname = $varname.', '.implode(', ', $arguments);
+
                     //array_push($result, $varname);
-                    
+
                     break;
-                    
-                    /*case '[':
-                    $arguments = $handle_code_inbetween();
-                    $varname = $varname . '[' . implode($arguments) . ']';
-                    
-                    break;*/
+
+                /*case '[':
+                $arguments = $handle_code_inbetween();
+                $varname = $varname . '[' . implode($arguments) . ']';
+
+                break;*/
                 case '=':
-                    if( preg_match( '/^[[:space:]]*$/', $name ) ) {
-                        next( $separators );
+                    if (preg_match('/^[[:space:]]*$/', $name)) {
+                        next($separators);
                         $arguments = $handle_code_inbetween();
-                        $varname = $varname . ' = ' . implode( $arguments );
-                    } 
-                    else {
-                        $varname = "{$varname} = " . $handle_recursion( array(
-                            $sep,
-                            end( $separators )
-                        ) );
+                        $varname = $varname.' = '.implode($arguments);
+                    } else {
+                        $varname = "{$varname} = ".$handle_recursion([
+                                $sep,
+                                end($separators)
+                            ]);
                     }
-                    
+
                     break;
                 default:
-                    if(( $name !== false && $name !== '' ) || $sep[0] != ')' )$varname = $varname . $sep[0] . $name;
+                    if (($name !== false && $name !== '') || $sep[0] != ')') $varname = $varname.$sep[0].$name;
                     break;
-                }
-                
-                next( $separators );
             }
-            array_push( $result, $varname );
-            
-            return $result;
-    }
-    
-    public function handleString( $input ) {
-        $result = array();
-        $results_string = array();
-        
-        $separators = preg_split( '/[+](?!\\()/',
-         // concatenation operator - only js
-        $input, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_OFFSET_CAPTURE | PREG_SPLIT_DELIM_CAPTURE );
-        
-        foreach( $separators as $i => $part ) {
-            
-            // $sep[0] - the separator string due to PREG_SPLIT_OFFSET_CAPTURE flag
-            // $sep[1] - the offset due to PREG_SPLIT_OFFSET_CAPTURE
-            
-            $sep = substr( $input, strlen( $part[0] ) + $part[1] + 1, isset( $separators[ $i + 1] ) ? $separators[ $i + 1][1] : strlen( $input ) );
-            
-            // handleCode() and the regex bellow dont like spaces
-            $part[0] = trim( $part[0] );
-            
-            if( preg_match( '/^(([\'"]).*?\2)(.*)$/', $part[0], $match ) ) {
-                if( mb_strlen( trim( $match[3] ) ) ) {
-                    throw new \Exception( 'Unexcpected value: ' . $match[3] );
-                }
-                array_push( $results_string, $match[1] );
-            } 
-            else {
-                $code = $this->handleCode( $part[0] );
-                
-                $result = array_merge( $result, array_slice( $code, 0, -1 ) );
-                array_push( $results_string, array_pop( $code ) );
-            }
+
+            next($separators);
         }
-        
-        array_push( $result, implode( ' . ', $results_string ) );
-        
+        array_push($result, $varname);
+
         return $result;
     }
-    
-    protected function createStatements() {
-        if( func_num_args() == 0 ) {
+
+    public function handleString($input)
+    {
+
+        $result = [];
+        $results_string = [];
+
+        $separators = preg_split('/[+](?!\\()/',
+            // concatenation operator - only js
+            $input, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_OFFSET_CAPTURE | PREG_SPLIT_DELIM_CAPTURE);
+
+        foreach ($separators as $i => $part) {
+
+            // $sep[0] - the separator string due to PREG_SPLIT_OFFSET_CAPTURE flag
+            // $sep[1] - the offset due to PREG_SPLIT_OFFSET_CAPTURE
+
+            $sep = substr($input, strlen($part[0]) + $part[1] + 1, isset($separators[$i + 1]) ? $separators[$i + 1][1] : strlen($input));
+
+            // handleCode() and the regex bellow dont like spaces
+            $part[0] = trim($part[0]);
+
+            if (preg_match('/^(([\'"]).*?\2)(.*)$/', $part[0], $match)) {
+                if (mb_strlen(trim($match[3]))) {
+                    throw new \Exception('Unexcpected value: '.$match[3]);
+                }
+                array_push($results_string, $match[1]);
+            } else {
+                $code = $this->handleCode($part[0]);
+
+                $result = array_merge($result, array_slice($code, 0, -1));
+                array_push($results_string, array_pop($code));
+            }
+        }
+
+        array_push($result, implode(' . ', $results_string));
+
+        return $result;
+    }
+
+    protected function createStatements()
+    {
+
+        if (func_num_args() == 0) {
             throw new Exception();
         }
-        
+
         $arguments = func_get_args();
-        $statements = array();
-        $variables = array();
-        
-        foreach( $arguments as $arg ) {
-            
+        $statements = [];
+        $variables = [];
+
+        foreach ($arguments as $arg) {
+
             // shortcut for constants
-            if( $this->isConstant( $arg ) ) {
-                if( $arg === 'undefined' )$arg = 'null';
-                array_push( $variables, $arg );
+            if ($this->isConstant($arg)) {
+                if ($arg === 'undefined') $arg = 'null';
+                array_push($variables, $arg);
                 continue;
             }
-            
+
             // if we have a php variable assume that the string is good php
-            if( preg_match( '/&?\${1,2}[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*/', $arg ) ) {
-                array_push( $variables, $arg );
+            if (preg_match('/&?\${1,2}[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*/', $arg)) {
+                array_push($variables, $arg);
                 continue;
             }
-            
-            if( preg_match( '/^([\'"]).*?\1/', $arg, $match ) ) {
-                $code = $this->handleString( trim( $arg ) );
-            } 
-            else {
-                
+
+            if (preg_match('/^([\'"]).*?\1/', $arg, $match)) {
+                $code = $this->handleString(trim($arg));
+            } else {
+
                 // TODO: move this to handleCode
-                $arg = preg_replace( '/\bvar\b/', '', $arg );
-                $code = $this->handleCode( trim( $arg ) );
+                $arg = preg_replace('/\bvar\b/', '', $arg);
+                $code = $this->handleCode(trim($arg));
             }
-            
-            $statements = array_merge( $statements, array_slice( $code, 0, -1 ) );
-            array_push( $variables, array_pop( $code ) );
+
+            $statements = array_merge($statements, array_slice($code, 0, -1));
+            array_push($variables, array_pop($code));
         }
-        
-        array_push( $statements, $variables );
-        
+
+        array_push($statements, $variables);
+
         return $statements;
     }
-    
-    protected function createPhpBlock( $code, $statements = null ) {
-        if( $statements == null ) {
-            return '<?php ' . $code . ' ?>';
+
+    protected function createPhpBlock($code, $statements = null)
+    {
+
+        if ($statements == null) {
+            return '<?php '.$code.' ?>';
         }
-        
-        $code_format = array_pop( $statements );
-        array_unshift( $code_format, $code );
-        
-        if( count( $statements ) == 0 ) {
-            $php_string = call_user_func_array( 'sprintf', $code_format );
-            
-            return '<?php ' . $php_string . ' ?>';
+
+        $code_format = array_pop($statements);
+        array_unshift($code_format, $code);
+
+        if (count($statements) == 0) {
+            $php_string = call_user_func_array('sprintf', $code_format);
+
+            return '<?php '.$php_string.' ?>';
         }
-        
+
         $stmt_string = '';
-        foreach( $statements as $stmt ) {
-            $stmt_string.= $this->newline() . $this->indent() . $stmt . ';';
+        foreach ($statements as $stmt) {
+            $stmt_string .= $this->newline().$this->indent().$stmt.';';
         }
-        
-        $stmt_string.= $this->newline() . $this->indent();
-        $stmt_string.= call_user_func_array( 'sprintf', $code_format );
-        
+
+        $stmt_string .= $this->newline().$this->indent();
+        $stmt_string .= call_user_func_array('sprintf', $code_format);
+
         $php_str = '<?php ';
-        $php_str.= $stmt_string;
-        $php_str.= $this->newline() . $this->indent() . ' ?>';
-        
+        $php_str .= $stmt_string;
+        $php_str .= $this->newline().$this->indent().' ?>';
+
         return $php_str;
     }
-    
-    protected function createCode( $code ) {
-        if( func_num_args() > 1 ) {
+
+    protected function createCode($code)
+    {
+
+        if (func_num_args() > 1) {
             $arguments = func_get_args();
-            array_shift( $arguments );
-             // remove $code
-            $statements = $this->apply( 'createStatements', $arguments );
-            
-            return $this->createPhpBlock( $code, $statements );
+            array_shift($arguments);
+            // remove $code
+            $statements = $this->apply('createStatements', $arguments);
+
+            return $this->createPhpBlock($code, $statements);
         }
-        
-        return $this->createPhpBlock( $code );
+
+        return $this->createPhpBlock($code);
     }
-    
-    protected function interpolate( $text ) {
-        $ok = preg_match_all( '/(\\\\)?([#!]){(.*?)}/', $text, $matches, PREG_SET_ORDER );
-        
-        if( !$ok ) {
+
+    protected function interpolate($text)
+    {
+
+        $ok = preg_match_all('/(\\\\)?([#!]){(.*?)}/', $text, $matches, PREG_SET_ORDER);
+
+        if (!$ok) {
             return $text;
         }
-        
+
         $i = 1;
-         // str_replace need a pass-by-ref
-        foreach( $matches as $m ) {
-            
+        // str_replace need a pass-by-ref
+        foreach ($matches as $m) {
+
             // \#{dont_do_interpolation}
-            if( mb_strlen( $m[1] ) == 0 ) {
-                if( $m[2] == '!' ) {
-                    $code_str = $this->createCode( 'echo %s', $m[3] );
-                } 
-                else {
-                    $code_str = $this->createCode( 'echo htmlspecialchars(%s)', $m[3] );
+            if (mb_strlen($m[1]) == 0) {
+                if ($m[2] == '!') {
+                    $code_str = $this->createCode('echo %s', $m[3]);
+                } else {
+                    $code_str = $this->createCode('echo htmlspecialchars(%s)', $m[3]);
                 }
-                $text = str_replace( $m[0], $code_str, $text, $i );
+                $text = str_replace($m[0], $code_str, $text, $i);
             }
         }
-        
-        return str_replace( '\\#{', '#{', $text );
+
+        return str_replace('\\#{', '#{', $text);
     }
-    
-    protected function visitNode( Nodes\Node $node ) {
-        $fqn = get_class( $node );
-        $parts = explode( '\\', $fqn );
-        $name = $parts[count( $parts ) - 1];
-        $method = 'visit' . ucfirst( strtolower( $name ) );
-        
-        return $this->$method( $node );
+
+    protected function visitNode(Nodes\Node $node)
+    {
+
+        $fqn = get_class($node);
+        $parts = explode('\\', $fqn);
+        $name = $parts[count($parts) - 1];
+        $method = 'visit'.ucfirst(strtolower($name));
+
+        return $this->$method($node);
     }
-    
-    protected function visitCasenode( Nodes\CaseNode $node ) {
+
+    protected function visitCasenode(Nodes\CaseNode $node)
+    {
+
         $within = $this->withinCase;
         $this->withinCase = true;
-        
+
         // TODO: fix the case hack
         // php expects that the first case statement will be inside the same php block as the switch
-        $code_str = 'switch (%s) { ' . $this->newline() . $this->indent() . 'case "__phphackhere__": break;';
-        $code = $this->createCode( $code_str, $node->expr );
-        $this->buffer( $code );
-        
+        $code_str = 'switch (%s) { '.$this->newline().$this->indent().'case "__phphackhere__": break;';
+        $code = $this->createCode($code_str, $node->expr);
+        $this->buffer($code);
+
         $this->indents++;
-        $this->visit( $node->block );
+        $this->visit($node->block);
         $this->indents--;
-        
-        $code = $this->createCode( '}' );
-        $this->buffer( $code );
+
+        $code = $this->createCode('}');
+        $this->buffer($code);
         $this->withinCase = $within;
     }
-    
-    protected function visitWhen( Nodes\When $node ) {
-        if( 'default' == $node->expr ) {
-            $code = $this->createCode( 'default:' );
-            $this->buffer( $code );
-        } 
-        else {
-            $code = $this->createCode( 'case %s:', $node->expr );
-            $this->buffer( $code );
+
+    protected function visitWhen(Nodes\When $node)
+    {
+
+        if ('default' == $node->expr) {
+            $code = $this->createCode('default:');
+            $this->buffer($code);
+        } else {
+            $code = $this->createCode('case %s:', $node->expr);
+            $this->buffer($code);
         }
-        
-        $this->visit( $node->block );
-        
-        $code = $this->createCode( 'break;' );
-        $this->buffer( $code . $this->newline() );
+
+        $this->visit($node->block);
+
+        $code = $this->createCode('break;');
+        $this->buffer($code.$this->newline());
     }
-    
-    protected function visitLiteral( Nodes\Literal $node ) {
-        $str = preg_replace( '/\\n/', '\\\\n', $node->string );
-        $this->buffer( $str );
+
+    protected function visitLiteral(Nodes\Literal $node)
+    {
+
+        $str = preg_replace('/\\n/', '\\\\n', $node->string);
+        $this->buffer($str);
     }
-    
-    protected function visitBlock( Nodes\Block $block ) {
-        foreach( $block->nodes as $k => $n ) {
-            $this->visit( $n );
+
+    protected function visitBlock(Nodes\Block $block)
+    {
+
+        foreach ($block->nodes as $k => $n) {
+            $this->visit($n);
         }
     }
-    
-    protected function visitDoctype( Nodes\Doctype $doctype = null ) {
-        if( isset( $this->hasCompiledDoctype ) ) {
-            throw new \Exception( 'Revisiting doctype' );
+
+    protected function visitDoctype(Nodes\Doctype $doctype = null)
+    {
+
+        if (isset($this->hasCompiledDoctype)) {
+            throw new \Exception('Revisiting doctype');
         }
         $this->hasCompiledDoctype = true;
-        
-        if( empty( $doctype->value ) || $doctype == null || !isset( $doctype->value ) ) {
+
+        if (empty($doctype->value) || $doctype == null || !isset($doctype->value)) {
             $doc = 'default';
-        } 
-        else {
-            $doc = strtolower( $doctype->value );
+        } else {
+            $doc = strtolower($doctype->value);
         }
-        
-        if( isset( $this->doctypes[ $doc ] ) ) {
-            $str = $this->doctypes[ $doc ];
-        } 
-        else {
+
+        if (isset($this->doctypes[$doc])) {
+            $str = $this->doctypes[$doc];
+        } else {
             $str = "<!DOCTYPE {$doc}>";
         }
-        
-        $this->buffer( $str . $this->newline() );
-        
-        if( strtolower( $str ) == '<!doctype html>' ) {
+
+        $this->buffer($str.$this->newline());
+
+        if (strtolower($str) == '<!doctype html>') {
             $this->terse = true;
         }
-        
+
         $this->xml = false;
-        if( $doc == 'xml' ) {
+        if ($doc == 'xml') {
             $this->xml = true;
         }
     }
-    
-    protected function visitMixin( Nodes\Mixin $mixin ) {
-        $name = '__'.preg_replace( '/-/', '_', $mixin->name ).'_mixin';
+
+    protected function visitMixin(Nodes\Mixin $mixin)
+    {
+
+        $name = '__'.preg_replace('/-/', '_', $mixin->name).'_mixin';
         $arguments = $mixin->arguments;
         $block = $mixin->block;
         $attributes = $mixin->attributes;
-        
-        if( $mixin->call ) {
-            
-            if( !count( $attributes ) ) {
+
+        if ($mixin->call) {
+
+            if (!count($attributes)) {
                 $attributes = "(isset(\$attributes)) ? \$attributes : array()";
             } else {
 
-                $_attr = array();
-                foreach( $attributes as $data ) {
-                    if( $data['escaped'] === true ) {
-                        $_attr[ $data['name']] = htmlspecialchars( $data['value'] );
-                    } 
-                    else {
-                        $_attr[ $data['name']] = $data['value'];
+                $_attr = [];
+                foreach ($attributes as $data) {
+                    if ($data['escaped'] === true) {
+                        $_attr[$data['name']] = htmlspecialchars($data['value']);
+                    } else {
+                        $_attr[$data['name']] = $data['value'];
                     }
                 }
-                
+
                 //TODO: this adds extra escaping, tests mixin.* failed.
-                $attributes = var_export( $_attr, true );
+                $attributes = var_export($_attr, true);
                 $attributes = "array_merge({$attributes}, (isset(\$attributes)) ? \$attributes : array())";
             }
-            
-            if( $arguments === null || empty( $arguments ) ) {
-                $code = $this->createPhpBlock( "{$name}({$attributes})" );
-            } 
-            else {
-                
-                if( !empty( $arguments ) && !is_array( $arguments ) ) {
-                    
+
+            if ($arguments === null || empty($arguments)) {
+                $code = $this->createPhpBlock("{$name}({$attributes})");
+            } else {
+
+                if (!empty($arguments) && !is_array($arguments)) {
+
                     //$arguments = array($arguments);
-                    $arguments = explode( ',', $arguments );
+                    $arguments = explode(',', $arguments);
                 }
-                
-                array_unshift( $arguments, $attributes );
-                $statements = $this->apply( 'createStatements', $arguments );
-                
-                $variables = array_pop( $statements );
-                $variables = implode( ', ', $variables );
-                array_push( $statements, $variables );
-                
+
+                array_unshift($arguments, $attributes);
+                $statements = $this->apply('createStatements', $arguments);
+
+                $variables = array_pop($statements);
+                $variables = implode(', ', $variables);
+                array_push($statements, $variables);
+
                 $arguments = $statements;
                 $code_format = "{$name}(%s)";
-                array_unshift( $arguments, $code_format );
-                
-                $code = $this->apply( 'createCode', $arguments );
+                array_unshift($arguments, $code_format);
+
+                $code = $this->apply('createCode', $arguments);
             }
-            $this->buffer( $code );
-        } 
-        else {
-            if( $arguments === null || empty( $arguments ) ) {
-                $arguments = array();
-            } 
-            else if( !is_array( $arguments ) ) {
-                $arguments = array(
+            $this->buffer($code);
+        } else {
+            if ($arguments === null || empty($arguments)) {
+                $arguments = [];
+            } else if (!is_array($arguments)) {
+                $arguments = [
                     $arguments
-                );
+                ];
             }
-            
+
             //TODO: assign nulls to all varargs for remove php warnings
-            array_unshift( $arguments, '$attributes' );
-            $code = $this->createCode( "function {$name} (%s) {", implode( ',', $arguments ) );
-            
-            $this->buffer( $code );
+            array_unshift($arguments, '$attributes');
+            $code = $this->createCode("function {$name} (%s) {", implode(',', $arguments));
+
+            $this->buffer($code);
             $this->indents++;
-            $this->visit( $block );
+            $this->visit($block);
             $this->indents--;
-            $this->buffer( $this->createCode( '}' ) );
+            $this->buffer($this->createCode('}'));
         }
     }
-    
-    protected function visitTag( Nodes\Tag $tag ) {
-        if( !isset( $this->hasCompiledDoctype ) && 'html' == $tag->name ) {
+
+    protected function visitTag(Nodes\Tag $tag)
+    {
+
+        if (!isset($this->hasCompiledDoctype) && 'html' == $tag->name) {
             $this->visitDoctype();
         }
-        
-        $self_closing =( in_array( strtolower( $tag->name ), $this->selfClosing ) || $tag->selfClosing ) && !$this->xml;
-        
-        if( $tag->name == 'pre' ) {
+
+        $self_closing = (in_array(strtolower($tag->name), $this->selfClosing) || $tag->selfClosing) && !$this->xml;
+
+        if ($tag->name == 'pre') {
             $pp = $this->prettyprint;
             $this->prettyprint = false;
         }
-        
-        if( count( $tag->attributes ) ) {
+
+        if (count($tag->attributes)) {
             $open = '';
             $close = '';
-            
-            if( $self_closing ) {
-                $open = '<' . $tag->name . ' ';
-                $close =( $this->terse ) ? '>' : '/>';
-            } 
-            else {
-                $open = '<' . $tag->name . ' ';
+
+            if ($self_closing) {
+                $open = '<'.$tag->name.' ';
+                $close = ($this->terse) ? '>' : '/>';
+            } else {
+                $open = '<'.$tag->name.' ';
                 $close = '>';
             }
-            
-            $this->buffer( $this->indent() . $open, false );
-            $this->visitAttributes( $tag->attributes );
-            $this->buffer( $close . $this->newline() , false );
-        } 
-        else {
+
+            $this->buffer($this->indent().$open, false);
+            $this->visitAttributes($tag->attributes);
+            $this->buffer($close.$this->newline(), false);
+        } else {
             $html_tag = '';
-            
-            if( $self_closing ) {
-                $html_tag = '<' . $tag->name .(( $this->terse ) ? '>' : '/>' );
-            } 
-            else {
-                $html_tag = '<' . $tag->name . '>';
+
+            if ($self_closing) {
+                $html_tag = '<'.$tag->name.(($this->terse) ? '>' : '/>');
+            } else {
+                $html_tag = '<'.$tag->name.'>';
             }
-            
-            $this->buffer( $html_tag );
+
+            $this->buffer($html_tag);
         }
-        
-        if( !$self_closing ) {
+
+        if (!$self_closing) {
             $this->indents++;
-            if( isset( $tag->code ) ) {
-                $this->visitCode( $tag->code );
+            if (isset($tag->code)) {
+                $this->visitCode($tag->code);
             }
-            $this->visit( $tag->block );
+            $this->visit($tag->block);
             $this->indents--;
-            
-            $this->buffer( '</' . $tag->name . '>' );
+
+            $this->buffer('</'.$tag->name.'>');
         }
-        
-        if( $tag->name == 'pre' ) {
+
+        if ($tag->name == 'pre') {
             $this->prettyprint = $pp;
         }
     }
-    
-    protected function visitFilter( Nodes\Filter $node ) {
+
+    protected function visitFilter(Nodes\Filter $node)
+    {
+
         $filter = $node->name;
-        
+
         // filter:
-        if( $node->isASTFilter ) {
-            $str = Filter::$filter( $node->block, $this, $node->attributes );
-            
+        if ($node->isASTFilter) {
+            $str = Filter::$filter($node->block, $this, $node->attributes);
+
             // :filter
-            
-        } 
-        else {
+
+        } else {
             $str = '';
-            foreach( $this->block->nodes as $n ) {
-                $str.= $n->value . "\n";
+            foreach ($this->block->nodes as $n) {
+                $str .= $n->value."\n";
             }
-            $str = Filter::$filter( $str, $node->attributes );
+            $str = Filter::$filter($str, $node->attributes);
         }
-        $this->buffer( $str );
+        $this->buffer($str);
     }
-    
-    protected function visitText( Nodes\Text $text ) {
-        $this->buffer( $this->interpolate( $text->value ) );
+
+    protected function visitText(Nodes\Text $text)
+    {
+
+        $this->buffer($this->interpolate($text->value));
     }
-    
-    protected function visitComment( Nodes\Comment $comment ) {
-        if( !$comment->buffer ) {
+
+    protected function visitComment(Nodes\Comment $comment)
+    {
+
+        if (!$comment->buffer) {
             return;
         }
-        
-        $this->buffer( '<!--' . $comment->value . '-->' );
+
+        $this->buffer('<!--'.$comment->value.'-->');
     }
-    
-    protected function visitBlockComment( Nodes\BlockComment $comment ) {
-        if( !$comment->buffer ) {
+
+    protected function visitBlockComment(Nodes\BlockComment $comment)
+    {
+
+        if (!$comment->buffer) {
             return;
         }
-        
-        if( strlen( $comment->value ) && 0 === strpos( trim( $comment->value ), 'if' ) ) {
-            $this->buffer( '<!--[' . trim( $comment->value ) . ']>' );
-            $this->visit( $comment->block );
-            $this->buffer( '<![endif]-->' );
-        } 
-        else {
-            $this->buffer( '<!--' . $comment->value );
-            $this->visit( $comment->block );
-            $this->buffer( '-->' );
+
+        if (strlen($comment->value) && 0 === strpos(trim($comment->value), 'if')) {
+            $this->buffer('<!--['.trim($comment->value).']>');
+            $this->visit($comment->block);
+            $this->buffer('<![endif]-->');
+        } else {
+            $this->buffer('<!--'.$comment->value);
+            $this->visit($comment->block);
+            $this->buffer('-->');
         }
     }
-    
-    protected function visitCode( Nodes\Code $node ) {
+
+    protected function visitCode(Nodes\Code $node)
+    {
+
         $block = !$node->buffer;
-        $code = trim( $node->value );
-        
-        if( $node->buffer ) {
-            
-            if( $node->escape ) {
-                $this->buffer( $this->createCode( 'echo htmlspecialchars(%s)', $code ) );
-            } 
-            else {
-                $this->buffer( $this->createCode( 'echo %s', $code ) );
+        $code = trim($node->value);
+
+        if ($node->buffer) {
+
+            if ($node->escape) {
+                $this->buffer($this->createCode('echo htmlspecialchars(%s)', $code));
+            } else {
+                $this->buffer($this->createCode('echo %s', $code));
             }
-        } 
-        else {
-            
-            $php_open = implode( '|', $this->phpOpenBlock );
-            
-            if( preg_match( "/^[[:space:]]*({$php_open})(.*)/", $code, $matches ) ) {
-                
-                $code = trim( $matches[2], '; ' );
-                while(( $len = strlen( $code ) ) > 1 &&( $code[0] == '(' || $code[0] == '{' ) && ord( $code[0] ) == ord( substr( $code, -1 ) ) - 1 ) {
-                    $code = trim( substr( $code, 1, $len - 2 ) );
+        } else {
+
+            $php_open = implode('|', $this->phpOpenBlock);
+
+            if (preg_match("/^[[:space:]]*({$php_open})(.*)/", $code, $matches)) {
+
+                $code = trim($matches[2], '; ');
+                while (($len = strlen($code)) > 1 && ($code[0] == '(' || $code[0] == '{') && ord($code[0]) == ord(substr($code, -1)) - 1) {
+                    $code = trim(substr($code, 1, $len - 2));
                 }
-                
-                $index = count( $this->buffer ) - 1;
+
+                $index = count($this->buffer) - 1;
                 $conditional = '';
-                
-                if( isset( $this->buffer[ $index ] ) && false !== strpos( $this->buffer[ $index ], $this->createCode( '}' ) ) ) {
-                    
+
+                if (isset($this->buffer[$index]) && false !== strpos($this->buffer[$index], $this->createCode('}'))) {
+
                     // the "else" statement needs to be in the php block that closes the if
-                    $this->buffer[ $index ] = null;
-                    $conditional.= '} ';
+                    $this->buffer[$index] = null;
+                    $conditional .= '} ';
                 }
-                
-                $conditional.= '%s';
-                
-                if( strlen( $code ) > 0 ) {
-                    $conditional.= '(%s) {';
-                    if( $matches[1] == 'unless' ) {
-                        $conditional = sprintf( $conditional, 'if', '!(%s)' );
-                        $this->buffer( $this->createCode( $conditional, $code ) );
-                    } 
-                    else {
-                        
+
+                $conditional .= '%s';
+
+                if (strlen($code) > 0) {
+                    $conditional .= '(%s) {';
+                    if ($matches[1] == 'unless') {
+                        $conditional = sprintf($conditional, 'if', '!(%s)');
+                        $this->buffer($this->createCode($conditional, $code));
+                    } else {
+
                         //новый код для isset
-                        if( !preg_match( '/[&|^\(\)=<>]/', $code ) ) {
-                            $conditional = sprintf( $conditional, $matches[1], 'isset(%s) && %s' );
-                            $this->buffer( $this->createCode( $conditional, $code, $code ) );
-                        } 
-                        else {
-                            $conditional = sprintf( $conditional, $matches[1], '%s' );
-                            $this->buffer( $this->createCode( $conditional, $code, $code ) );
+                        if (!preg_match('/[&|^\(\)=<>]/', $code)) {
+                            $conditional = sprintf($conditional, $matches[1], 'isset(%s) && %s');
+                            $this->buffer($this->createCode($conditional, $code, $code));
+                        } else {
+                            $conditional = sprintf($conditional, $matches[1], '%s');
+                            $this->buffer($this->createCode($conditional, $code, $code));
                         }
                     }
-                } 
-                else {
-                    $conditional.= ' {';
-                    $conditional = sprintf( $conditional, $matches[1] );
-                    
-                    $this->buffer( $this->createCode( $conditional ) );
+                } else {
+                    $conditional .= ' {';
+                    $conditional = sprintf($conditional, $matches[1]);
+
+                    $this->buffer($this->createCode($conditional));
                 }
-            } 
-            else {
-                $this->buffer( $this->createCode( $code ) );
+            } else {
+                $this->buffer($this->createCode($code));
             }
         }
-        
-        if( isset( $node->block ) ) {
+
+        if (isset($node->block)) {
             $this->indents++;
-            $this->visit( $node->block );
+            $this->visit($node->block);
             $this->indents--;
-            
-            if( !$node->buffer ) {
-                $this->buffer( $this->createCode( '}' ) );
+
+            if (!$node->buffer) {
+                $this->buffer($this->createCode('}'));
             }
         }
     }
-    
-    protected function visitEach( $node ) {
-        
+
+    protected function visitEach($node)
+    {
+
         //if (is_numeric($node->obj)) {
         //if (is_string($node->obj)) {
         //$serialized = serialize($node->obj);
-        if( isset( $node->alternative ) ) {
-            $code = $this->createCode( 'if (isset(%s) && %s) {', $node->obj, $node->obj );
-            $this->buffer( $code );
+        if (isset($node->alternative)) {
+            $code = $this->createCode('if (isset(%s) && %s) {', $node->obj, $node->obj);
+            $this->buffer($code);
             $this->indents++;
         }
-        
-        if( isset( $node->key ) && mb_strlen( $node->key ) > 0 ) {
-            $code = $this->createCode( 'foreach (%s as %s => %s) {', $node->obj, $node->key, $node->value );
-        } 
-        else {
-            $code = $this->createCode( 'foreach (%s as %s) {', $node->obj, $node->value );
+
+        if (isset($node->key) && mb_strlen($node->key) > 0) {
+            $code = $this->createCode('foreach (%s as %s => %s) {', $node->obj, $node->key, $node->value);
+        } else {
+            $code = $this->createCode('foreach (%s as %s) {', $node->obj, $node->value);
         }
-        
-        $this->buffer( $code );
-        
+
+        $this->buffer($code);
+
         $this->indents++;
-        $this->visit( $node->block );
+        $this->visit($node->block);
         $this->indents--;
-        
-        $this->buffer( $this->createCode( '}' ) );
-        
-        if( isset( $node->alternative ) ) {
+
+        $this->buffer($this->createCode('}'));
+
+        if (isset($node->alternative)) {
             $this->indents--;
-            $this->buffer( $this->createCode( '} else {' ) );
+            $this->buffer($this->createCode('} else {'));
             $this->indents++;
-            
-            $this->visit( $node->alternative );
+
+            $this->visit($node->alternative);
             $this->indents--;
-            
-            $this->buffer( $this->createCode( '}' ) );
+
+            $this->buffer($this->createCode('}'));
         }
     }
-    
-    protected function visitAttributes( $attributes ) {
-        $items = array();
-        $classes = array();
-        
-        foreach( $attributes as $attr ) {
-            $key = trim( $attr['name'] );
-            $value = trim( $attr['value'] );
-            
-            if( $this->isConstant( $value, $key == 'class' ) ) {
-                $value = trim( $value, ' \'"' );
-                if( $value === 'undefined' )$value = 'null';
-            } 
-            else {
-                $json = json_decode( preg_replace( "/'([^']*?)'/", '"$1"', $value ) );
-                
-                if( $json !== null && is_array( $json ) && $key == 'class' ) {
-                    $value = implode( ' ', $json );
-                } 
-                else {
-                    
+
+    protected function visitAttributes($attributes)
+    {
+
+        $items = [];
+        $classes = [];
+
+        foreach ($attributes as $attr) {
+            $key = trim($attr['name']);
+            $value = trim($attr['value']);
+
+            if ($this->isConstant($value, $key == 'class')) {
+                $value = trim($value, ' \'"');
+                if ($value === 'undefined') $value = 'null';
+            } else {
+                $json = json_decode(preg_replace("/'([^']*?)'/", '"$1"', $value));
+
+                if ($json !== null && is_array($json) && $key == 'class') {
+                    $value = implode(' ', $json);
+                } else {
+
                     // inline this in the tag
                     $pp = $this->prettyprint;
                     $this->prettyprint = false;
-                    
-                    if( $key == 'class' ) {
-                        $value = $this->createCode( 'echo (is_array(%1$s)) ? implode(" ", %1$s) : %1$s', $value );
-                    } 
-                    elseif( strpos( $key, 'data-' ) !== false ) {
-                        $value = $this->createCode( 'echo json_encode(%s)', $value );
-                    } 
-                    else {
-                        $value = $this->createCode( 'echo %s', $value );
+
+                    if ($key == 'class') {
+                        $value = $this->createCode('echo is_array(%1$s) ? implode(" ", %1$s) : %1$s', $value);
+                    } else {
+                            $value = $this->createCode('echo is_array(%1$s) ? json_encode(%1$s) : %1$s', $value);
                     }
-                    
+
                     $this->prettyprint = $pp;
                 }
             }
-            if( $key == 'class' ) {
-                if( $value !== 'false' && $value !== 'null' && $value !== 'undefined' )array_push( $classes, $value );
-            } 
-            elseif( $value == 'true' || $attr['value'] === true ) {
-                if( $this->terse ) {
+            if ($key == 'class') {
+                if ($value !== 'false' && $value !== 'null' && $value !== 'undefined') array_push($classes, $value);
+            } elseif ($value == 'true' || $attr['value'] === true) {
+                if ($this->terse) {
                     $items[] = $key;
-                } 
-                else {
+                } else {
                     $items[] = "{$key}='{$key}'";
                 }
-            } 
-            elseif( $value !== 'false' && $value !== 'null' && $value !== 'undefined' ) {
+            } elseif ($value !== 'false' && $value !== 'null' && $value !== 'undefined') {
                 $items[] = "{$key}='{$value}'";
             }
         }
-        
-        if( count( $classes ) ) {
-            $items[] = 'class=\'' . implode( ' ', $classes ) . '\'';
+
+        if (count($classes)) {
+            $items[] = 'class=\''.implode(' ', $classes).'\'';
         }
-        
-        $this->buffer( implode( ' ', $items ), false );
+
+        $this->buffer(implode(' ', $items), false);
     }
 }

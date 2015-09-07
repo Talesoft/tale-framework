@@ -2,13 +2,13 @@
 
 namespace Tale\Data;
 
-use Tale\Data\Entity\Collection;
-use Tale\StringUtil;
+use Tale\Util\StringUtil;
 
 class Table extends NamedEntityBase
 {
 
     private $_database;
+    private $_hasModel;
     private $_rowClassName;
     private $_columns;
 
@@ -17,7 +17,12 @@ class Table extends NamedEntityBase
         parent::__construct($name);
 
         $this->_database = $database;
-        $this->_rowClassName = $rowClassName ? $rowClassName : 'Tale\\Data\\Row';
+
+        $modelClassName = $this->getModelClassName();
+        $this->_hasModel = $modelClassName ? true : false;
+        $this->_rowClassName = $rowClassName
+            ? $rowClassName
+            : ( $modelClassName ? $modelClassName : 'Tale\\Data\\Row' );
         $this->_columns = [];
     }
 
@@ -47,6 +52,12 @@ class Table extends NamedEntityBase
         return $this;
     }
 
+    public function hasModel()
+    {
+
+        return $this->_hasModel;
+    }
+
     public function exists()
     {
 
@@ -72,15 +83,52 @@ class Table extends NamedEntityBase
     public function create()
     {
 
+        if (empty($this->_columns) && $this->_hasModel)
+            $this->setModelColumns();
+
         if (empty($this->_columns))
             throw new \Exception(
-                "Failed to create table: "
+                "Failed to create table $this: "
                 ."No columns given"
             );
 
         $this->getSource()->createTable($this, $this->_columns);
 
         return parent::create();
+    }
+
+    public function migrate()
+    {
+
+        if (!$this->exists())
+            return $this->create();
+
+        if (empty($this->_columns) && $this->_hasModel)
+            $this->setModelColumns();
+
+        if (empty($this->_columns))
+            throw new \Exception(
+                "Failed to migrate table $this: "
+                ."No columns given"
+            );
+
+        $thisColumns = $this->_columns;
+        $remoteColumns = $this->getColumns()->getItems();
+
+        $removedColumns = array_diff($remoteColumns, $thisColumns);
+
+        foreach ($thisColumns as $column) {
+
+            if ($column->exists())
+                $column->save();
+            else
+                $column->create();
+        }
+
+        foreach ($removedColumns as $removedCol)
+            $removedCol->remove();
+
+        return $this;
     }
 
     public function remove()
@@ -245,6 +293,70 @@ class Table extends NamedEntityBase
         $src->createRow($this, $data);
 
         return $src->getLastId();
+    }
+
+    public function insertRow(array $data = null, $create = true)
+    {
+
+        $className = $this->_rowClassName;
+        $row = new $className($this, $data);
+
+        if ($create)
+            $row->create();
+
+        return $row;
+    }
+
+    public function getModelClassName()
+    {
+
+        $nameSpaces = $this->_database->getModelNameSpaces();
+
+        if (empty($nameSpaces))
+            return null;
+
+        foreach ($nameSpaces as $nameSpace) {
+
+            $className = rtrim($nameSpace, '\\').'\\'.StringUtil::camelize(StringUtil::singularize($this->getName()));
+
+            if (!class_exists($className))
+                continue;
+
+            if (!is_subclass_of($className, 'Tale\\Data\\Row'))
+                throw new \Exception(
+                    "Failed to use $className as a model class: "
+                    ."The class needs to extend Tale\\Data\\Row"
+                );
+
+            return $className;
+        }
+
+        return null;
+    }
+
+    public function getModelFields()
+    {
+
+        $ref = new \ReflectionClass($this->_rowClassName);
+        $defaultValues = $ref->getDefaultProperties();
+
+        foreach ($ref->getProperties(\ReflectionProperty::IS_PUBLIC) as $prop) {
+
+            if ($prop->isStatic())
+                continue;
+
+            $name = $prop->getName();
+            yield $name => isset($defaultValues[$name]) ? $defaultValues[$name] : 'id';
+        }
+    }
+
+    public function setModelColumns()
+    {
+
+        foreach($this->getModelFields() as $name => $typeString)
+            $this->{$name}->parse($typeString);
+
+        return $this;
     }
 
     protected function inflectInputColumnName($name)

@@ -859,7 +859,12 @@ class StringUtil extends Util
 
         return preg_replace_callback('/\{\{([^\}]+)\}\}/i', function ($m) use ($source, $defaultValue, $delimeter) {
 
-            return StringUtil::resolve($m[1], $source, $defaultValue, $delimeter);
+            $resolved = StringUtil::resolve($m[1], $source, $defaultValue, $delimeter);
+
+            if ($resolved === null)
+                return $m[0];
+
+            return $resolved;
         }, $string);
     }
 

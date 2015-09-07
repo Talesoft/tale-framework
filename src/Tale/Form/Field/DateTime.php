@@ -8,11 +8,6 @@ use Tale\Form\FieldBase;
 class DateTime extends FieldBase
 {
 
-    public function setValue($value)
-    {
-
-        return parent::setValue($value ? strtotime($value) : null);
-    }
 
     public function getValue()
     {
@@ -20,7 +15,7 @@ class DateTime extends FieldBase
         $value = parent::getValue();
 
         if ($value)
-            return new \DateTime("@$value");
+            return new \DateTime($value);
 
         return null;
     }

@@ -182,7 +182,7 @@ class Query
     public function selectOne(array $fields = null, $as = null)
     {
 
-        $result = $this->limit(1)->selectArray();
+        $result = $this->limit(1)->selectArray($fields, $as);
 
         return count($result) ? $result[0] : $result;
     }

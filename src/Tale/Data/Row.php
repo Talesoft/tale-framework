@@ -5,14 +5,13 @@ namespace Tale\Data;
 use Exception,
     BadMethodCallException,
     Tale\Util\StringUtil;
+use Tale\Event;
 
 class Row extends EntityBase
 {
 
-    private $_data;
-
     private $_table;
-    private $_indexColumn;
+    private $_data;
 
     public function __construct(Table $table, array $data = null)
     {
@@ -20,13 +19,43 @@ class Row extends EntityBase
 
         $this->_data = $data ? $data : [];
         $this->_table = $table;
-        $this->_indexColumn = null;
+
+        $this->init();
+    }
+
+    protected function init()
+    {
+        if ($this->_table->hasModel()) {
+
+            foreach ($this->_table->getModelFields() as $name => $typeString) {
+
+                if (property_exists($this, $name))
+                    unset($this->{$name});
+            }
+
+            $ref = new \ReflectionClass($this);
+            foreach ($ref->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
+
+                $name = $method->getName();
+
+                if ($method->isStatic() || strncmp('init', $name, 4) !== 0)
+                    continue;
+
+                call_user_func([$this, $name]);
+            }
+        }
     }
 
     public function getTable()
     {
 
         return $this->_table;
+    }
+
+    public function getData()
+    {
+
+        return $this->_data;
     }
 
     public function getDatabase()
@@ -44,7 +73,7 @@ class Row extends EntityBase
     public function exists()
     {
 
-        $pk = $this->getTable()->getPrimaryKeyName(true);
+        $pk = $this->getPrimaryKeyName(true);
 
         if (!$pk || !isset($this->_data[$pk]))
             throw new Exception("Failed to check row existence: Primary column $pk has no value");
@@ -55,63 +84,108 @@ class Row extends EntityBase
     public function load()
     {
 
-        $pk = $this->getTable()->getPrimaryKeyName(true);
+        if (!$this->emit('beforeLoad'))
+            return $this;
+
+        $pk = $this->getPrimaryKeyName(true);
 
         if (!$pk || !isset($this->_data[$pk]))
-            throw new Exception("Failed to check row existence: Primary column $pk has no value");
+            throw new Exception("Failed to load row: Primary column $pk has no value");
 
-        $this->_data = $this->_table->where([
+        $qry = $this->_table->where([
             $pk => $this->_data[$pk]
-        ])->selectOne(null, false);
+        ]);
+        $args = new Event\Args(['query' => $qry, 'primaryKey' => $pk]);
+        if ($this->emit('load', $args)) {
 
-        return parent::load();
+            $this->_data = $qry->selectOne(null, false);
+            $this->emit('afterLoad');
+
+            return parent::load();
+        }
+
+        return $this;
     }
 
     public function save()
     {
 
-        $pk = $this->getTable()->getPrimaryKeyName(true);
+        if (!$this->emit('beforeSave'))
+            return $this;
+
+        $pk = $this->getPrimaryKeyName(true);
 
         if (!$pk || !isset($this->_data[$pk]))
-            throw new Exception("Failed to check row existence: Primary column $pk has no value");
+            throw new Exception("Failed to save row: Primary column $pk has no value");
 
         $data = $this->_data;
 
         //Unset the primary key in the passed data, we don't want it to end up in setting the ID
         unset($data[$pk]);
 
-        $this->_table->where([
+        $qry = $this->_table->where([
             $pk => $this->_data[$pk]
-        ])->update($data);
+        ]);
+        $args = new Event\Args(['query' => $qry, 'primaryKey' => $pk]);
+        if ($this->emit('save', $args)) {
 
-        return parent::save();
+            $qry->update($data);
+            $this->emit('afterSave');
+
+            return parent::save();
+        }
+
+        return $this;
     }
 
     public function remove()
     {
 
-        $pk = $this->getTable()->getPrimaryKeyName(true);
+        if (!$this->emit('beforeRemove'))
+            return $this;
+
+        $pk = $this->getPrimaryKeyName(true);
 
         if (!$pk || !isset($this->_data[$pk]))
-            throw new Exception("Failed to check row existence: Primary column $pk has no value");
+            throw new Exception("Failed to remove row: Primary column $pk has no value");
 
-        $this->_table->where([
+        $qry = $this->_table->where([
             $pk => $this->_data[$pk]
-        ])->remove();
+        ]);
+        $args = new Event\Args(['query' => $qry, 'primaryKey' => $pk]);
+        if ($this->emit('remove', $args)) {
 
-        return parent::remove();
+            $qry->remove();
+            $this->emit('afterRemove');
+
+            return parent::remove();
+        }
+
+        return $this;
     }
 
     public function create()
     {
 
-        $pk = $this->getTable()->getPrimaryKeyName(true);
+        if (!$this->emit('beforeCreate'))
+            return $this;
 
-        $this->_data[$pk] = null;
-        $id = $this->_table->insert($this->_data);
-        $this->_data[$pk] = $id;
+        $pk = $this->getPrimaryKeyName(true);
 
-        return parent::create();
+        $args = new Event\Args(['primaryKey' => $pk]);
+        if ($this->emit('create', $args)) {
+
+            $this->_data[$pk] = null;
+            $id = $this->_table->insert($this->_data);
+            $this->_data[$pk] = $id;
+
+            $args = new Event\Args(['id' => $id, 'primaryKey' => $pk]);
+            $this->emit('afterCreate', $args);
+
+            return parent::create();
+        }
+
+        return $this;
     }
 
     public function getOneQuery(Table $table, $columnName = null)
@@ -346,6 +420,36 @@ class Row extends EntityBase
 
         return $this;
     }
+    
+    public function getPrimaryKeyName($inflect = false)
+    {
+        
+        return $this->getPrimaryKeyName($inflect);
+    }
+
+    function __isset($name)
+    {
+
+        return isset($this->_data[$name]);
+    }
+
+    function __get($name)
+    {
+
+        return $this->_data[$name];
+    }
+
+    function __set($name, $value)
+    {
+        $this->_data[$name] = $value;
+    }
+
+    function __unset($name)
+    {
+
+        unset($this->_data[$name]);
+    }
+
 
     public function __call($method, array $args = null)
     {

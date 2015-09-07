@@ -7,6 +7,7 @@ use Tale\App\FeatureBase;
 use Tale\Dispatcher;
 use Tale\ClassLoader;
 use Tale\Factory;
+use Tale\FactoryException;
 
 class Controller extends FeatureBase
 {
@@ -76,8 +77,8 @@ class Controller extends FeatureBase
 
             $this->registerHelper('dispatchError', function ($controller, $action, $format = null, array $args = null) {
 
-                if (isset($controller->dispatchRequest) && !$format)
-                    $format = $controller->dispatchRequest->getFormat();
+                if (isset($controller->request) && !$format)
+                    $format = $controller->request->getFormat();
 
                 if (!$format)
                     throw new \Exception(
@@ -219,7 +220,11 @@ class Controller extends FeatureBase
 
             //We need our request on the controller to work with it
 
-            $controllerInstance->setArg('dispatchRequest', $request);
+            $controllerInstance->setArg('request', $request);
+
+            //Also give the controller a way to reach the app and its config
+
+            $controllerInstance->setArg('app', $this->getApp());
 
             if ($controllerInstance->emit('beforeInit')) {
 
@@ -240,10 +245,10 @@ class Controller extends FeatureBase
             }
 
 
-        } catch (\RuntimeException $e) {
+        } catch (\Exception $e) {
 
             //If the error controller wasnt found, the dispatching of it doesnt make sense
-            if ($controller === $this->getOption('errorController'))
+            if (!($e instanceof FactoryException) || $controller === $this->getOption('errorController'))
                 throw $e;
 
             return $this->dispatchError('not-found', $format);

@@ -2,7 +2,7 @@
 
 namespace Tale\Data;
 
-use Tale\StringUtil;
+use Tale\Util\StringUtil;
 
 /**
  * Class Database
@@ -18,16 +18,19 @@ class Database extends NamedEntityBase
 
 	private $_tables;
 
+	private $_modelNameSpaces;
+
 	/**
 	 * @param \Tale\Data\Source $source
 	 * @param                   $name
      */
-	public function __construct(Source $source, $name)
+	public function __construct(Source $source, $name, $modelNameSpaces = null)
 	{
 		parent::__construct($name);
 
 		$this->_source = $source;
 		$this->_tables = [];
+		$this->_modelNameSpaces = $modelNameSpaces ? $modelNameSpaces : [];
 	}
 
 	/**
@@ -38,6 +41,24 @@ class Database extends NamedEntityBase
 
 		return $this->_source;
 	}
+
+    /**
+     * @return array|null
+     */
+    public function getModelNameSpaces()
+    {
+
+        return $this->_modelNameSpaces;
+    }
+
+
+    public function addModelNameSpace($nameSpace)
+    {
+
+        $this->_modelNameSpaces[] = $nameSpace;
+
+        return $this;
+    }
 
 	/**
 	 * @return mixed
@@ -94,6 +115,14 @@ class Database extends NamedEntityBase
 		return parent::remove();
 	}
 
+
+
+	private function _createTable($name, $rowClassName = null)
+	{
+
+		return new Table($this, $name, $rowClassName);
+	}
+
 	/**
 	 * @return \Generator
      */
@@ -110,7 +139,7 @@ class Database extends NamedEntityBase
 
 		foreach ($tableNames as $name)
             if (!isset($this->_tables[$name]))
-                $this->_tables[$name] = new Table($this, $name);
+                $this->_tables[$name] = $this->_createTable($name);
 
         return new Entity\Collection($this->_tables);
 	}
@@ -124,7 +153,7 @@ class Database extends NamedEntityBase
 	{
 
 		if (!isset($this->_tables[$name]))
-            $this->_tables[$name] = new Table($this, $name);
+            $this->_tables[$name] = $this->_createTable($name);
 
         return $this->_tables[$name];
 	}

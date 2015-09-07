@@ -14,12 +14,7 @@ abstract class EntityBase
     public function __construct()
     {
 
-        $this->init();
         $this->_state = State::INITIALIZED;
-    }
-
-    protected function init()
-    {
     }
 
     public function loadIfExists()

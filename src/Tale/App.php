@@ -64,6 +64,7 @@ class App
             'view'       => 'Tale\\App\\Feature\\View',
             'router'     => 'Tale\\App\\Feature\\Router',
             'form'       => 'Tale\\App\\Feature\\Form',
+            'session'       => 'Tale\\App\\Feature\\Session',
             'logger'     => 'Tale\\App\\Feature\\Logger'
         ]);
 

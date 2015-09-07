@@ -166,14 +166,32 @@ class MySql extends AdapterBase
 		else
 			$sql .= ' NOT NULL';
 
-		if ($default)
-			$sql .= ' DEFAULT '.$this->encode($default);
+		if ($default) {
+
+			if (strtolower($type) === 'timestamp') {
+				switch (strtolower($default)) {
+					case 'currenttimestamp':
+					case 'onupdatecurrenttimestamp':
+						$sql .= ' DEFAULT CURRENT_TIMESTAMP';
+						break;
+					default:
+						$sql .= ' DEFAULT '.$this->encode($default);
+						break;
+				}
+			} else {
+
+				$sql .= ' DEFAULT '.$this->encode($default);
+			}
+		}
 
 		if ($primary)
 			$sql .= ' PRIMARY KEY';
 
 		if ($auto)
 			$sql .= ' AUTO_INCREMENT';
+
+        if (strtolower($type) === 'timestamp' && ($default && strtolower($default) === 'onupdatecurrenttimestamp'))
+            $sql .= ' ON UPDATE CURRENT_TIMESTAMP';
 
 		return $sql;
 	}
@@ -533,7 +551,7 @@ class MySql extends AdapterBase
 
 				$refInfo = $stmt->fetchObject();
 
-				if ($info) {
+				if ($refInfo) {
 
 					$refCol = $column->getSource()
 						->getDatabase($refInfo->db)
@@ -662,11 +680,17 @@ class MySql extends AdapterBase
 			$suffix = '';
 			$len = strlen($field);
 			$char = null;
-			while (!ctype_alnum($char = $field[--$len]))
-				if ($char !== '.')
-					$suffix = $char.$suffix;
 
-			$field = $this->inflectInputColumnName(substr($field, 0, $len + 1));
+            if (!ctype_alnum($field[$len - 1])) {
+
+                while ($len-- && !ctype_alnum($char = $field[$len]))
+                    if ($char !== '.')
+                        $suffix = $char.$suffix;
+
+                $field = substr($field, 0, $len);
+            }
+
+			$field = $this->inflectInputColumnName($field);
 
 			if (in_array($field, ['or', 'and'])) {
 

@@ -132,6 +132,8 @@ class Factory
      * @param string     $className The alias or FQCN to instanciate
      * @param array|null $args      The arguments that should be passed to the constructor
      *
+     * @throws \Tale\FactoryException
+     *
      * @return object The newly created child-class instance
      */
     public function createInstance($className, array $args = null)
@@ -141,7 +143,7 @@ class Factory
         $className = $this->resolveClassName($className);
 
         if (!class_exists($className) || ($this->_baseClassName && !is_subclass_of($className, $this->_baseClassName)))
-            throw new \RuntimeException(
+            throw new FactoryException(
                 "Failed to resolve factory classname: "
                 ."$className does not exist or is not a valid {$this->_baseClassName}"
             );

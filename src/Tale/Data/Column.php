@@ -338,7 +338,10 @@ class Column extends NamedEntityBase
 
                     $this->makePrimary();
                     break;
+                case 'index':
 
+                    $this->makeIndex();
+                    break;
                 /* Custom Types! */
                 //TODO: Control this with an option in Tale\Data\Source
                 case 'id':

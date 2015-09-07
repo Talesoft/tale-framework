@@ -79,6 +79,19 @@ class Form
         return $this->setField($name, $definition['type'], $definition['value'], $definition['options']);
     }
 
+    public function getErrors($withFields = false)
+    {
+
+        $errors = [];
+        foreach ($this->_fields as $name => $field)
+            if ($withFields)
+                $errors[$name] = $field->getErrors();
+            else
+                $errors = array_merge($errors, $field->getErrors());
+
+        return $errors;
+    }
+
     public function getHtmlElement(array $attributes = null, $fieldCallback = null)
     {
 

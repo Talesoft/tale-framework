@@ -72,12 +72,20 @@ class Router extends FeatureBase
 
             if (isset($this->controller)) {
 
+                /**
+                 * @var \Tale\App\Feature\Controller $controller
+                 */
                 $controller = $this->controller;
-                $controller->registerHelper('getUrl', function ($controller, $path, array $args = null, $preserveQuery = false) {
+                $controller->registerHelper('getUrl', function ($controller, $path = null, array $args = null, $preserveQuery = false) {
 
-                    if (isset($controller->dispatchRequest)) {
+                    $path = $path ? $path : '';
 
-                        $req = $controller->dispatchRequest;
+                    if (isset($controller->request)) {
+
+                        /**
+                         * @var \Tale\App\Feature\Controller\Request $req
+                         */
+                        $req = $controller->request;
                         $path = StringUtil::interpolate($path, [
                             'controller' => $req->getController(),
                             'action' => $req->getAction(),
@@ -108,6 +116,11 @@ class Router extends FeatureBase
                     }
 
                     return $url;
+                });
+
+                $controller->registerHelper('redirect', function($controller, $path, array $args = null, $preserveQuery = null) {
+
+                    return new Controller\Response\Redirect($controller->getUrl($path, $args, $preserveQuery));
                 });
             }
 
@@ -187,13 +200,9 @@ class Router extends FeatureBase
             if ($result instanceof Response\Redirect) {
 
                 $url = $result->getData();
-                if (strncmp($url, 'http', 4) !== 0) {
+                $response->setLocation($url);
 
-                    $url = rtrim($baseUrl, '/').'/'.ltrim($url, '/');
-                    $response->setLocation($url);
-
-                    return $response;
-                }
+                return $response;
             }
 
             $body = $response->getBody();

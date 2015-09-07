@@ -12,7 +12,11 @@ abstract class FieldBase
     private $_form;
     private $_name;
     private $_value;
-    private $_options;
+
+    /**
+     * @var \Tale\Form\Validator
+     */
+    private $_validator;
 
     public function __construct(Form $form, $name, $value = null, array $options = null)
     {
@@ -65,6 +69,24 @@ abstract class FieldBase
     }
 
     protected function init() {}
+
+    public function validate($reset = false)
+    {
+
+        if (!isset($this->_validator) || $reset)
+            $this->_validator = new Validator($this->_value);
+
+        return $this->_validator;
+    }
+
+    public function getErrors()
+    {
+
+        if (!isset($this->_validator))
+            return [];
+
+        return $this->_validator->getErrors();
+    }
 
     abstract public function getHtmlElement();
 }

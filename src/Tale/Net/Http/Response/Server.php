@@ -78,6 +78,13 @@ class Server extends Response
 				."before apply() has been called on the HTTP response"
 			);
 
+		if (function_exists('mb_http_output')) {
+
+			$encoding = $this->getBody()->getContentEncoding();
+			mb_http_output(strtoupper($encoding ? $encoding : 'UTF-8'));
+			ob_start('mb_output_handler');
+		}
+
 		$this->applyStatusCode();
 		$this->applyHeaders();
 		$this->applyBody();

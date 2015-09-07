@@ -53,12 +53,12 @@ class View extends FeatureBase
                 $tm = $this->_themeManager;
                 $controller->registerHelper('render', function ($controller, $path, array $args = null, $cacheHtml = false) use ($tm) {
 
-                    return $tm->renderView($path, $args, $cacheHtml, $this);
+                    return $tm->renderView($path, $args, $cacheHtml, $controller);
                 });
 
                 $controller->registerHelper('view', function ($controller, array $args = null, $path = null, $cacheHtml = false) {
 
-                    if (!isset($controller->dispatchRequest) && !$path)
+                    if (!isset($controller->request) && !$path)
                         throw new \Exception(
                             "Failed to render view: controller has no "
                             ." dispatch information and you also didnt "
@@ -67,9 +67,9 @@ class View extends FeatureBase
                         );
 
 
-                    if (isset($controller->dispatchRequest) && !$path) {
+                    if (isset($controller->request) && !$path) {
 
-                        $req = $controller->dispatchRequest;
+                        $req = $controller->request;
 
                         //Don't render anything if we didn't request html.
                         //Pass through the raw data instead

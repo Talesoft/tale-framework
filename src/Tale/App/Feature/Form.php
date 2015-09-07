@@ -52,49 +52,44 @@ class Form extends FeatureBase
                     return $this->_manager->getForm($name);
                 });
 
+                $controller->setArg('formData', null);
+                $controller->registerHelper('loadFormData', function($controller) {
+
+                    if ($controller->formData !== null)
+                        return;
+
+                    $controller->formData = [
+                        Method::POST => [],
+                        Method::PUT => [],
+                        Method::GET => []
+                    ];
+                    if (isset($controller->webRequest)) {
+
+                        //We can get data from the web request
+                        $bodyArgs = $controller->webRequest->getBodyArgs();
+                        $urlArgs = $controller->webRequest->getUrlArgs();
+                        $controller->formData[Method::POST] = $bodyArgs;
+                        $controller->formData[Method::PUT] = $bodyArgs;
+                        $controller->formData[Method::GET] = $urlArgs;
+                    }
+                });
+
+                $controller->registerHelper('hasFormData', function($controller, $method) {
+
+                    $controller->loadFormData();
+
+                    return !empty($controller->formData[$method]);
+                });
+
                 $controller->registerHelper('getFilledForm', function ($controller, $name, $method = Method::POST, ServerRequest $request = null) use($app) {
 
                     $form = $this->_manager->getForm($name);
 
-                    //This links to the webRequest that the router gave us.
-                    //Does it make sense here? Lets think about this
-                    if (!$request && isset($controller->webRequest))
-                        $request = $controller->webRequest;
+                    if (!$controller->hasFormData($method))
+                        return $form;
 
-                    if (!$request) {
-
-                        if ($app->isWebApp())
-                            throw new \RuntimeException(
-                                "Failed to fill form: "
-                                ."no HTTP request found to get data from. "
-                                ."Try dispatching via the router feature."
-                            );
-
-                        //TODO: CLI form handling
-                    }
-
-                    switch ($method) {
-                        case Method::GET:
-
-                            foreach ($request->getUrlArgs() as $name => $value) {
-
-                                if (isset($form->{$name}))
-                                    $form->{$name}->setValue($value);
-                            }
-                            break;
-                        case Method::POST:
-                        case Method::PUT:
-
-                            foreach ($request->getBodyArgs() as $name => $value) {
-
-                                if (isset($form->{$name}))
-                                    $form->{$name}->setValue($value);
-                            }
-                            break;
-                        default:
-
-                            throw new \Exception("Unsupported form method");
-                    }
+                    foreach ($this->formData[$method] as $name => $value)
+                        $form->{$name}->setValue($value);
 
                     return $form;
                 });

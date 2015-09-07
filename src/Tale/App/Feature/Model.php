@@ -14,7 +14,6 @@ class Model extends FeatureBase
      * @var \Tale\ClassLoader[]
      */
     private $_loaders;
-    private $_providers;
 
     public function init()
     {
@@ -42,7 +41,6 @@ class Model extends FeatureBase
             $data = $this->data;
 
             $this->_loaders = [];
-            $this->_providers = [];
 
             foreach ($this->getConfig() as $alias => $options) {
 
@@ -72,16 +70,17 @@ class Model extends FeatureBase
                         "Failed to set model database: No database given"
                     );
 
-                $provider = new Provider(
-                    $data->getSource($options['source'])->{$options['database']},
-                    $options['nameSpace']
-                );
+                $source = $data->getSource($options['source']);
 
-                $this->_providers[$alias] = $provider;
+                /** @var \Tale\Data\Database $database */
+                $database = $source->{$options['database']};
+
+                if ($options['nameSpace'])
+                    $database->addModelNameSpace($options['nameSpace']);
 
                 if (isset($this->controller)) {
 
-                    $this->controller->setArg($alias, $provider);
+                    $this->controller->setArg($alias, $database);
                 }
             }
         });
@@ -93,7 +92,6 @@ class Model extends FeatureBase
                 $loader->unregister();
 
             unset($this->_loaders);
-            unset($this->_providers);
         });
     }
 
@@ -104,15 +102,6 @@ class Model extends FeatureBase
     {
         return $this->_loaders;
     }
-
-    /**
-     * @return \Tale\App\Feature\Model\Provider
-     */
-    public function getProviders()
-    {
-        return $this->_providers;
-    }
-
 
     public function getDependencies()
     {

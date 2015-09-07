@@ -8,6 +8,17 @@ use Tale\Form\FieldBase;
 class Number extends FieldBase
 {
 
+    public function getValue()
+    {
+
+        $value = parent::getValue();
+
+        if ($value)
+            return intval($value);
+
+        return null;
+    }
+
     public function getHtmlElement()
     {
 
@@ -27,22 +38,5 @@ class Number extends FieldBase
             $el->setAttribute('step', $this->getOption('step'));
 
         return $el;
-    }
-
-    public function setValue($value)
-    {
-
-        return parent::setValue($value ? intval($value) : null);
-    }
-
-    public function getValue()
-    {
-
-        $value = parent::getValue();
-
-        if ($value)
-            return intval($value);
-
-        return null;
     }
 }

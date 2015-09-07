@@ -40,7 +40,7 @@ class ControllerBase
         return isset($this->_args[$key]);
     }
 
-    public function getArg($key)
+    public function &getArg($key)
     {
 
         return $this->_args[$key];
@@ -97,7 +97,7 @@ class ControllerBase
         $this->removeArg($key);
     }
 
-    public function __get($key)
+    public function &__get($key)
     {
 
         return $this->getArg($key);
