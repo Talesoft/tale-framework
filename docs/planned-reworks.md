@@ -4,6 +4,7 @@ See `crud.md`
 
 ## Tale\Crud\Request
 
+```
 class Request
     $_method
     ->getArg($name, $default = null)   //The below using $_method as the method
@@ -16,7 +17,7 @@ class Request
     ->getUpdateArgs(...)
     ->getRemoveArg(...)
     ->getRemoveArgs(...)
-    
+```
 
 
 ## Tale\Environment
@@ -34,7 +35,7 @@ static class Environment
     ::isWeb() => \PHP_SAPI != 'cli'
     ::isCli() => \PHP_SAPI = 'cli'
     ::isServer() => \PHP_SAPI = 'cli-server'
-
+```
 
 
 
@@ -74,12 +75,12 @@ Router now doesnt create any input data.
 Form now uses CRUD-Fields and types
 Form is created as the following
 
-$form = new Form($crudAction, $fields)
+`$form = new Form($crudAction, $fields)`
 
 e.g.
-$form = new Form(Crud::CREATE, $fields)
+`$form = new Form(Crud::CREATE, $fields)`
 
 Validate complete forms
 
-$form->validates() //true/false
-$form->getErrors() //[]
+`$form->validates() //true/false`
+`$form->getErrors() //[]`
