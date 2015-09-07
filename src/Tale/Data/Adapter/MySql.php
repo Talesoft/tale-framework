@@ -840,7 +840,7 @@ class MySql extends AdapterBase
 				$sql .= " ORDER BY ".implode(',', $sortings);
 			}
 		}
-        
+
 		$limit = $qry->getLimit();
 		$limitStart = $qry->getLimitStart();
 

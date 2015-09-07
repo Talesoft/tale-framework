@@ -13,7 +13,7 @@ class Column extends NamedEntityBase
 
     private static $_types = [
         /* Numeric */
-        'bool', 'byte', 'short', 'int', 'long', 'decimal', 'float', 'double',
+        'bool', 'byte', 'short', 'int', 'long', 'float', 'double',
         /* Text */
         'char', 'string', 'datetime', 'timestamp',
         /* Misc */
