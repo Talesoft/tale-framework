@@ -704,8 +704,10 @@ class MySql extends AdapterBase
 			$negate = ($suffix === '!');
 			$op = '=';
 
-			if (is_object($value))
+			if (is_object($value)) {
+				//TODO: Auto PK receiving from Row-objects
 				$value = (array)$value;
+			}
 
 			if (is_array($value)) {
 
@@ -714,6 +716,12 @@ class MySql extends AdapterBase
 					$args[] = $v;
 
 				continue;
+			}
+
+			if (is_null($value)) {
+
+				if ($op === '=')
+					$op = ' IS '.($negate ? 'NOT ' : '');
 			}
 
 			switch ($suffix) {
@@ -812,16 +820,16 @@ class MySql extends AdapterBase
 						case 'asc':
 						case 'ascending':
 						case '+':
-						case '>':
-						case 'v':
+						case '<':
+						case '^':
 						default:
 							$direction = 'ASC';
 							break;
 						case 'desc':
 						case 'descending':
 						case '-':
-						case '<':
-						case '^':
+						case '>':
+						case 'v':
 							$direction = 'DESC';
 							break;
 					}
@@ -832,8 +840,7 @@ class MySql extends AdapterBase
 				$sql .= " ORDER BY ".implode(',', $sortings);
 			}
 		}
-
-
+        
 		$limit = $qry->getLimit();
 		$limitStart = $qry->getLimitStart();
 
