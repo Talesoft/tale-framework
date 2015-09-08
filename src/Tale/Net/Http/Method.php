@@ -4,9 +4,10 @@ namespace Tale\Net\Http;
 
 use Tale\Enum;
 
-class Method extends Enum {
+class Method extends Enum
+{
 
-	const GET = 'GET';
+    const GET = 'GET';
     const POST = 'POST';
     const HEAD = 'HEAD';
     const PUT = 'PUT';

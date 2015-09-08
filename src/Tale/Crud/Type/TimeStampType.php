@@ -8,7 +8,7 @@ use Tale\Crud\Validator;
 class TimeStampType extends TypeBase
 {
 
-    protected function convert($value)
+    protected function sanitize($value)
     {
 
         if (empty($value))

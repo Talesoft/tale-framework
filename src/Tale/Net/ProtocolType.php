@@ -5,7 +5,8 @@ namespace Tale\Net;
 use Tale\Enum;
 
 //http://php.net/manual/de/function.getprotobyname.php
-class ProtocolType extends Enum {
+class ProtocolType extends Enum
+{
 
 	const IP = 'ip';
 	const ICMP = 'icmp';
@@ -19,8 +20,9 @@ class ProtocolType extends Enum {
 	const RDP = 'rdp';
 	const RVD = 'rvd';
 
-	public static function getNumber( $protocolType ) {
+	public static function getNumber($protocolType)
+	{
 
-		return getprotobyname( $protocolType );
+		return getprotobyname($protocolType);
 	}
 }

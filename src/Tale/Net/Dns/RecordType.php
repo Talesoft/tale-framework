@@ -4,7 +4,8 @@ namespace Tale\Net\Dns;
 
 use Tale\Enum;
 
-class RecordType extends Enum {
+class RecordType extends Enum
+{
 
     const A = \DNS_A;
     const MX = \DNS_MX;

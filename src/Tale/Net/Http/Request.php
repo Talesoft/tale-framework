@@ -2,6 +2,9 @@
 
 namespace Tale\Net\Http;
 
+use Tale\Environment;
+use Tale\Util\StringUtil;
+
 class Request extends Message {
 
     private $_method;
@@ -100,5 +103,62 @@ class Request extends Message {
         ] )."\r\n";
 
         return $header.parent::getString();
+    }
+
+    private static function _validateWebEnvironment()
+    {
+
+        if (!Environment::isWeb())
+            throw new \Exception(
+                "Failed to get request data: "
+                ."The current environment is not a web environment"
+            );
+    }
+
+    public static function getProtocolFromEnvironment()
+    {
+
+        self::_validateWebEnvironment();
+
+        $proto = Environment::getClientOption('SERVER_PROTOCOL');
+        return explode('/', $proto)[0];
+    }
+
+    public static function getProtocolVersionFromEnvironment()
+    {
+
+        self::_validateWebEnvironment();
+
+        $proto = Environment::getClientOption('SERVER_PROTOCOL');
+        return explode('/', $proto)[1];
+    }
+
+    public static function getMethodFromEnvironment()
+    {
+
+        self::_validateWebEnvironment();
+
+        return Environment::getClientOption('REQUEST_METHOD');
+    }
+
+    public static function getHeadersFromEnvironment()
+    {
+
+        self::_validateWebEnvironment();
+
+        foreach ($_SERVER as $name => $value) {
+
+            if (strncmp($name, 'HTTP_', 5) === 0) {
+
+                $name = StringUtil::dasherize(StringUtil::humanize(strtolower(substr($name, 5))));
+                yield $name => $value;
+            }
+        }
+    }
+
+    public static function getHeaderArrayFromEnvironment()
+    {
+
+        return iterator_to_array(self::getHeadersFromEnvironment());
     }
 }

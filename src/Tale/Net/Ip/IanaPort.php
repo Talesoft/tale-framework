@@ -4,7 +4,8 @@ namespace Tale\Net\Ip;
 
 use Tale\Enum;
 
-class IanaPort extends Enum {
+class IanaPort extends Enum
+{
 
 	const TCPMUX = 1;
 	const COMPRESSNET = 3;

@@ -6,109 +6,129 @@ use Tale\Net\AddressFamily,
     Tale\Net\Dns,
     Exception;
 
-class Address {
+class Address
+{
 
-	private $_bytes;
-	private $_family;
+    private $_bytes;
+    private $_family;
 
-	public function __construct( array $bytes ) {
+    public function __construct(array $bytes)
+    {
 
-		$this->_bytes = $bytes;
+        $this->_bytes = $bytes;
 
-		switch( count( $this->_bytes ) ) {
-			case 4: $this->_family = AddressFamily::INET; break;
-			case 16: $this->_family = AddressFamily::INET6; break;
-			default:
+        switch (count($this->_bytes)) {
+            case 4:
+                $this->_family = AddressFamily::INET;
+                break;
+            case 16:
+                $this->_family = AddressFamily::INET6;
+                break;
+            default:
 
-				throw new Exception( "Failed to construct IP address: Passed bytes dont count for any known AddressFamily. Try 4 (IPv4) or 16 (IPv6) bytes" );
-		}
-	}
-
-	public function getBytes() {
-
-		return $this->_bytes;
-	}
-
-    public function getHexBytes() {
-
-        return array_map( function( $byte ) {
-
-            return str_pad( dechex( $byte ), 2, '0', \STR_PAD_LEFT );
-        }, $this->_bytes );
+                throw new Exception("Failed to construct IP address: Passed bytes dont count for any known AddressFamily. Try 4 (IPv4) or 16 (IPv6) bytes");
+        }
     }
 
-    public function getFamily() {
+    public function getBytes()
+    {
+
+        return $this->_bytes;
+    }
+
+    public function getHexBytes()
+    {
+
+        return array_map(function ($byte) {
+
+            return str_pad(dechex($byte), 2, '0', \STR_PAD_LEFT);
+        }, $this->_bytes);
+    }
+
+    public function getFamily()
+    {
 
         return $this->_family;
     }
 
-    public function isIpv4() {
+    public function isIpv4()
+    {
 
         return $this->_family === AddressFamily::INET;
     }
 
-    public function isIpv6() {
+    public function isIpv6()
+    {
 
         return $this->_family === AddressFamily::INET6;
     }
 
-    public function getString() {
+    public function getString()
+    {
 
-        return inet_ntop( implode( array_map( 'chr', $this->_bytes ) ) );
+        return inet_ntop(implode(array_map('chr', $this->_bytes)));
     }
 
-    public function getReverseHostName() {
+    public function getReverseHostName()
+    {
 
-        return Dns::getReverseHostName( $this );
+        return Dns::getReverseHostName($this);
     }
 
-    public function lookUp() {
+    public function lookUp()
+    {
 
-        return Dns::lookUpReverse( $this );
+        return Dns::lookUpReverse($this);
     }
 
-    public function lookUpArray() {
+    public function lookUpArray()
+    {
 
-        return iterator_to_array( $this->lookUp() );
+        return iterator_to_array($this->lookUp());
     }
 
-    public function lookUpFirst() {
+    public function lookUpFirst()
+    {
 
-        return Dns::lookUpReverseFirst( $this );
+        return Dns::lookUpReverseFirst($this);
     }
 
-    public function lookUpHostName() {
+    public function lookUpHostName()
+    {
 
         $first = $this->lookUpFirst();
 
-        if( !$first )
+        if (!$first)
             return null;
 
         return $first->getTargetHostName();
     }
 
-    public function __toString() {
+    public function __toString()
+    {
 
         return $this->getString();
     }
 
-    public static function fromString( $string ) {
+    public static function fromString($string)
+    {
 
-        $n = @inet_pton( $string );
+        $n = @inet_pton($string);
 
-        if( $n === false )
-            throw new Exception( "Failed to convert string to IPAddress: $string is not a valid ip address of any kind" );
+        if ($n === false)
+            throw new Exception("Failed to convert string to IPAddress: $string is not a valid ip address of any kind");
 
-        return new static( array_map( 'ord', str_split( $n ) ) );
+        return new static(array_map('ord', str_split($n)));
     }
 
-    public static function tryFromString( $string ) {
+    public static function tryFromString($string)
+    {
 
         $ip = null;
         try {
 
-            $ip = self::fromString( $string );
-        } catch( \Exception $e ) {
+            $ip = self::fromString($string);
+        } catch (\Exception $e) {
 
             return null;
         }
@@ -116,17 +136,18 @@ class Address {
         return $ip;
     }
 
-    public static function fromDomain( $string, $v6 = false ) {
+    public static function fromDomain($string, $v6 = false)
+    {
 
-        $ip = self::tryFromString( $string );
+        $ip = self::tryFromString($string);
 
-        if( $ip )
+        if ($ip)
             return $ip;
 
-        $record = $v6 ? Dns::lookUpAaaaRecord( $string ) : Dns::lookUpARecord( $string );
+        $record = $v6 ? Dns::lookUpAaaaRecord($string) : Dns::lookUpARecord($string);
 
-        if( !$record )
-            throw new Exception( "Failed to look up IP address for host $string. No matching records found" );
+        if (!$record)
+            throw new Exception("Failed to look up IP address for host $string. No matching records found");
 
         return $record->getAddress();
     }

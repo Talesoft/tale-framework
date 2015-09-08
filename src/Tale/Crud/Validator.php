@@ -48,6 +48,22 @@ class Validator
         return $this->_errors;
     }
 
+    public function addError($message)
+    {
+
+        $this->_errors[] = $message;
+
+        return $this;
+    }
+
+    public function addErrors(array $errors)
+    {
+
+        $this->_errors = array_merge($this->_errors, $errors);
+
+        return $this;
+    }
+
     public function reset()
     {
 
@@ -118,8 +134,8 @@ class Validator
             $errors = $allowance->getErrors();
         }
 
-        $this->_errors = array_merge($this->_errors, $errors);
-        $this->_errors[] = $message;
+        $this->addErrors(array_merge($this->_errors, $errors));
+        $this->addError($message);
 
         return $this;
     }
@@ -129,7 +145,7 @@ class Validator
     {
 
         if (!$condition)
-            $this->_errors[] = $message;
+            $this->addError($message);
 
         return $this;
     }
@@ -174,7 +190,7 @@ class Validator
     public function notIn(array $values, $message)
     {
 
-        return $this->isnt(in_array($this->_value, $values), $message, true);
+        return $this->isnt(in_array($this->_value, $values, true), $message);
     }
 
     public function fails($filter, $message)
@@ -209,6 +225,52 @@ class Validator
     {
 
         return $this->fails($message, \FILTER_VALIDATE_FLOAT);
+    }
+
+    public function notArray($message)
+    {
+
+        return $this->isnt(is_array($this->_value), $message);
+    }
+
+    public function notArrayOf($message, $className, $keyClassName = null)
+    {
+
+        $factory = Type::getTypeFactory();
+        $className = $factory->resolveClassName($className);
+        $keyClassName = $keyClassName ? $factory->resolveClassName($keyClassName) : null;
+
+        if (!is_array($this->_value))
+            return $this->addError($message);
+
+        foreach ($this->_value as $key =>$value) {
+
+            if (!is_a($value, $className))
+                return $this->addError($message);
+
+            if ($keyClassName && !is_a($key, $keyClassName))
+                return $this->addError($message);
+        }
+
+        return $this;
+    }
+
+    public function notObject($message)
+    {
+
+        return $this->isnt(is_object($this->_value), $message);
+    }
+
+    public function notObjectOf($message, $className)
+    {
+
+        return $this->isnt(is_a($this->_value, $className), $message);
+    }
+
+    public function notClassNameOf($message, $className)
+    {
+
+        return $this->isnt(is_a($this->_value, $className, true), $message);
     }
 
     public function notIpv4($message)
@@ -259,9 +321,9 @@ class Validator
         return $this->notAlpha($message, '0-9'.$additionalChars);
     }
 
-    public function notArray($message)
+    public function notCanonical($message, $additionalChars = '')
     {
 
-        return $this->isnt(is_array($this->_value), $message);
+        return $this->notAlphaNumeric($message, '_\-'.$additionalChars);
     }
 }

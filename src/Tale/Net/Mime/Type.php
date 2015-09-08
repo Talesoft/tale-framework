@@ -4,7 +4,8 @@ namespace Tale\Net\Mime;
 
 use Tale\Enum;
 
-class Type extends Enum {
+class Type extends Enum
+{
 
     const A3GPDASH_QOE_REPORT_XML = 'application/3gpdash-qoe-report+xml';
     const A3GPP_IMS_XML = 'application/3gpp-ims+xml';
@@ -1436,5 +1437,4 @@ class Type extends Enum {
     const VND_SEALED_MPEG4 = 'video/vnd.sealed.mpeg4';
     const VND_SEALEDMEDIA_SOFTSEAL_MOV = 'video/vnd.sealedmedia.softseal-mov';
     const VND_UVVU_MP4 = 'video/vnd.uvvu-mp4';
-
 }

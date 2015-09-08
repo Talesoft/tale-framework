@@ -19,11 +19,13 @@ class Type
 
         return [
             'bool' => 'Tale\\Crud\\Type\\BoolType',
+            'boolean' => 'Tale\\Crud\\Type\\BoolType',
             'byte' => 'Tale\\Crud\\Type\\ByteType',
             'ubyte' => 'Tale\\Crud\\Type\\UByteType',
             'short' => 'Tale\\Crud\\Type\\ShortType',
             'ushort' => 'Tale\\Crud\\Type\\UShortType',
             'int' => 'Tale\\Crud\\Type\\IntType',
+            'integer' => 'Tale\\Crud\\Type\\IntType',
             'uint' => 'Tale\\Crud\\Type\\UIntType',
             'long' => 'Tale\\Crud\\Type\\LongType',
             'ulong' => 'Tale\\Crud\\Type\\ULongType',
@@ -46,6 +48,15 @@ class Type
             self::$_typeFactory = new Factory('Tale\\Crud\\TypeBase', self::getInbuiltTypes() );
 
         return self::$_typeFactory;
+    }
+
+    public function create($className, $value)
+    {
+
+        $args = func_get_args();
+        array_shift($args);
+
+        return self::$_typeFactory->createInstance($className, $args);
     }
 
     public static function convert($value)

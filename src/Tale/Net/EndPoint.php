@@ -2,16 +2,19 @@
 
 namespace Tale\Net;
 
-class EndPoint {
+class EndPoint
+{
 
 	private $_addressFamily;
 
-	public function __construct( $addressFamily ) {
+	public function __construct($addressFamily)
+	{
 
 		$this->_addressFamily = $addressFamily;
 	}
 
-	public function getAddressFamily() {
+	public function getAddressFamily()
+	{
 
 		return $this->_addressFamily;
 	}

@@ -2,66 +2,75 @@
 
 namespace Tale\Net;
 
-use Tale\StringUtil;
+use Tale\Util\StringUtil;
 
-class Uri {
+class Uri
+{
 
 	private $_scheme;
 	private $_path;
 
-	public function __construct( array $items = null ) {
+	public function __construct(array $items = null)
+	{
 
-		$items = array_replace( [
+		$items = array_replace([
 			'scheme' => null,
-			'path' => null
-		], $items );
+			'path'   => null
+		], $items);
 
-		$this->_scheme = $items[ 'scheme' ];
-		$this->_path = $items[ 'path' ];
+		$this->_scheme = $items['scheme'];
+		$this->_path = $items['path'];
 	}
 
-	public function hasScheme() {
+	public function hasScheme()
+	{
 
-		return !is_null( $this->_scheme );
+		return !is_null($this->_scheme);
 	}
 
-	public function getScheme() {
+	public function getScheme()
+	{
 
 		return $this->_scheme;
 	}
 
-	public function setScheme( $scheme ) {
+	public function setScheme($scheme)
+	{
 
 		$this->_scheme = $scheme;
 
 		return $this;
 	}
 
-	public function hasPath() {
+	public function hasPath()
+	{
 
-		return !is_null( $this->_path );
+		return !is_null($this->_path);
 	}
 
-	public function getPath() {
+	public function getPath()
+	{
 
 		return $this->_path;
 	}
 
-	public function setPath( $path ) {
+	public function setPath($path)
+	{
 
 		$this->_path = $path;
 
 		return $this;
 	}
 
-	public function getString() {
+	public function getString()
+	{
 
 		$str = '';
 
-		if( $this->_scheme )
+		if ($this->_scheme)
 			$str .= "{$this->_scheme}:";
 
-		if( $this->_path )
+		if ($this->_path)
 			$str .= $this->_path;
 		else
 			$str .= '/';
@@ -69,13 +78,15 @@ class Uri {
 		return $str;
 	}
 
-	public function __toString() {
+	public function __toString()
+	{
 
 		return $this->getString();
 	}
 
-	public static function fromString( $uriString ) {
+	public static function fromString($uriString)
+	{
 
-		return new static( StringUtil::map( $uriString, ':', [ 'scheme', 'path' ] ) );
+		return new static(StringUtil::map($uriString, ':', ['scheme', 'path']));
 	}
 }

@@ -4,7 +4,8 @@ namespace Tale\Net\Ip;
 
 use Tale\Enum;
 
-class Port extends Enum {
+class Port extends Enum
+{
 
     const TCPMUX = 1;
     const COMPRESSNET = 3;

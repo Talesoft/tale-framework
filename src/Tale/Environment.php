@@ -67,18 +67,18 @@ class Environment
     public static function isWeb()
     {
 
-        return !(self::isCli() || self::isServer());
+        return !self::isCli();
     }
 
     public static function isCli()
     {
 
-        return \PHP_SAPI !== 'cli';
+        return \PHP_SAPI === 'cli';
     }
 
     public static function isServer()
     {
 
-        return \PHP_SAPI !== 'cli-server';
+        return \PHP_SAPI === 'cli-server';
     }
 }

@@ -10,7 +10,7 @@ class EnumType extends StringType
 
     private $_options;
 
-    public function __construct($value, array $options = null)
+    public function __construct($value = null, array $options = null)
     {
 
         $this->_options = $options ? $options : [];

@@ -7,7 +7,7 @@ use Tale\Crud\TypeBase;
 class StringType extends TypeBase
 {
 
-    protected function convert($value)
+    protected function sanitize($value)
     {
 
         if (empty($value) || !$this->isScalar())

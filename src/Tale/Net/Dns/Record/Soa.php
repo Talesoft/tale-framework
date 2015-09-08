@@ -5,7 +5,8 @@ namespace Tale\Net\Dns\Record;
 use Tale\Net\Dns\Record;
 use Tale\Net\Dns\RecordType;
 
-class Soa extends Record {
+class Soa extends Record
+{
 
     private $_sourceHostName;
     private $_mailAddress;
@@ -15,8 +16,9 @@ class Soa extends Record {
     private $_expireTime;
     private $_minTtl;
 
-    public function __construct( $hostName, $sourceHostName, $mailAddress, $serial, $refreshInterval, $retryDelay, $expireTime, $minTtl, $ttl ) {
-        parent::__construct( $hostName, RecordType::SOA, $ttl );
+    public function __construct($hostName, $sourceHostName, $mailAddress, $serial, $refreshInterval, $retryDelay, $expireTime, $minTtl, $ttl)
+    {
+        parent::__construct($hostName, RecordType::SOA, $ttl);
 
         $this->_sourceHostName = $sourceHostName;
         $this->_mailAddress = $mailAddress;
@@ -27,44 +29,52 @@ class Soa extends Record {
         $this->_minTtl = $minTtl;
     }
 
-    public function getSourceHostName() {
+    public function getSourceHostName()
+    {
 
         return $this->_sourceHostName;
     }
 
-    public function getMailAddress() {
+    public function getMailAddress()
+    {
 
         return $this->_mailAddress;
     }
 
-    public function getSerial() {
+    public function getSerial()
+    {
 
         return $this->_serial;
     }
 
-    public function getRefreshInterval() {
+    public function getRefreshInterval()
+    {
 
         return $this->_refreshInterval;
     }
 
-    public function getRetryDelay() {
+    public function getRetryDelay()
+    {
 
         return $this->_retryDelay;
     }
 
-    public function getExpireTime() {
+    public function getExpireTime()
+    {
 
         return $this->_expireTime;
     }
 
-    public function getMinTtl() {
+    public function getMinTtl()
+    {
 
         return $this->_minTtl;
     }
 
-    public function __toString() {
+    public function __toString()
+    {
 
-        $str = implode( ' ', [
+        $str = implode(' ', [
             $this->_sourceHostName,
             $this->_mailAddress,
             $this->_serial,
@@ -72,7 +82,7 @@ class Soa extends Record {
             $this->_retryDelay,
             $this->_expireTime,
             $this->_minTtl
-        ] );
+        ]);
 
         return parent::__toString()." $str";
     }

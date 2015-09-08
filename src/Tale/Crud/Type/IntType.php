@@ -13,7 +13,7 @@ class IntType extends UnsignedTypeBase
     const UNSIGNED_MIN = 0;
     const UNSIGNED_MAX = 4294967295;
 
-    protected function convert($value)
+    protected function sanitize($value)
     {
 
         if (empty($value) || !$this->isScalar())
@@ -30,10 +30,16 @@ class IntType extends UnsignedTypeBase
             $v->notInt('Value has to be a number')
                 ->when($this->isSigned(), function(Validator $v) {
 
-                    $v->outOf(static::MIN, static::MAX, 'Value has to be between -127 and 127');
+                    $v->outOf(
+                        static::MIN, static::MAX,
+                        sprintf('Value has to be between %d and %d', static::MIN, static::MAX
+                    ));
                 })->otherwise(function(Validator $v) {
 
-                    $v->outOf(static::UNSIGNED_MIN, static::UNSIGNED_MAX, 'Value has to be between 0 and 255');
+                    $v->outOf(
+                        static::UNSIGNED_MIN, static::UNSIGNED_MAX,
+                        sprintf('Value has to be between %d and %d', static::UNSIGNED_MIN, static::UNSIGNED_MAX
+                    ));
                 });
         });
 

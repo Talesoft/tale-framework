@@ -9,7 +9,7 @@ abstract class TypeBase
     private $_valueType;
     private $_validator;
 
-    public function __construct($value)
+    public function __construct($value = null)
     {
 
         $this->_value = $value;
@@ -29,9 +29,20 @@ abstract class TypeBase
         if ($this->isNull())
             return null;
 
-        return $this->convert($this->_value);
+        return $this->sanitize($this->_value);
     }
 
+    public function getValueType()
+    {
+
+        return $this->_valueType;
+    }
+
+    public function getValidator()
+    {
+
+        return $this->_validator;
+    }
 
     public function isBool()
     {
@@ -87,17 +98,6 @@ abstract class TypeBase
         return $this->_valueType === 'NULL';
     }
 
-    protected function convert($value)
-    {
-
-        return $value;
-    }
-
-    protected function validate(Validator $v) {
-
-        return $v;
-    }
-
     public function validates()
     {
 
@@ -111,5 +111,24 @@ abstract class TypeBase
     {
 
         return $this->_validator->getErrors();
+    }
+
+    public function __toString()
+    {
+
+        $value = $this->getValue();
+        return $value ? (string)$value : '';
+    }
+
+
+    protected function sanitize($value)
+    {
+
+        return $value;
+    }
+
+    protected function validate(Validator $v) {
+
+        return $v;
     }
 }

@@ -8,7 +8,7 @@ use Tale\Crud\Validator;
 class DateTimeType extends TypeBase
 {
 
-    protected function convert($value)
+    protected function sanitize($value)
     {
 
         if (empty($value))
