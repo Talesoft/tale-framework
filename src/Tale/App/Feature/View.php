@@ -27,7 +27,8 @@ class View extends FeatureBase
             );
 
         $this->prependOptions([
-            'path'           => $this->getApp()->getOption('path').'/themes',
+            'path'           => $app->getOption('path').'/themes',
+            'baseUrl'        => ($app->hasOption('url') ? $app->getOption('url') : '/themes'),
             'phtmlExtension' => 'phtml'
         ]);
 
@@ -53,7 +54,7 @@ class View extends FeatureBase
                 $tm = $this->_themeManager;
                 $controller->registerHelper('render', function ($controller, $path, array $args = null, $cacheHtml = false) use ($tm) {
 
-                    return $tm->renderView($path, $args, $cacheHtml, $controller);
+                    return $tm->renderView($path, $args, $cacheHtml);
                 });
 
                 $controller->registerHelper('view', function ($controller, array $args = null, $path = null, $cacheHtml = false) {
@@ -66,6 +67,8 @@ class View extends FeatureBase
                             ." Use the controller-feature's dispatch-methods."
                         );
 
+                    $args = $args ? $args : [];
+                    $args['view'] = $controller;
 
                     if (isset($controller->request) && !$path) {
 
@@ -79,13 +82,26 @@ class View extends FeatureBase
                         $path = str_replace('.', '/', $req->getController()).'/'.$req->getAction().'.'.$this->getOption('phtmlExtension');
                     }
 
-                    return new Response('html', $controller->render($path, array_replace($args ? $args : [], $controller->getArgs()), $cacheHtml));
+                    return new Response('html', $controller->render($path, array_replace($args, $controller->getArgs()), $cacheHtml));
                 });
 
                 $controller->registerHelper('viewCached', function ($controller, array $args = null, $path = null) {
 
                     return $controller->view($args, $path, true);
                 });
+
+                $proxies = [
+                    'getFontUrl', 'getImageUrl', 'getScriptUrl', 'getStyleUrl', 'getViewUrl',
+                    'resolveFont', 'resolveImage', 'resolveScript', 'resolveStyle', 'resolveView'
+                ];
+                foreach ($proxies as $name)
+                    $controller->registerHelper($name, function($controller) use($name) {
+
+                        $args = func_get_args();
+                        array_shift($args);
+
+                        return call_user_func_array([$this->_themeManager, $name], $args);
+                    });
 
             }
         });

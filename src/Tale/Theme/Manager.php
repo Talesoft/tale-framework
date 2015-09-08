@@ -26,6 +26,7 @@ class Manager
 
         $this->appendOptions([
             'path'          => './themes',
+            'baseUrl'       => '/themes',
             'themes'        => ['default'],
             'types' => [
                 'fonts'   => 'fonts',
@@ -100,23 +101,34 @@ class Manager
 
         foreach ($this->_themes as $theme) {
 
-            yield "$themePath/$theme/$subPath/$path";
+            yield $theme => "$themePath/$theme/$subPath/$path";
         }
     }
 
     public function getExistingPaths($type, $path)
     {
 
-        foreach ($this->getPossiblePaths($type, $path) as $fullPath)
+        foreach ($this->getPossiblePaths($type, $path) as $theme => $fullPath)
             if (file_exists($fullPath))
-                yield $fullPath;
+                yield $theme => $fullPath;
     }
 
     public function resolve($type, $path)
     {
 
-        foreach ($this->getExistingPaths($type, $path) as $fullPath)
+        foreach ($this->getExistingPaths($type, $path) as $theme => $fullPath)
             return $fullPath;
+
+        return null;
+    }
+
+    public function getUrl($type, $path)
+    {
+
+        $baseUrl = $this->getOption('baseUrl');
+        $types = $this->getOption('types');
+        foreach ($this->getExistingPaths($type, $path) as $theme => $fullPath)
+            return rtrim($baseUrl, '/').'/'.$types[$type].'/'.ltrim($path, '/');
 
         return null;
     }
@@ -184,16 +196,46 @@ class Manager
         return $this->resolve(self::TYPE_VIEW, $path);
     }
 
-    public function renderView($path, array $args = null, $cacheHtml = false, $context = null)
+    public function getFontUrl($path)
     {
 
-        $renderView = function() use($path, $args, $context) {
+        return $this->getUrl(self::TYPE_FONT, $path);
+    }
+
+    public function getImageUrl($path)
+    {
+
+        return $this->getUrl(self::TYPE_IMAGE, $path);
+    }
+
+    public function getScriptUrl($path)
+    {
+
+        return $this->getUrl(self::TYPE_SCRIPT, $path);
+    }
+
+    public function getStyleUrl($path)
+    {
+
+        return $this->getUrl(self::TYPE_STYLE, $path);
+    }
+
+    public function getViewUrl($path)
+    {
+
+        return $this->getUrl(self::TYPE_VIEW, $path);
+    }
+
+    public function renderView($path, array $args = null, $cacheHtml = false)
+    {
+
+        $renderView = function() use($path, $args) {
 
             $phtml = $this->fetchCached(
                 'views.'.StringUtil::canonicalize($path),
                 function () use ($path) {
 
-                return $this->getConvertedContent(self::TYPE_VIEW, $path);
+                    return $this->getConvertedContent(self::TYPE_VIEW, $path);
             }, $this->getOption('lifeTime'));
 
             if( !$phtml )
@@ -212,9 +254,6 @@ class Manager
 
                 return ob_get_clean();
             };
-
-            if (is_object($context))
-                $render->bindTo($context, $context);
 
             return $render($dataUri, $args ? $args : []);
         };

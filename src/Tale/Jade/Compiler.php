@@ -1014,9 +1014,9 @@ class Compiler
                     $this->prettyprint = false;
 
                     if ($key == 'class') {
-                        $value = $this->createCode('echo is_array(%1$s) ? implode(" ", %1$s) : %1$s', $value);
+                        $value = $this->createCode('$_v = %1$s; echo is_array($_v) ? implode(" ", $_v) : "";', $value);
                     } else {
-                            $value = $this->createCode('echo is_array(%1$s) ? json_encode(%1$s) : %1$s', $value);
+                        $value = $this->createCode('$_v = %1$s; echo is_array($_v) || is_object($_v) ? json_encode($_v) : $_v;', $value);
                     }
 
                     $this->prettyprint = $pp;

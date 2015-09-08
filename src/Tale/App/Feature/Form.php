@@ -48,7 +48,6 @@ class Form extends FeatureBase
 
                 $controller->registerHelper('getForm', function($controller, $name) {
 
-
                     return $this->_manager->getForm($name);
                 });
 
@@ -88,8 +87,9 @@ class Form extends FeatureBase
                     if (!$controller->hasFormData($method))
                         return $form;
 
-                    foreach ($this->formData[$method] as $name => $value)
-                        $form->{$name}->setValue($value);
+                    foreach ($controller->formData[$method] as $name => $value)
+                        if (isset($form->{$name}))
+                            $form->{$name}->setValue($value);
 
                     return $form;
                 });

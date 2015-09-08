@@ -84,3 +84,28 @@ Validate complete forms
 
 `$form->validates() //true/false`
 `$form->getErrors() //[]`
+
+
+
+
+
+# Reverse Routing
+
+We can map URLs to variables via routes, but can we map variables to URLs via routes?
+
+# Route Data should be collection
+
+No really, $request->controller would be way more awesome then $request->getController()
+
+
+
+
+# Data Auto-Where-Selectors
+
+Query->where{{field}}($value)
+Query->sortBy{{field}}($desc = false)
+
+Query->selectBy{{field}}($value, $as)
+Query->countBy{{field}}($field)
+Query->updateBy{{field}}($value, $data)
+Query->removeBy{{field}}($value)

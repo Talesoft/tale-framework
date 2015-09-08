@@ -687,7 +687,7 @@ class MySql extends AdapterBase
                     if ($char !== '.')
                         $suffix = $char.$suffix;
 
-                $field = substr($field, 0, $len);
+                $field = substr($field, 0, $len + 1);
             }
 
 			$field = $this->inflectInputColumnName($field);

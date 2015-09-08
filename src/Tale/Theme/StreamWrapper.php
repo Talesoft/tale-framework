@@ -20,9 +20,9 @@ class StreamWrapper
      *
      * @return bool
      */
-    public function stream_open($path)
+    public function stream_open($data)
     {
-        $this->_data = substr(strstr($path, ';'), 1);
+        $this->_data = substr($data, strpos($data, ';') + 1);
         $this->_position = 0;
 
         return true;
