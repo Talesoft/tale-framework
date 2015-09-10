@@ -10,7 +10,7 @@ use Tale\Event;
  *
  * @package Tale\Event
  */
-trait OptionalTrait
+trait EmitterTrait
 {
 
     /**

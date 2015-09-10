@@ -7,7 +7,7 @@ use Tale\Event;
 
 abstract class EntityBase
 {
-    use Event\OptionalTrait;
+    use Event\EmitterTrait;
 
     private $_state;
 

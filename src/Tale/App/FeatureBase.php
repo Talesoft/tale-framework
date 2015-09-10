@@ -9,7 +9,7 @@ use Tale\Event;
 abstract class FeatureBase
 {
     use Config\OptionalTrait;
-    use Event\OptionalTrait;
+    use Event\EmitterTrait;
 
     private $_app;
     private $_dependencyInstances;

@@ -3,9 +3,11 @@
 namespace Tale\Crud\Entity;
 
 use Tale\Data\EntityBase;
+use Tale\Event;
 
 class Data extends Collection
 {
+    use Event\EmitterTrait;
 
     private $_changes;
 
@@ -20,7 +22,8 @@ class Data extends Collection
     {
 
         $oldValue = $this->hasItem($key) ? $this->getItem($key) : null;
-        $this->_changes[] = new Change($this->)
+        $change = new Change($key, $oldValue, $value);
+        $this->_changes[] = new Change($key, $oldValue, $value);
     }
 
 }

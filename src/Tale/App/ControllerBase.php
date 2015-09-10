@@ -7,7 +7,7 @@ use Tale\Event;
 
 class ControllerBase
 {
-    use Event\OptionalTrait;
+    use Event\EmitterTrait;
 
     private $_args;
     private $_helpers;

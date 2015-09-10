@@ -26,7 +26,7 @@ class App
     use Config\OptionalTrait {
         mergeOptions as private _mergeOptions;
     }
-    use Event\OptionalTrait;
+    use Event\EmitterTrait;
 
 
     const TYPE_CLI = 'cli';

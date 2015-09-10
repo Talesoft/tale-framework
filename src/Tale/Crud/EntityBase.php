@@ -5,9 +5,9 @@ namespace Tale\Crud;
 use Tale\Data\Entity\State;
 use Tale\Event;
 
-abstract class EntityBase
+abstract class EntityBase implements EntityInterface
 {
-    use Event\OptionalTrait;
+    use Event\EmitterTrait;
 
     private $_data;
     private $_state;
